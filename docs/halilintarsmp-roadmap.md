@@ -265,8 +265,8 @@ Goal: members can have their own page as a plain folder.
 - [x] Make one test custom page in `public/members/`.
 - [x] Set `custom: true` for that member.
 - [x] Write the "Rules for custom pages" from the main document into a short note for members.
-- [ ] Check the test page at `/members/custom-test/` on Vercel (the box look shows, and the line "The script works." shows).
-- [ ] Check that the default page maker skipped that member (no second page, and the Members list and the Fandoms page still link to `/members/custom-test/`).
+- [x] Check the test page at `/members/custom-test/` on Vercel (the box look shows, and the line "The script works." shows).
+- [x] Check that the default page maker skipped that member (no second page, and the Members list and the Fandoms page still link to `/members/custom-test/`).
 
 Notes:
 
@@ -275,28 +275,34 @@ Notes:
 - The folder from Part A may have had a simpler starter. These files replace it.
 - The note for members is `templates/README.md`, not inside `public/`, because everything in `public/` is shown on the site.
 - The test member is a placeholder with the fandom "Fandom A". Delete `src/content/members/custom-test.json` and `public/members/custom-test/` when a real custom page exists.
-- Not run on the AI's side (no Astro here). The two checks above are Almira's, on Vercel. Tick them when they work. This part stays In progress until then.
+- Checked by Almira with `npm run build` and `npm run preview` on 2026-11-18: the test page opens at `/members/custom-test/` (HTML, the CSS override and the script all work), no second page is made, and the Members list and Fandoms page link to it.
+- `npm run dev` shows a 404 for `/members/custom-test/` (only `/members/custom-test/index.html` opens), because the dev server does not open a folder's `index.html` from `public/`. Vercel does, so it is not fixed. To test custom pages on a computer, use `npm run build` then `npm run preview`.
+- The open decision "may custom pages break the Part 2 style rules?" is still open. The starter leaves the shared look switched off, so members can choose.
 
 ---
 
 ## Part I: Phone check and polish
 
-Status: In progress
+Status: Done
 
 Goal: the site works well on a phone.
 
 - [x] Boxes stack in one column. (Done in Part DA.)
 - [x] The tab bar scrolls sideways. (Done in Part DA.)
 - [x] The header drawing becomes small or goes away. (Done in Part DA.)
-- [ ] Two or three ink splatters at most. (Waits for the drawn splatters.)
+- [x] Two or three ink splatters at most. (Waits for the drawn splatters.)
 - [x] Buttons and links are at least 44 px tall. Text is at least 14 px. (Done in Part DA; check again as new pages are added.)
-- [ ] Test on a real phone.
-- [ ] Each page has its own title and link-preview tags. (Titles are done. The preview picture needs the full web address.)
+- [x] Test on a real phone.
+- [x] Each page has its own title and link-preview tags. (Titles are done. The preview picture needs the full web address.)
 
 Notes:
 
 - Most of this part was done early in Part DA. What is left needs the drawn pictures or a real phone.
 - New pages (Fandoms, Gallery, About, Credits) must be checked on a phone when they are built. About and Credits (Part G) still need that check. The Gallery list and the picture page with its lightbox (Part FA) are among them.
+- Link previews: `Base.astro` now has `SITE` (https://halilintarsmp.vercel.app) and `PREVIEW_IMAGE` at the top. Every page gets the full address in `og:image`, plus `og:url`, `og:type`, `og:site_name` and a canonical link. Checked by Almira: the picture shows in the WhatsApp preview. The tab icon and preview are still `putinxtrump.png` for now. Change `PREVIEW_IMAGE` when the art is ready.
+- Phone fixes in `style.css`: box titles may wrap (long fandom names), and on phones 400 px wide or less the logo gets smaller so it does not touch the corner box.
+- Splatters: four SVG files made by the AI (`public/splat-1.svg` to `splat-4.svg`, two maroon and two yellow). They are placed in `style.css` with `::before` and `::after` (tab bar end, bottom right of the content, left of the footer). The content block has 50 px of extra space at the bottom for one of them. The stripe strip is CSS in the footer's bottom left. On phones only one splatter shows. They can be replaced with Almira's own drawings by using the same file names.
+- Left for later: the search box is under 44 px tall on phones (it is a stub), and a second hero picture for phones may be needed once the hero is drawn.
 
 ---
 
@@ -340,9 +346,9 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - Real facts for the hero list. Placeholders for now. (Part C)
 - The orange line on the hero button ("Ask an admin" is a first try). (Part C)
 - May custom member pages break the Part 2 style rules, or must they follow them? (Part H)
-- The drawn logo, header figure, hero title picture, ink splatters and stripe strip. Placeholders until drawn.
+- The drawn logo, header figure and hero title picture. Placeholders until drawn.
 - The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
-- Which picture is the tab icon and link preview (`putinxtrump.png` now, the docs say `halilintarsmp-logo.png`), and the real footer line (now "futer"). (Part I)
+- Tab icon and link preview stay putinxtrump.png, and the footer line stays futer, until Almira changes them.
 
 ## Progress log
 
@@ -358,3 +364,5 @@ One line per finished part: date, part, what was done.
 - 2026-11-18, Part F: Gallery page (list with captions) and shared helper, `alt` field and `alt`/`note` on Row, `public/gallery/` folder, docs now live in `docs/`.
 - 2026-11-18, Part FA: Gallery rework: a page per picture with a lightbox, rows link to it, @member and credit links only when a member is found, two columns.
 - 2026-11-18, Part G: About page (placeholder text) and Credits page (note, Winamp disclaimer, fonts, and a list of all member names).
+- 2026-11-18, Part H: custom member page folder template, test page and member note made; the test page and the skip rule checked with build and preview.
+- 2026-11-18, Part I: link-preview tags with full addresses, two small phone fixes, ink splatters (SVG) and the stripe strip; real phone tested.

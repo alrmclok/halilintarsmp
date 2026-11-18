@@ -1,14 +1,14 @@
 {
-  "name": "Member One",
-  "handle": "member_one",
-  "picture": "",
+  "name": "Placeholder",
+  "handle": "placeholder",
+  "picture": "/putinxtrump.png",
   "fandoms": [
-    "Fandom A",
-    "Fandom B"
+    "Lesbian Space Princess",
+    "Placeholder"
   ],
   "joined": "2026-11-01",
   "intro": "One short line about this member.",
-  "custom": true,
+  "custom": false,
   "sections": [
     {
       "heading": "About",
