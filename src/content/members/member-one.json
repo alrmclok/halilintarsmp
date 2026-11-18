@@ -8,7 +8,7 @@
   ],
   "joined": "2026-11-01",
   "intro": "One short line about this member.",
-  "custom": false,
+  "custom": true,
   "sections": [
     {
       "heading": "About",

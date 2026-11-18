@@ -1,8 +1,0 @@
-{
-  "name": "Custom Test",
-  "handle": "custom_test",
-  "fandoms": ["Fandom A"],
-  "joined": "2026-11-18",
-  "intro": "A test member with a custom page. Delete this member and its folder when a real custom page exists.",
-  "custom": true
-}

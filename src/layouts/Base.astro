@@ -3,6 +3,10 @@
 const { title = 'HalilintarSMP', description = 'The community website of the HalilintarSMP.' } = Astro.props;
 const fullTitle = title === 'HalilintarSMP' ? title : `${title} | HalilintarSMP`;
 const path = Astro.url.pathname;
+const SITE = 'https://halilintarsmp.vercel.app'; // if you get your own domain, change only this line
+const PREVIEW_IMAGE = '/putinxtrump.png'; // tab icon + link preview picture (a file in public/)
+const pageUrl = new URL(path, SITE).href;
+const imageUrl = new URL(PREVIEW_IMAGE, SITE).href;
 const tabs = [
   { label: 'Home', href: '/' },
   { label: 'Members', href: '/members/' },
@@ -19,11 +23,15 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="HalilintarSMP" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="/putinxtrump.png" />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={imageUrl} />
+    <link rel="canonical" href={pageUrl} />
     <link rel="stylesheet" href="/style.css" />
-    <link rel="icon" type="image/png" href="/putinxtrump.png" />
+    <link rel="icon" type="image/png" href={PREVIEW_IMAGE} />
   </head>
   <body>
     <div class="wrap">
