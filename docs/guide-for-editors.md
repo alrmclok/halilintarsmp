@@ -1,5 +1,7 @@
 # Guide for editing the HalilintarSMP site
 
+For Katz and Kate. Plain words, small steps. Almira owns the project. You two can edit it.
+
 Last updated: 2026-11-19
 
 ## The idea in one minute
@@ -45,6 +47,7 @@ You will see these folders: `docs`, `src`, `public` and `templates`. Section 4 s
 | Gallery pictures | `public/gallery/` |
 | Fandom pictures | `public/fandoms/` |
 | News | `src/content/news.json` |
+| Words on the Join and Rules pages | `src/pages/join.astro` and `src/pages/rules.astro` (see section 9) |
 | Starter folder for a custom page | `templates/custom-member/` |
 | Notes for members about custom pages | `templates/README.md` |
 | The full details of everything | `docs/halilintarsmp-main.md` |
@@ -110,9 +113,28 @@ Nothing has to be written in a data file.
 
 ## 8. Add news
 
-Open `src/content/news.json`. Copy an existing item and change its words. Put the newest item on top. The home page shows the first three.
+Open `src/content/news.json`. It is a list inside `[ ]`. Copy an existing item and change its words:
 
-## 9. Custom member pages
+```json
+{
+  "title": "News post",
+  "by": "Sample Member",
+  "date": "2026-11-19",
+  "summary": "A short line about this post."
+}
+```
+
+- The News page shows every item, newest date first.
+- The home page shows only the first three items of the file, so put the newest item on top.
+- Do not forget the comma between items.
+
+## 9. Join and Rules pages
+
+The words on these pages are in two code files: `src/pages/join.astro` and `src/pages/rules.astro`. You may change the words. Only change text between tags, like `<p>this text</p>` or `<li>this text</li>`. Leave the other lines alone, especially the ones that start with `---`, `import`, `<Base` or `<Box`.
+
+The server address is one line near the top of `join.astro`, the one that starts with `const SERVER_ADDRESS`. Change only the text inside the quotes.
+
+## 10. Custom member pages
 
 A member can build their own page with plain HTML, CSS and JS, in their own folder. The steps are in `templates/README.md`. The page also needs `"custom": true` in the member's file. The rules:
 
@@ -121,7 +143,7 @@ A member can build their own page with plain HTML, CSS and JS, in their own fold
 - Keep pictures small.
 - The page links back to `/members/`.
 
-## 10. If something breaks
+## 11. If something breaks
 
 - If the site looks wrong after a change, it was most likely the last change. GitHub keeps every old version.
 - Open the file and click "History". Click the change you made. Red lines are what was removed and green lines are what was added.

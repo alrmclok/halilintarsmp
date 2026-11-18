@@ -201,7 +201,7 @@ Notes:
 
 - Made by Almira with another AI on 2026-11-19. This AI only read the summary of that work and did not see the code. Almira checks with `npm run build` and `npm run preview`.
 - The documents now describe it: the `pronouns` row in "The member data file", the new "Fandom pictures" part, the `public/fandoms/` folder and the infobox line in Part 2 section 7.
-- The summary named a file `src/components/FeaturedMember.astro`. It is not in the folder layout. If that file really exists, add it to the layout in the main document.
+- The summary named a file `src/components/FeaturedMember.astro`. It exists (the home page imports it), so it is now in the folder layout of the main document.
 - Check: the build still works when `public/fandoms/` is empty (an empty folder needs a `.gitkeep`, and the scan should skip it). Check also what happens when two files clean to the same name. The docs say "one picture per fandom" for now.
 - Not changed: the page for one fandom (`fandoms/[slug].astro`) was not mentioned, so it shows no picture.
 
@@ -354,18 +354,27 @@ Notes:
 
 ## Part K: News, Join and Rules pages
 
-Status: Not started
+Status: In progress
 
 Goal: the links that still point to `#` lead to real pages. Almira picked pages, not pop-ups.
 
-- [ ] News page (`/news/`): all items from `news.json`, newest first, built with the same Box and Row as the other lists. "More news" and each news row on the home page point to it.
-- [ ] Join page (`/join/`): how to join, and the server address in its own Box with the address `server-address` (so `/join/#server-address` jumps to it). The second-bar link "Join" and the hero button lead to this page. The second-bar link "Server address" leads to `/join/#server-address`.
-- [ ] Rules page (`/rules/`): the second-bar link "Rules" leads here.
-- [ ] Real addresses for the Discord and WhatsApp links in the black corner box (still `#`).
-- [ ] Add the three pages to the pages table and the folder layout in the main document.
-- [ ] Check every new page on a phone.
+- [x] News page (`/news/`): all items from `news.json`, newest first, built with the same Box and Row as the other lists. "More news" and each news row on the home page point to it.
+- [x] Join page (`/join/`): how to join, and the server address in its own Box with the address `server-address` (so `/join/#server-address` jumps to it). The second-bar link "Join" and the hero button lead to this page. The second-bar link "Server address" leads to `/join/#server-address`.
+- [x] Rules page (`/rules/`): the second-bar link "Rules" leads here.
+- [x] Discord and WhatsApp links in the black corner box: decided to send both to the Join page (see Notes).
+- [x] Add the three pages to the pages table and the folder layout in the main document.
+- [ ] Check every new page on a phone (Almira).
 
 Notes:
+
+- New files: `src/pages/news.astro`, `src/pages/join.astro`, `src/pages/rules.astro`. Changed: `src/layouts/Base.astro` (corner links and second-bar links) and `src/pages/index.astro` (the hero link, the "More news" link and the news rows). No new CSS and no new components: the pages only use `Base`, `Box` and `Row`.
+- News page: sorted by `date`, newest first, so the order of the file does not matter there. The home page News box still shows the first three items of the file, so keep the newest on top in `news.json`. Each item shows its title, "by name, date" and its `summary` as the second small line. A news row has no page of its own, so on the home page every row and "More news" go to `/news/`.
+- The maroon bar link "News" now goes to `/news/` (it used to jump to the News box on the home page, see Part C). The News box still has its `news` id, so `/#news` still works.
+- Join page: two Boxes. "How to join" is placeholder text (waiting for the admins; joining is mostly in person). "Server address" has the id `server-address`. The address is one line at the top of `join.astro` (`SERVER_ADDRESS`) and is a masked placeholder until the admins approve it.
+- Discord and WhatsApp: Almira decided both corner links go to the Join page, because a WhatsApp number does not belong on a public website. The labels still say "Discord" and "WhatsApp". Almira can rename them (for example "Join"), since they no longer open those apps.
+- Rules page: one Box with placeholder text and three placeholder rules.
+- Built here in a small test Astro project (5.14.1) with the real `Base`, `Box` and `Row`: the three pages build, the titles show, the order is newest first, the `server-address` id exists and the bar links are right. The edited `index.astro` was not built here, because it needs the whole project. Almira checks it with `npm run build` and on Vercel.
+- Still to do by Almira: look at `/news/`, `/join/`, `/rules/` and the home page on a phone, then set this part to Done.
 
 ---
 
@@ -380,6 +389,7 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
 - Tab icon and link preview stay putinxtrump.png, and the footer line stays futer, until Almira changes them.
 - Which folder holds member pictures. The main document says only "path to a small square picture", so the guide tells members to send theirs to Almira for now. (Part J)
+- When to build the search box (the plan is in the main document, Part 2 section 4). Suggestion: a Part L after this one. It needs a small search list made when the site builds (members, fandoms, news) and a little script.
 - Which files Katz and Kate may edit. The guide suggests data files, pictures and custom page folders only, and "ask Almira first" for code (`.astro`, `.js`, `.ts`, `style.css`). Almira can loosen or tighten this. (Part J)
 
 ## Progress log
@@ -400,3 +410,4 @@ One line per finished part: date, part, what was done.
 - 2026-11-18, Part I: link-preview tags with full addresses, two small phone fixes, ink splatters (SVG) and the stripe strip; real phone tested.
 - 2026-11-19, Part EA: optional member pronouns (infobox and Featured member) and automatic fandom pictures from `public/fandoms/`; made by Almira with another AI, now in the docs. Part H status corrected to Done.
 - 2026-11-19, Part J: `docs/guide-for-editors.md` written for Katz and Kate.
+- 2026-11-19, Part K: News, Join and Rules pages built (placeholder words, masked server address); corner, second-bar, hero and News box links now lead to them. Phone check still open.

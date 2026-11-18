@@ -1,0 +1,17 @@
+---
+// The News page: every item from news.json, newest first.
+// An item has: title, by, date (written 2026-11-16) and summary.
+import Base from '../layouts/Base.astro';
+import Box from '../components/Box.astro';
+import Row from '../components/Row.astro';
+import news from '../content/news.json';
+
+// Sorted by date, newest first. The date is written year-month-day, so sorting the text works.
+const items = [...news].sort((a, b) => b.date.localeCompare(a.date));
+---
+<Base title="News" description="News from the HalilintarSMP.">
+  <Box title="News">
+    {items.length === 0 && <p>No news yet.</p>}
+    {items.map((n) => <Row title={n.title} sub={`by ${n.by}, ${n.date}`} note={n.summary} />)}
+  </Box>
+</Base>

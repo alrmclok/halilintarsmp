@@ -38,7 +38,7 @@ Pages:
 | Gallery | Pictures with a title, a short description and a credit |
 | About | Short info about the SMP |
 | Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
-| News, Join, Rules | Decided, built in Part K: News is one page with all items. Join holds how to join and the server address (the maroon-bar link "Server address" jumps to it). Rules is its own page. No pop-ups |
+| News, Join, Rules | Three pages, built in Part K. News (`/news/`) lists every news item, newest first. Join (`/join/`) holds how to join and, in its own box, the server address (`/join/#server-address`). Rules (`/rules/`) is its own page. No pop-ups. They have no tab: they are reached from the maroon bar, the hero and the News box. The words on them are placeholders until the admins send the real ones |
 
 ## Who can change files
 
@@ -73,13 +73,17 @@ src/
   components/Box.astro      the box (Part 2 section 5)
   components/Row.astro      one row inside a box
   components/Parts.astro    shows text with member links inside it
+  components/FeaturedMember.astro  the card in the home page "Featured member" box
   lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
   lib/gallery.js            reads the gallery list, newest first, and gives each picture an address (home page and Gallery pages)
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
   lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages) and picks each fandom's picture from public/fandoms/
-  pages/                    home, members, fandoms, gallery, about, credits
+  pages/                    home, members, fandoms, gallery, about, credits, news, join, rules
   pages/about.astro         the About page
   pages/credits.astro       the Credits page: a note and every member's name, A to Z
+  pages/news.astro          the News page: every item in news.json, newest first
+  pages/join.astro          the Join page: how to join, and the server address (a line at the top of the file)
+  pages/rules.astro         the Rules page
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
   pages/fandoms/index.astro   the Fandoms list
@@ -240,11 +244,11 @@ Ink splatters sit near the right end of the tab bar, above the footer, and at th
 ### Decided for our home page
 
 - **Top tabs:** Home, Members, Fandoms, Gallery, About. Credits goes in the footer.
-- **Corner box (the small black one):** the Discord and WhatsApp links.
-- **Maroon second bar, left links:** Join, Rules, Server address, News. They point nowhere yet, until their pages or sections exist.
+- **Corner box (the small black one):** the Discord and WhatsApp links. Both lead to the Join page on purpose. A WhatsApp number or invite does not belong on a public website, so how to reach the community is explained on Join.
+- **Maroon second bar, left links:** Join (`/join/`), Rules (`/rules/`), Server address (`/join/#server-address`) and News (`/news/`).
 - **Search box (right side of the second bar):** a stub for now. It is shown but does nothing. Almira's plan for later: while typing, a list drops down with fuzzy matches (spelling does not have to be exact), each with its kind (fandom or member) on the right. Under those matches, always visible, are three lines: Search the typed words in Fandoms, in Members, or in Posts. Picking one opens that page with the search applied. "Posts" means the News items.
 - **Header figure:** a plain empty box with a label until the real one is drawn.
-- **Big hero button:** two lines, like the original. Top line in white: "Join the SMP". Bottom line in orange: "Ask an admin". The bottom line is a first try and can change.
+- **Big hero button:** two lines, like the original. Top line in white: "Join the SMP". Bottom line in orange: "Ask an admin". The bottom line is a first try and can change. The whole hero is a link to the Join page.
 - **Hero facts list:** placeholders for now. Use four short lines with round bullets. The first one is bold and red-orange like in the screenshot, the others are bold black. Write real facts later.
 - **Boxes in the grid:**
   - Row one: Gallery highlights (wide) and Featured member (narrow).
@@ -343,6 +347,7 @@ Do not:
 Nothing here blocks the start of the build. These are placeholders that get filled in later:
 
 - The real facts for the hero list.
+- The real "how to join" steps, the real rules, and the approved server address. All three are placeholders on their pages (the address is a masked placeholder in `join.astro`).
 - The drawn logo, header figure, hero title picture, splatters and stripe strip.
 - The final words for the orange line on the hero button.
 - Whether members with their own custom page may break these style rules. Not decided yet.

@@ -30,7 +30,7 @@ const newestMembers = [...members].sort((a, b) => b.joined.localeCompare(a.joine
 const latestNews = news.slice(0, SHOW);
 ---
 <Base title="HalilintarSMP">
-  <a class="hero" href="#"><img class="hero-art" src="/hero-title.png" alt="Join the HalilintarSMP" /></a>
+  <a class="hero" href="/join/"><img class="hero-art" src="/hero-title.png" alt="Join the HalilintarSMP" /></a>
 
   <div class="grid grid-2">
     <Box title="Gallery highlights" moreHref="/gallery/" moreLabel="More gallery">
@@ -56,8 +56,8 @@ const latestNews = news.slice(0, SHOW);
     <Box title="Members" moreHref="/members/" moreLabel="More members">
       {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />)}
     </Box>
-    <Box id="news" title="News" moreHref="#" moreLabel="More news">
-      {latestNews.map((n) => <Row href="#" title={n.title} sub={`by ${n.by}, ${n.date}`} />)}
+    <Box id="news" title="News" moreHref="/news/" moreLabel="More news">
+      {latestNews.map((n) => <Row href="/news/" title={n.title} sub={`by ${n.by}, ${n.date}`} />)}
     </Box>
   </div>
 </Base>

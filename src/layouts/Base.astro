@@ -43,16 +43,16 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
           {tabs.map((t) => <a href={t.href} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>)}
         </nav>
         <div class="corner">
-          <a href="#">Discord</a>
-          <a href="#">WhatsApp</a>
+          <a href="/join/">Discord</a>
+          <a href="/join/">WhatsApp</a>
         </div>
       </div>
       <div class="subbar">
         <div class="subbar-links">
-          <a href="#">Join</a>
-          <a href="#">Rules</a>
-          <a href="#">Server address</a>
-          <a href="/#news">News</a>
+          <a href="/join/">Join</a>
+          <a href="/rules/">Rules</a>
+          <a href="/join/#server-address">Server address</a>
+          <a href="/news/">News</a>
         </div>
         <!-- Search is a stub for now: it does nothing yet. -->
         <form class="search" role="search" onsubmit="return false">

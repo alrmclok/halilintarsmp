@@ -1,0 +1,18 @@
+---
+// The Join page: how to join, and the server address in its own box.
+// The box has the id "server-address", so /join/#server-address jumps to it.
+import Base from '../layouts/Base.astro';
+import Box from '../components/Box.astro';
+
+const SERVER_ADDRESS = '███_████-████.███████.██'; // placeholder until the admins approve it. Change only this line
+---
+<Base title="Join" description="How to join the HalilintarSMP, and the server address.">
+  <Box title="How to join">
+    <p>Placeholder: the real steps are waiting for the admins.</p>
+    <p>Joining is mostly done by meeting in person, so ask an admin.</p>
+  </Box>
+  <Box id="server-address" title="Server address">
+    <p><strong>{SERVER_ADDRESS}</strong></p>
+    <p>Placeholder: this address is not approved yet.</p>
+  </Box>
+</Base>
