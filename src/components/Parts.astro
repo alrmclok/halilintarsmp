@@ -1,0 +1,5 @@
+---
+// Shows "parts" made by lib/mentions.js: plain text, or a link in the red-orange mention style.
+const { parts = [] } = Astro.props;
+---
+{parts.map((p) => (p.href ? <a class="mention" href={p.href}>{p.text}</a> : p.text))}

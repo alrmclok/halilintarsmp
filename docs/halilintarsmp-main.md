@@ -11,6 +11,7 @@ It has two parts.
 
 ## How the two files are used
 
+- Both files live in the `docs/` folder of the project.
 - Start every chat by sending both files. Read this one for context. Read the roadmap to find the next part to do.
 - When a part is finished and nothing in the plan changed, update only the roadmap (its status and notes).
 - When something in the real app changes what this file says (a folder or file name, a decision, a color or size, a rule), update this file too, so it always matches the real site.
@@ -61,23 +62,32 @@ A change to the site is a code change:
 ### Folder layout
 
 ```
+docs/
+  halilintarsmp-main.md     this file
+  halilintarsmp-roadmap.md  what is done and what is next
 src/
   layouts/Base.astro        header, tab bar, footer
   components/Box.astro      the box (Part 2 section 5)
   components/Row.astro      one row inside a box
+  components/Parts.astro    shows text with member links inside it
   lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
+  lib/gallery.js            reads the gallery list, newest first, and gives each picture an address (home page and Gallery pages)
+  lib/mentions.js           turns member names in gallery text into links, only when a member is found
   lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages)
   pages/                    home, members, fandoms, gallery, about, credits
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
   pages/fandoms/index.astro   the Fandoms list
   pages/fandoms/[slug].astro  one fandom page: its members
+  pages/gallery/index.astro   the Gallery list (two columns)
+  pages/gallery/[slug].astro  one picture's own page, with a lightbox
   content.config.ts         what a member data file must contain
   content/members/          one data file per member
-  content/gallery.json      the gallery list
+  content/gallery.json      the gallery list (see "The gallery data file")
   content/news.json         the news list
 public/
   style.css                 the shared colors and box look
+  gallery/                  the gallery pictures
   members/member-name/      a custom page: index.html, style.css, script.js
 templates/custom-member/    a starter folder to copy for a custom page
 ```
@@ -105,6 +115,27 @@ One JSON file per member in `src/content/members/`. The file name is the member'
 | `featured` | no | `true` = shown in the home page "Featured member" box. If nobody has it, the first member is shown |
 | `edited` | no | Date for the "Last edited" line. Empty = the joined date |
 | `sections` | no | The article body: a list of `heading` and `text`. A blank line in `text` starts a new paragraph |
+
+### The gallery data file
+
+`src/content/gallery.json` is one list. Each picture is one entry. The picture files go in `public/gallery/`, and `file` is the address of the picture, for example `/gallery/my-picture.png`.
+
+| Field | Needed? | What it is |
+|---|---|---|
+| `title` | yes | Short title. It also makes the address of the picture's page: "Gallery picture one" becomes `/gallery/gallery-picture-one/`. Two pictures with the same title get -2, -3. Changing a title changes that address |
+| `description` | yes | One short line. A word that starts with @ links to a member (see below) |
+| `credit` | yes | The artist, or who is in it. Shown as "by ...". Links to a member when the name matches (see below) |
+| `file` | no | Address of the picture. Empty = gray box and no link |
+| `alt` | yes | A few words about what the picture shows, for screen readers. If empty, the title is used |
+| `added` | yes | Date, written `2026-11-01`. Newest first on the Gallery page and the home page |
+
+Member links in gallery text. They are made when the site builds, and only when a member is really found, so a link never leads to a "not found" page.
+
+- In a description, a word that starts with `@` links to that member's page when it matches a member's `handle` (capitals do not matter). "@member_one!" links `@member_one` and leaves the "!" outside the link. If nobody has that handle, the text stays plain. So when a member changes their handle, old descriptions keep their words and the link simply goes away.
+- In a credit, the name links when it matches a member's `name` or `handle` (capitals do not matter). If nobody matches, it stays plain.
+- The links are red-orange and bold (the `.mention` style).
+
+Keep pictures small: about 1200 px wide at most and under 300 KB each. Files in `public/` are served as they are, so nothing shrinks them for you.
 
 ### Rules for custom pages
 
@@ -233,7 +264,7 @@ We do not run real wiki software. We only copy how a wiki is organized, so the s
 - **Home page = main page.** Boxes such as a featured member, recent additions, fandoms and news.
 - **Member page = an article.** A title, a one-line intro, an infobox on the right (picture, handle, fandoms, joined date), a contents box if the page is long, sections with headings, and a "Categories" line at the bottom that links to fandoms.
 - **Fandom page = a category page.** A short list of the members in that fandom.
-- **Gallery = a list with captions.** Each picture has a title, a short description, and a credit to the artist or who is in it.
+- **Gallery = a list with captions.** Each picture has a title, a short description, and a credit to the artist or who is in it. The list is in two columns on a computer. Each picture also has its own page with the big picture, and clicking that picture opens it in a lightbox (a dark overlay).
 - **Recent additions.** A short list on the home page of the newest things, newest first.
 - **"Last edited" line.** A small gray line at the bottom of pages, like a wiki.
 

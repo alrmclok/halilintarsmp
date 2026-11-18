@@ -6,7 +6,7 @@ This file is written for the AI that helps Almira build the site. It lists the w
 
 ## Rules for the AI
 
-1. Almira sends both files at the start of every chat: the main document and this roadmap.
+1. Almira sends both files at the start of every chat: the main document and this roadmap. Both live in the `docs/` folder of the project.
 2. Read the main document first, then find the first part here that is not Done. Work only on that part.
 3. Before starting a part, say in a few plain words what it will do. Then do it.
 4. When the part is finished and nothing in the plan changed: update only this file. Set the status to Done, tick the checklist, and write short notes under "Notes".
@@ -186,16 +186,50 @@ Notes:
 
 ## Part F: Gallery
 
-Status: Not started
+Status: Done
 
 Goal: the gallery as a list with captions.
 
-- [ ] A gallery data file: each picture has a file, a title, a short description and a credit.
-- [ ] Gallery page.
-- [ ] Gallery highlights box on the home page, newest first.
-- [ ] Pictures are small files and have alt text.
+- [x] A gallery data file: each picture has a file, a title, a short description and a credit.
+- [x] Gallery page.
+- [x] Gallery highlights box on the home page, newest first.
+- [x] Pictures are small files and have alt text.
 
 Notes:
+
+- New files: `src/lib/gallery.js` (reads and tidies the list, newest first; used by the home page and the Gallery page) and `src/pages/gallery/index.astro` (one Box, one row per picture: thumbnail, title, description, "by credit"). New empty folder `public/gallery/` (with a `.gitkeep`) for the pictures.
+- Changed: `gallery.json` has a new field `alt`. `Row.astro` has two new optional props: `alt` (what the picture shows) and `note` (a second small line, used for the credit). `src/pages/index.astro` now gets the highlights from `getGallery()`.
+- Each Gallery row links to that picture's own page (see Part FA).
+- Pictures are not shrunk by the site (files in `public/` are served as they are). The rule is in the main document: about 1200 px wide at most and under 300 KB. Almira can change this number.
+- The gallery list is not checked by Astro like the member files are. `gallery.js` gives safe defaults for a missing field instead.
+- The three gallery entries are still placeholders with no files. Almira adds real pictures to `public/gallery/` and real entries to `gallery.json`.
+- Not run on the AI's side (no Astro here). Almira checks `/gallery/` on Vercel, and on a phone.
+
+---
+
+## Part FA: Gallery rework (picture pages, lightbox, member links)
+
+Status: Done
+
+Goal: the gallery pictures can be seen big, and member names in gallery text link to the member.
+
+- [x] Each picture has its own page at `/gallery/title/`, with the big picture.
+- [x] Clicking the picture on that page opens a lightbox.
+- [x] Gallery rows link to those pages (the thumbnail and the title).
+- [x] A word starting with `@` in a description links to the member with that handle, only when one is found.
+- [x] The credit links to the member with that name, only when one is found.
+- [x] The Gallery list is in two columns on a computer, one column on a phone.
+
+Notes:
+
+- New files: `src/pages/gallery/[slug].astro` (the picture page and the lightbox, a small script using the built-in `<dialog>` element: click anywhere or press Esc to close), `src/lib/mentions.js` (finds members and makes the links), `src/components/Parts.astro` (shows text with links inside it).
+- Changed: `gallery.js` gives every picture a slug from its title (duplicates get -2, -3). `Row.astro` now makes the thumbnail a link when the row has a link, and `sub` / `note` can hold links. The home highlights link to the picture pages and link the credit. `style.css` has the mention color, the two columns, the picture page and the lightbox (and the phone rules at the end).
+- Rule for @: matches a member's `handle`, not their file name, so a changed handle stops matching and the old text stays as it was. "@member_one!" links `@member_one`; the "!" stays plain. The credit matches a member's `name` or `handle`. Capitals do not matter.
+- Pictures without a file still get a page (a gray box, no lightbox), so no link leads to "not found".
+- "2 rows" was read as two columns. Almira can say if they meant something else.
+- The first placeholder entry in `gallery.json` now says "Say hi to @member_one!" and is credited to "Member One", so the links can be tested with the placeholder member.
+- Changing a picture's title changes the address of its page. Almira can add an optional `slug` field later if that becomes a problem.
+- Not run on the AI's side (no Astro here). Almira checks `/gallery/`, one picture page and the lightbox on Vercel, and on a phone.
 
 ---
 
@@ -245,7 +279,7 @@ Goal: the site works well on a phone.
 Notes:
 
 - Most of this part was done early in Part DA. What is left needs the drawn pictures or a real phone.
-- New pages (Fandoms, Gallery, About, Credits) must be checked on a phone when they are built.
+- New pages (Fandoms, Gallery, About, Credits) must be checked on a phone when they are built. The Gallery list and the picture page with its lightbox (Part FA) are among them.
 
 ---
 
@@ -285,3 +319,5 @@ One line per finished part: date, part, what was done.
 - 2026-11-18, Part D: Members list, default member page (article style), three placeholder members, home boxes read from the same data.
 - 2026-11-18, Part DA: look check against the screenshot (measured spacing, wider boxes, flush hero, tilted button with a hero figure placeholder), phone layout, two bugs fixed.
 - 2026-11-18, Part E: Fandoms list and one page per fandom, built from member data with one shared helper. Same-fandom matching ignores capitals, spaces and symbols.
+- 2026-11-18, Part F: Gallery page (list with captions) and shared helper, `alt` field and `alt`/`note` on Row, `public/gallery/` folder, docs now live in `docs/`.
+- 2026-11-18, Part FA: Gallery rework: a page per picture with a lightbox, rows link to it, @member and credit links only when a member is found, two columns.

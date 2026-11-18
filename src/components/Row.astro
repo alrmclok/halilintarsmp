@@ -1,11 +1,20 @@
 ---
 // One row inside a Box: small square picture, bold title, a smaller line under it.
-const { href, title, sub, pic } = Astro.props;
+// Optional: note = a second smaller line, alt = what the picture shows.
+// sub and note can be a plain string, or "parts" (a list from lib/mentions.js) when they hold member links.
+// When the row has a link (href), the picture is a link too.
+import Parts from './Parts.astro';
+const { href, title, sub, note, pic, alt } = Astro.props;
 ---
 <div class="row">
-  {pic ? <img class="row-pic" src={pic} alt="" /> : <div class="row-pic"></div>}
+  {href ? (
+    <a class="row-pic-link" href={href} tabindex="-1">
+      {pic ? <img class="row-pic" src={pic} alt={alt ?? ''} loading="lazy" decoding="async" /> : <div class="row-pic"></div>}
+    </a>
+  ) : pic ? <img class="row-pic" src={pic} alt={alt ?? ''} loading="lazy" decoding="async" /> : <div class="row-pic"></div>}
   <div>
     <span class="row-title">{href ? <a href={href}>{title}</a> : title}</span>
-    {sub && <span class="row-sub">{sub}</span>}
+    {sub && <span class="row-sub">{Array.isArray(sub) ? <Parts parts={sub} /> : sub}</span>}
+    {note && <span class="row-sub">{Array.isArray(note) ? <Parts parts={note} /> : note}</span>}
   </div>
 </div>

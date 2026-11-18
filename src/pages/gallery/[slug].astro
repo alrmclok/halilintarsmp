@@ -1,0 +1,50 @@
+---
+// One picture's own page: the big picture, its description and credit. Click the picture to open it in a lightbox.
+// A picture with no file yet shows a gray box. Made from gallery.json, one page per entry.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Parts from '../../components/Parts.astro';
+import { getGallery } from '../../lib/gallery.js';
+import { buildLookup, linkMentions, linkCredit } from '../../lib/mentions.js';
+
+export async function getStaticPaths() {
+  return getGallery().map((g) => ({ params: { slug: g.slug }, props: { picture: g } }));
+}
+
+const { picture } = Astro.props;
+const entries = await getCollection('members');
+const lookup = buildLookup(entries.map((e) => ({ ...e.data, slug: e.id })));
+---
+<Base title={picture.title} description={picture.description}>
+  <article class="article">
+    <h1>{picture.title}</h1>
+    {picture.description && <p class="lead"><Parts parts={linkMentions(picture.description, lookup)} /></p>}
+
+    <figure class="gallery-full">
+      {picture.file ? (
+        <button type="button" class="zoom" id="open-lightbox" aria-label="Open the picture full size">
+          <img src={picture.file} alt={picture.alt} />
+        </button>
+      ) : (
+        <div class="ph" role="img" aria-label="No picture yet"></div>
+      )}
+    </figure>
+
+    <p class="gallery-meta"><Parts parts={linkCredit(picture.credit, lookup)} />{picture.added && ` · Added ${picture.added}`}</p>
+    <p class="categories"><a href="/gallery/">Back to the gallery</a></p>
+  </article>
+
+  {picture.file && (
+    <dialog id="lightbox" class="lightbox" aria-label={picture.title}>
+      <img src={picture.file} alt={picture.alt} />
+      <button type="button" class="lb-close">Close</button>
+    </dialog>
+  )}
+</Base>
+
+<script>
+  // Lightbox: the picture opens in a dialog. A click anywhere in it, or the Esc key, closes it.
+  const dlg = document.getElementById('lightbox') as HTMLDialogElement | null;
+  document.getElementById('open-lightbox')?.addEventListener('click', () => dlg?.showModal());
+  dlg?.addEventListener('click', () => dlg.close());
+</script>
