@@ -1,0 +1,18 @@
+{
+  "name": "Member Two",
+  "handle": "member_two",
+  "picture": "",
+  "fandoms": [
+    "Fandom B"
+  ],
+  "joined": "2026-11-05",
+  "intro": "Another short line, for the second placeholder member.",
+  "custom": false,
+  "featured": true,
+  "sections": [
+    {
+      "heading": "About",
+      "text": "Placeholder text about this member."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "title": "Gallery picture one",
+    "description": "Short description goes here.",
+    "credit": "Placeholder",
+    "file": "",
+    "added": "2026-11-12"
+  },
+  {
+    "title": "Gallery picture two",
+    "description": "Short description goes here.",
+    "credit": "Placeholder",
+    "file": "",
+    "added": "2026-11-15"
+  },
+  {
+    "title": "Gallery picture three",
+    "description": "Short description goes here.",
+    "credit": "Placeholder",
+    "file": "",
+    "added": "2026-11-09"
+  }
+]

@@ -64,9 +64,18 @@ A change to the site is a code change:
 src/
   layouts/Base.astro        header, tab bar, footer
   components/Box.astro      the box (Part 2 section 5)
+  components/Row.astro      one row inside a box
+  lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
+  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages)
   pages/                    home, members, fandoms, gallery, about, credits
+  pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
+  pages/fandoms/index.astro   the Fandoms list
+  pages/fandoms/[slug].astro  one fandom page: its members
+  content.config.ts         what a member data file must contain
   content/members/          one data file per member
+  content/gallery.json      the gallery list
+  content/news.json         the news list
 public/
   style.css                 the shared colors and box look
   members/member-name/      a custom page: index.html, style.css, script.js
@@ -79,6 +88,23 @@ templates/custom-member/    a starter folder to copy for a custom page
 - A member with a custom page has a flag in their data file (for example `custom: true`). The default page maker skips them, so the two never clash. The Members list links to `/members/member-name/` in both cases, so the address looks the same.
 - The shared look lives in one file, `public/style.css`. The Astro layout uses it, and a custom page can link to it too if the member wants the box look. A member can also ignore it and write only their own `style.css`.
 - The starter folder in `templates/custom-member/` has a ready `index.html`, an empty `style.css`, an empty `script.js` and a link back to `/members/`. It sits outside `public/` so it is not shown on the site.
+
+### The member data file
+
+One JSON file per member in `src/content/members/`. The file name is the member's address: `member-one.json` becomes `/members/member-one/`.
+
+| Field | Needed? | What it is |
+|---|---|---|
+| `name` | yes | The name shown on the page |
+| `handle` | yes | Their online name |
+| `picture` | no | Path to a small square picture. Empty = gray box |
+| `fandoms` | yes | A list of fandom names. Capitals, extra spaces and symbols do not matter: "Fandom A" and "fandom-a" are the same fandom. The first spelling found is the one shown |
+| `joined` | yes | Date, written `2026-11-01` |
+| `intro` | yes | One short line |
+| `custom` | no | `true` = they have their own page folder, so no default page is made |
+| `featured` | no | `true` = shown in the home page "Featured member" box. If nobody has it, the first member is shown |
+| `edited` | no | Date for the "Last edited" line. Empty = the joined date |
+| `sections` | no | The article body: a list of `heading` and `text`. A blank line in `text` starts a new paragraph |
 
 ### Rules for custom pages
 
@@ -133,7 +159,7 @@ The hex values were picked from the screenshot with a color picker, so they matc
 | Name | Hex | Where it is used |
 |---|---|---|
 | Page background | `#6a6a57` | The olive-gray outside the content |
-| Content background | `#d4cfc2` | The warm gray area that holds the boxes |
+| Content background | `#d0ccbf` | The warm gray area that holds the boxes |
 | Box body | `#e8e6e0` | The inside of each box |
 | Maroon | `#5e0804` | Box title bars, the second bar under the tabs, the footer, the active tab, small buttons |
 | Yellow | `#f9be00` | The top tab bar, "More" links, footer links |
@@ -154,10 +180,10 @@ The blue in the screenshot only belongs to a picture. It is not part of our colo
 
 ## 4. Page layout, top to bottom
 
-1. **Header band.** Logo on the left, a drawn figure on the right, a small black box in the top right corner. The page is about 760 px wide, centered, with the olive color on both sides.
-2. **Yellow tab bar.** The main links. The active tab is maroon with white text and joins the bar below it.
+1. **Header band.** Logo on the left, a drawn figure on the right, a small black box in the top right corner. The page is about 760 px wide, centered, with the olive color on both sides. The top block (logo, tabs, maroon bar) and the content below are two separate blocks, with a thin strip of the olive page color between them.
+2. **Yellow tab bar.** The main links. The active tab is maroon with white text, has a slanted left edge, sticks up a little above the bar and joins the bar below it. The small black corner box sits at the right end of this row. It starts higher than the bar and has one rounded corner (top left). These two shapes are the only places where we break the square-corner rule, because the screenshot has them.
 3. **Maroon second bar.** Small yellow links on the left, a search box on the right.
-4. **Hero box.** A big title picture, a short list of facts with round bullets, and one big button. The big button is black with white and orange text.
+4. **Hero box.** One full picture. The list of facts (round bullets, bottom left) and the big button (bottom right) are real text and a real link placed on top of the picture. The big button is black with white and orange text, and it is tilted a little (4 degrees), like the original. A placeholder box labeled "Hero figure" stands behind its top edge, where the original has the man with the speaker head. It goes away when the figure is drawn into the hero picture. Almira draws the picture and saves it as `public/hero-title.png` (placeholder: 1520 x 660 px, shown 760 px wide).
 5. **Boxes in a grid.** Two boxes on one row (one wide, one narrow), then three boxes on the next row.
 6. **Footer.** Maroon bar with yellow links split by dots, and a white copyright line under it.
 
@@ -168,7 +194,7 @@ Ink splatters sit near the right end of the tab bar, above the footer, and at th
 - **Top tabs:** Home, Members, Fandoms, Gallery, About. Credits goes in the footer.
 - **Corner box (the small black one):** the Discord and WhatsApp links.
 - **Maroon second bar, left links:** Join, Rules, Server address, News. They point nowhere yet, until their pages or sections exist.
-- **Search box (right side of the second bar):** a stub for now. It is shown but does nothing. Almira's plan for later: while typing, a list drops down with fuzzy matches (spelling does not have to be exact), each with its kind (fandom or member) on the right. Under those matches, always visible, are three lines: Search the typed words in Fandoms, in Members, or in Posts. Picking one opens that page with the search applied. Still open: what "posts" are.
+- **Search box (right side of the second bar):** a stub for now. It is shown but does nothing. Almira's plan for later: while typing, a list drops down with fuzzy matches (spelling does not have to be exact), each with its kind (fandom or member) on the right. Under those matches, always visible, are three lines: Search the typed words in Fandoms, in Members, or in Posts. Picking one opens that page with the search applied. "Posts" means the News items.
 - **Header figure:** a plain empty box with a label until the real one is drawn.
 - **Big hero button:** two lines, like the original. Top line in white: "Join the SMP". Bottom line in orange: "Ask an admin". The bottom line is a first try and can change.
 - **Hero facts list:** placeholders for now. Use four short lines with round bullets. The first one is bold and red-orange like in the screenshot, the others are bold black. Write real facts later.
@@ -178,6 +204,8 @@ Ink splatters sit near the right end of the tab bar, above the footer, and at th
   - Each box has the same build (section 5), and a "More" link in the title bar.
 
 ## 5. The box (the main building block)
+
+Measured from the screenshot: 7 px between boxes sideways and 10 px between rows of boxes. The title bar is 23 px tall. Rows start 6 px from the box edge. The wide and narrow boxes on row one are about 1.45 to 1.
 
 Every box looks like this:
 
@@ -192,7 +220,8 @@ Build every box the same way, so a new box is a copy of an old one with new word
 
 ## 6. Type
 
-- The text in the screenshot looks like Verdana or Arial. Use `Verdana, Tahoma, Arial, sans-serif`. These are already on most computers, so nothing has to be downloaded.
+- Body text: Verdana (the screenshot text is wide with a big x-height, which fits Verdana). Use `Verdana, Tahoma, Arial, sans-serif`.
+- Tab bar, maroon bar, box titles, "More" links and footer links: Trebuchet MS bold, which is the closest match to the narrower bold text in the enlarged screenshot. Use `"Trebuchet MS", Tahoma, Verdana, sans-serif`. This is a best reading from a picture, not a fact from the original code. In the original the box titles look like small pictures with a soft edge. We use plain text. Both fonts are already on most computers, so nothing has to be downloaded.
 - Titles in boxes are bold. Headlines are bold and red-orange. Small links are link red. Body text is black.
 - The original text is tiny, about 11 to 12 px. That is part of the charm, but it is hard to read on a phone. We use at least 14 px for normal text, and 16 px on phones.
 - The big title in the hero and the logo are pictures, not text.
@@ -212,6 +241,17 @@ The infobox and the contents box use the same colors as the other boxes: maroon 
 
 ## 8. Phones
 
+Built in Part DA with one breakpoint, 700 px wide and smaller (at the end of `public/style.css`):
+
+- Header: smaller logo, no header figure, the black corner box moves up into the header row.
+- Tab bar: one row that scrolls sideways. Tabs are 44 px tall.
+- Hero: the picture on top, then the facts, then the button (straight, not tilted). No figure box.
+- Boxes in one column. Box title bars are 44 px tall. A whole row is the tap target, not only its title.
+- Member page: the infobox goes on top, full width.
+- Text is 16 px.
+
+What this section asks for:
+
 - Boxes stack in one column.
 - The tab bar scrolls sideways instead of wrapping.
 - The big drawing in the header becomes small or goes away.
@@ -226,7 +266,8 @@ The infobox and the contents box use the same colors as the other boxes: maroon 
 |---|---|
 | Logo | The wordmark "HalilintarSMP". Until it is drawn, use the placeholder `halilintarsmp-logo.png` everywhere it is needed: the header, the browser tab icon and the link preview. Swap it out in all three places as soon as the real logo exists, and do this before the site is shared widely. |
 | Header figure | A character or mascot of our own. Until it is drawn, use a plain empty box with a label. |
-| Hero title picture | The big title at the top of the home page. |
+| Hero figure | A character standing on top of the big button. Until it is drawn, a plain dashed box with a label (`.hero-figure` in `index.astro`). It can also be drawn into `hero-title.png`, and then the box is removed. |
+| Hero title picture | The whole hero, as one full picture with room for the facts list (bottom left) and the big button (bottom right). File `public/hero-title.png`. Until it is drawn, a gray placeholder. |
 | Ink splatters | Three or four shapes, in maroon and in yellow. |
 | Stripe strip | Diagonal stripes for the footer corner. |
 | Arrow | A small orange arrow, used before "More" links. |

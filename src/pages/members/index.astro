@@ -1,0 +1,20 @@
+---
+// The Members list: every member, A to Z. Each row links to /members/name/.
+// A member with a custom page (custom: true) links to the same address, so the list does not care.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Box from '../../components/Box.astro';
+import Row from '../../components/Row.astro';
+
+const entries = await getCollection('members');
+const members = entries
+  .map((e) => ({ ...e.data, slug: e.id }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+---
+<Base title="Members" description="The members of the HalilintarSMP.">
+  <Box title="Members">
+    {members.map((m) => (
+      <Row href={`/members/${m.slug}/`} title={m.name} sub={`${m.handle} · ${m.fandoms.join(', ')}`} pic={m.picture} />
+    ))}
+  </Box>
+</Base>

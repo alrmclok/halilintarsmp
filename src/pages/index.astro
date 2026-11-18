@@ -1,11 +1,46 @@
 ---
-// Test page for Part B. It gets replaced in Part C.
+// Home page. Every box is filled from data files, not typed into the page.
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Box from '../components/Box.astro';
+import Row from '../components/Row.astro';
+import gallery from '../content/gallery.json';
+import news from '../content/news.json';
+import { getFandoms } from '../lib/fandoms.js';
+
+const entries = await getCollection('members');
+const members = entries.map((e) => ({ ...e.data, slug: e.id }));
+
+// Fandoms box: built by the shared helper, so it matches the Fandoms pages.
+const fandoms = getFandoms(members);
+
+const newestGallery = [...gallery].sort((a, b) => b.added.localeCompare(a.added)).slice(0, 3);
+// Featured member: the one with "featured": true in their file, or the first member if none has it.
+const featured = members.find((m) => m.featured) ?? members[0];
+// Members box: the newest six, newest first.
+const newestMembers = [...members].sort((a, b) => b.joined.localeCompare(a.joined)).slice(0, 6);
 ---
 <Base title="HalilintarSMP">
-  <Box title="Members" moreHref="/members/" moreLabel="More members">
-    <div class="row"><div class="row-pic"></div><div><span class="row-title"><a href="#">Member one</a></span><span class="row-sub">by Placeholder</span></div></div>
-    <div class="row"><div class="row-pic"></div><div><span class="row-title"><a href="#">Member two</a></span><span class="row-sub">by Placeholder</span></div></div>
-  </Box>
+  <a class="hero" href="#"><img class="hero-art" src="/hero-title.png" alt="Join the HalilintarSMP" /></a>
+
+  <div class="grid grid-2">
+    <Box title="Gallery highlights" moreHref="/gallery/" moreLabel="More gallery">
+      {newestGallery.map((g) => <Row href="/gallery/" title={g.title} sub={`by ${g.credit}`} pic={g.file} />)}
+    </Box>
+    <Box title="Featured member" moreHref="/members/" moreLabel="More members">
+      {featured && <Row href={`/members/${featured.slug}/`} title={featured.name} sub={featured.intro} pic={featured.picture} />}
+    </Box>
+  </div>
+
+  <div class="grid grid-3">
+    <Box title="Fandoms" moreHref="/fandoms/" moreLabel="More fandoms">
+      {fandoms.map((f) => <Row href={`/fandoms/${f.slug}/`} title={f.name} sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`} />)}
+    </Box>
+    <Box title="Members" moreHref="/members/" moreLabel="More members">
+      {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />)}
+    </Box>
+    <Box id="news" title="News" moreHref="#" moreLabel="More news">
+      {news.map((n) => <Row href="#" title={n.title} sub={`by ${n.by}, ${n.date}`} />)}
+    </Box>
+  </div>
 </Base>

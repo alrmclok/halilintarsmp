@@ -27,29 +27,29 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
   </head>
   <body>
     <div class="wrap">
-      <header class="header">
+      <header class="top">
         <a class="logo" href="/"><img src="/halilintarsmp-logo.png" alt="HalilintarSMP" /></a>
-        <div class="header-right">
-          <div class="figure">Header figure</div>
-          <div class="corner">
-            <a href="#">Discord</a>
-            <a href="#">WhatsApp</a>
-          </div>
-        </div>
       </header>
-      <nav class="tabs" aria-label="Main">
-        {tabs.map((t) => <a href={t.href} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>)}
-      </nav>
+      <div class="navrow">
+        <nav class="tabs" aria-label="Main">
+          {tabs.map((t) => <a href={t.href} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>)}
+        </nav>
+        <div class="corner">
+          <a href="#">Discord</a>
+          <a href="#">WhatsApp</a>
+        </div>
+      </div>
       <div class="subbar">
         <div class="subbar-links">
           <a href="#">Join</a>
           <a href="#">Rules</a>
           <a href="#">Server address</a>
-          <a href="#">News</a>
+          <a href="/#news">News</a>
         </div>
         <!-- Search is a stub for now: it does nothing yet. -->
         <form class="search" role="search" onsubmit="return false">
-          <input type="search" placeholder="Search" aria-label="Search" readonly />
+          <span>Search</span>
+          <input type="search" aria-label="Search" readonly />
           <button type="button" disabled>GO</button>
         </form>
       </div>
@@ -62,7 +62,7 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
             <li><a href="/credits/">Credits</a></li>
           </ul>
         </div>
-        <p class="copy">Copyright &copy; HalilintarSMP</p>
+        <p class="copy">futer</p>
       </footer>
     </div>
   </body>

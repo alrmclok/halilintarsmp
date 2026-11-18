@@ -1,0 +1,52 @@
+---
+// The default member page, made from the member's data file (wiki article style).
+// Members with custom: true are left out here, because their own folder in public/members/ is used instead.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Box from '../../components/Box.astro';
+import { toSlug } from '../../lib/slug.js';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('members', (e) => !e.data.custom);
+  return entries.map((e) => ({ params: { slug: e.id }, props: { member: e.data } }));
+}
+
+const { member } = Astro.props;
+const edited = member.edited || member.joined;
+const paragraphs = (text) => text.split(/\n\s*\n/);
+---
+<Base title={member.name} description={member.intro}>
+  <article class="article">
+    <aside class="infobox">
+      <Box title={member.name}>
+        {member.picture ? <img class="info-pic" src={member.picture} alt="" /> : <div class="info-pic"></div>}
+        <dl class="info-list">
+          <dt>Handle</dt>
+          <dd>{member.handle}</dd>
+          <dt>Fandoms</dt>
+          <dd>{member.fandoms.length ? member.fandoms.map((f, i) => (<>{i > 0 && ', '}<a href={`/fandoms/${toSlug(f)}/`}>{f}</a></>)) : 'None yet'}</dd>
+          <dt>Joined</dt>
+          <dd>{member.joined}</dd>
+        </dl>
+      </Box>
+    </aside>
+
+    <h1>{member.name}</h1>
+    <p class="lead">{member.intro}</p>
+
+    {member.sections.map((s) => (
+      <section>
+        <h2>{s.heading}</h2>
+        {paragraphs(s.text).map((p) => <p>{p}</p>)}
+      </section>
+    ))}
+
+    <p class="categories">
+      <strong>Categories:</strong>
+      {member.fandoms.length
+        ? member.fandoms.map((f, i) => (<>{i > 0 && ' | '}<a href={`/fandoms/${toSlug(f)}/`}>{f}</a></>))
+        : ' none yet'}
+    </p>
+    <p class="edited">Last edited {edited}</p>
+  </article>
+</Base>

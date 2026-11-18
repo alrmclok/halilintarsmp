@@ -1,0 +1,11 @@
+---
+// One row inside a Box: small square picture, bold title, a smaller line under it.
+const { href, title, sub, pic } = Astro.props;
+---
+<div class="row">
+  {pic ? <img class="row-pic" src={pic} alt="" /> : <div class="row-pic"></div>}
+  <div>
+    <span class="row-title">{href ? <a href={href}>{title}</a> : title}</span>
+    {sub && <span class="row-sub">{sub}</span>}
+  </div>
+</div>
