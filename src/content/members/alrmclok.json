@@ -1,0 +1,27 @@
+{
+  "name": "Almira",
+  "handle": "alrmclok",
+  "pronouns": "they/any",
+  "picture": "/members/alrmclok/photo-profile.png",
+  "fandoms": [
+    "[Placeholder]"
+  ],
+  "joined": "2026-11-15",
+  "featured": false,
+  "intro": "greetings and salutations, dudes, dudettes, and dudonts!!",
+  "custom": false,
+  "sections": [
+    {
+      "heading": "about mee!",
+      "text": "hello everyone!! my name is almira lestari, and i live uhmm in cimahi, uhmm what else\n\nbeside code, i also draw!! my handles overall is @alrmclok, you could find the name everywhere (i hope)"
+    },
+    {
+      "heading": "likes",
+      "text": "wait what do i like here. i like food of course, fantube, or maybe sumthing sweet but not that sweet my teeth would hurt so badly"
+    },
+    {
+      "heading": "dislikes",
+      "text": "i dont like spiders, they be freaking me out. also i dont like loud noise, and other stuff"
+    }
+  ]
+}

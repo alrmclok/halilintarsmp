@@ -7,6 +7,7 @@ const members = defineCollection({
   schema: z.object({
     name: z.string(),
     handle: z.string(),
+    pronouns: z.string().optional(),
     picture: z.string().default(''),
     fandoms: z.array(z.string()),
     joined: z.string(),

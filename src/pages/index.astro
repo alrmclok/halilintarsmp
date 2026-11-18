@@ -51,7 +51,7 @@ const latestNews = news.slice(0, SHOW);
 
   <div class="grid grid-3">
     <Box title="Fandoms" moreHref="/fandoms/" moreLabel="More fandoms">
-      {fandoms.map((f) => <Row href={`/fandoms/${f.slug}/`} title={f.name} sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`} />)}
+      {fandoms.map((f) => <Row href={`/fandoms/${f.slug}/`} title={f.name} sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`} pic={f.pic} />)}
     </Box>
     <Box title="Members" moreHref="/members/" moreLabel="More members">
       {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />)}

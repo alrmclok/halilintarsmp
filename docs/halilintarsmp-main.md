@@ -1,6 +1,6 @@
 # HalilintarSMP: main document
 
-Last updated: 2026-11-18
+Last updated: 2026-11-19
 
 This is the main document for the HalilintarSMP website. It says what the site is, how it is built and how it looks. It is the context file. What is done and what comes next is in `halilintarsmp-roadmap.md`.
 
@@ -16,6 +16,7 @@ It has two parts.
 - When a part is finished and nothing in the plan changed, update only the roadmap (its status and notes).
 - When something in the real app changes what this file says (a folder or file name, a decision, a color or size, a rule), update this file too, so it always matches the real site.
 - At the end of the chat, hand back the updated files.
+- `guide-for-editors.md` (also in `docs/`) is the plain guide for Katz and Kate. It is not sent in every chat. Send it when the work changes something it explains (a data file field, a folder), and update it too.
 
 Writing rule for both files: when a person is mentioned, write them with they/them. This covers Katz, Kate and anyone added later. Almira is the owner of the project and is written by name.
 
@@ -33,7 +34,7 @@ Pages:
 |---|---|
 | Home | The main page: hero box and a grid of boxes |
 | Members | A list of members. Each member has their own page: a default one made from data, or a custom one the member builds as their own folder. |
-| Fandoms | A list of fandoms. Each fandom is a category page that lists its members. |
+| Fandoms | A list of fandoms. Each fandom is a category page that lists its members. A fandom can have a picture (see "Fandom pictures"). |
 | Gallery | Pictures with a title, a short description and a credit |
 | About | Short info about the SMP |
 | Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
@@ -66,6 +67,7 @@ A change to the site is a code change:
 docs/
   halilintarsmp-main.md     this file
   halilintarsmp-roadmap.md  what is done and what is next
+  guide-for-editors.md      a short plain guide for Katz and Kate (how to edit on GitHub)
 src/
   layouts/Base.astro        header, tab bar, footer
   components/Box.astro      the box (Part 2 section 5)
@@ -74,7 +76,7 @@ src/
   lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
   lib/gallery.js            reads the gallery list, newest first, and gives each picture an address (home page and Gallery pages)
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
-  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages)
+  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages) and picks each fandom's picture from public/fandoms/
   pages/                    home, members, fandoms, gallery, about, credits
   pages/about.astro         the About page
   pages/credits.astro       the Credits page: a note and every member's name, A to Z
@@ -91,6 +93,7 @@ src/
 public/
   style.css                 the shared colors and box look
   gallery/                  the gallery pictures
+  fandoms/                  fandom pictures, one per fandom (optional, see "Fandom pictures")
   members/member-name/      a custom page: index.html, style.css, script.js
 templates/custom-member/    a starter folder to copy for a custom page
 templates/README.md         the steps and rules for custom pages, written for members (outside public/, so it is not shown)
@@ -111,6 +114,7 @@ One JSON file per member in `src/content/members/`. The file name is the member'
 |---|---|---|
 | `name` | yes | The name shown on the page |
 | `handle` | yes | Their online name |
+| `pronouns` | no | Short text, for example `they/them`. Shown in the infobox under the handle and in the home page "Featured member" box. Empty = nothing is shown. Custom pages do not show it by themselves |
 | `picture` | no | Path to a small square picture. Empty = gray box |
 | `fandoms` | yes | A list of fandom names. Capitals, extra spaces and symbols do not matter: "Fandom A" and "fandom-a" are the same fandom. The first spelling found is the one shown |
 | `joined` | yes | Date, written `2026-11-01` |
@@ -119,6 +123,15 @@ One JSON file per member in `src/content/members/`. The file name is the member'
 | `featured` | no | `true` = shown in the home page "Featured member" box. If nobody has it, the first member is shown |
 | `edited` | no | Date for the "Last edited" line. Empty = the joined date |
 | `sections` | no | The article body: a list of `heading` and `text`. A blank line in `text` starts a new paragraph |
+
+### Fandom pictures
+
+A fandom can have a small picture. It shows in the rows of the Fandoms list and the home page Fandoms box. A fandom with no picture shows the gray square.
+
+- Put the picture in `public/fandoms/`. Any file type for a picture works (`.png`, `.jpg` and so on).
+- Nothing has to be written in a data file. When the site builds, `src/lib/fandoms.js` reads the folder, drops the extension from each file name, cleans the rest the same way as fandom names, and matches it to the fandom. So `fandom-a.png` and `Fandom A.jpg` both belong to "Fandom A". Capitals, spaces and symbols do not matter.
+- Keep one picture per fandom. Two files that clean to the same name are a mix-up.
+- Keep pictures small, like the gallery ones.
 
 ### The gallery data file
 
@@ -267,7 +280,7 @@ Build every box the same way, so a new box is a copy of an old one with new word
 We do not run real wiki software. We only copy how a wiki is organized, so the site is easy to browse and easy to write.
 
 - **Home page = main page.** Boxes such as a featured member, recent additions, fandoms and news.
-- **Member page = an article.** A title, a one-line intro, an infobox on the right (picture, handle, fandoms, joined date), a contents box if the page is long, sections with headings, and a "Categories" line at the bottom that links to fandoms.
+- **Member page = an article.** A title, a one-line intro, an infobox on the right (picture, handle, pronouns when given, fandoms, joined date), a contents box if the page is long, sections with headings, and a "Categories" line at the bottom that links to fandoms.
 - **Fandom page = a category page.** A short list of the members in that fandom.
 - **Gallery = a list with captions.** Each picture has a title, a short description, and a credit to the artist or who is in it. The list is in two columns on a computer. Each picture also has its own page with the big picture, and clicking that picture opens it in a lightbox (a dark overlay).
 - **Recent additions.** A short list on the home page of the newest things, newest first.

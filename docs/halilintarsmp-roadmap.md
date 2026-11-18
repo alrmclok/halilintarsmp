@@ -1,16 +1,16 @@
 # HalilintarSMP: roadmap
 
-Last updated: 2026-11-18
+Last updated: 2026-11-19
 
 This file is written for the AI that helps Almira build the site. It lists the work in ordered parts (A, B, C and so on). Each part is small enough to finish in one chat, and the next part is started in another chat. The context for everything is in `halilintarsmp-main.md`. This file only tracks progress.
 
 ## Rules for the AI
 
-1. Almira sends both files at the start of every chat: the main document and this roadmap. Both live in the `docs/` folder of the project.
+1. Almira sends both files at the start of every chat: the main document and this roadmap. Both live in the `docs/` folder of the project. The guide `docs/guide-for-editors.md` is sent only when the work changes something it explains.
 2. Read the main document first, then find the first part here that is not Done. Work only on that part.
 3. Before starting a part, say in a few plain words what it will do. Then do it.
 4. When the part is finished and nothing in the plan changed: update only this file. Set the status to Done, tick the checklist, and write short notes under "Notes".
-5. When something in the real app changes what the main document says (a file or folder name, a decision, a color or size, a rule): update the main document too, so it matches the real site.
+5. When something in the real app changes what the main document says (a file or folder name, a decision, a color or size, a rule): update the main document too, so it matches the real site. If the guide for editors explains it too, update the guide.
 6. At the end of the chat, hand back the updated files.
 7. Write plainly. Almira is learning, so explain new words in a short line. Write any mentioned person with they/them.
 8. Do not add pages, features or boxes that are not in the main document. If an idea comes up, write it under "Open decisions" and ask.
@@ -185,6 +185,28 @@ Notes:
 
 ---
 
+## Part EA: Pronouns and fandom pictures (made outside the parts list)
+
+Status: Done
+
+Goal: a member can show pronouns, and a fandom can show a picture, with no new page or data file.
+
+- [x] Optional `pronouns` field in the member data (`z.string().optional()` in `src/content.config.ts`).
+- [x] A Pronouns row under the handle in the infobox of `src/pages/members/[slug].astro`, only when pronouns are given.
+- [x] Pronouns also shown in the home page "Featured member" box, only when given.
+- [x] `src/lib/fandoms.js` reads `public/fandoms/` at build time, drops the extension from each file name, cleans it and gives each fandom a `pic` (`/fandoms/<file name>`).
+- [x] `pic` is passed to `Row` in `src/pages/fandoms/index.astro` and `src/pages/index.astro`. No picture = the gray square.
+
+Notes:
+
+- Made by Almira with another AI on 2026-11-19. This AI only read the summary of that work and did not see the code. Almira checks with `npm run build` and `npm run preview`.
+- The documents now describe it: the `pronouns` row in "The member data file", the new "Fandom pictures" part, the `public/fandoms/` folder and the infobox line in Part 2 section 7.
+- The summary named a file `src/components/FeaturedMember.astro`. It is not in the folder layout. If that file really exists, add it to the layout in the main document.
+- Check: the build still works when `public/fandoms/` is empty (an empty folder needs a `.gitkeep`, and the scan should skip it). Check also what happens when two files clean to the same name. The docs say "one picture per fandom" for now.
+- Not changed: the page for one fandom (`fandoms/[slug].astro`) was not mentioned, so it shows no picture.
+
+---
+
 ## Part F: Gallery
 
 Status: Done
@@ -257,7 +279,7 @@ Notes:
 
 ## Part H: Custom member pages
 
-Status: In progress
+Status: Done
 
 Goal: members can have their own page as a plain folder.
 
@@ -278,6 +300,7 @@ Notes:
 - Checked by Almira with `npm run build` and `npm run preview` on 2026-11-18: the test page opens at `/members/custom-test/` (HTML, the CSS override and the script all work), no second page is made, and the Members list and Fandoms page link to it.
 - `npm run dev` shows a 404 for `/members/custom-test/` (only `/members/custom-test/index.html` opens), because the dev server does not open a folder's `index.html` from `public/`. Vercel does, so it is not fixed. To test custom pages on a computer, use `npm run build` then `npm run preview`.
 - The open decision "may custom pages break the Part 2 style rules?" is still open. The starter leaves the shared look switched off, so members can choose.
+- Status was "In progress" by mistake: every checkbox was ticked and the progress log already listed it. Set to Done on 2026-11-19.
 
 ---
 
@@ -308,17 +331,24 @@ Notes:
 
 ## Part J: Guide for the people who edit
 
-Status: Not started
+Status: Done
 
 Goal: a short plain guide for Katz and Kate.
 
-- [ ] How to get the invite and open the project.
-- [ ] How to edit a file in the browser on GitHub and save it (a "commit").
-- [ ] Where member files, custom pages and gallery files are.
-- [ ] The rules for custom pages.
-- [ ] What to do if something breaks (GitHub keeps old versions).
+- [x] How to get the invite and open the project.
+- [x] How to edit a file in the browser on GitHub and save it (a "commit").
+- [x] Where member files, custom pages and gallery files are.
+- [x] The rules for custom pages.
+- [x] What to do if something breaks (GitHub keeps old versions).
 
 Notes:
+
+- New file: `docs/guide-for-editors.md`. It is also listed in the folder layout of the main document. It covers the invite, editing and adding files, where things are, adding a member (with a small example), fandom pictures, a gallery picture, news, custom pages and fixing a mistake.
+- The button names (pencil icon, "Commit changes", "Add file", "History") come from the AI's knowledge of GitHub, not from a screen. Katz and Kate (or Almira) should follow the steps once when the first invite goes out, and fix any wording that is off.
+- For fixing a mistake the guide says to copy the old text back from the History page. As far as the AI knows, GitHub's website has no one-click undo for a single change.
+- The guide says Vercel keeps showing the last working version when a build fails. That is how Vercel normally works. Almira can confirm in the Vercel dashboard.
+- The invite for Katz and Kate is still open (Part A). The guide does not depend on it.
+- Two things the guide had to leave open or suggest (see "Open decisions"): where member pictures go, and which files Katz and Kate may edit.
 
 ---
 
@@ -349,6 +379,8 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - The drawn logo, header figure and hero title picture. Placeholders until drawn.
 - The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
 - Tab icon and link preview stay putinxtrump.png, and the footer line stays futer, until Almira changes them.
+- Which folder holds member pictures. The main document says only "path to a small square picture", so the guide tells members to send theirs to Almira for now. (Part J)
+- Which files Katz and Kate may edit. The guide suggests data files, pictures and custom page folders only, and "ask Almira first" for code (`.astro`, `.js`, `.ts`, `style.css`). Almira can loosen or tighten this. (Part J)
 
 ## Progress log
 
@@ -366,3 +398,5 @@ One line per finished part: date, part, what was done.
 - 2026-11-18, Part G: About page (placeholder text) and Credits page (note, Winamp disclaimer, fonts, and a list of all member names).
 - 2026-11-18, Part H: custom member page folder template, test page and member note made; the test page and the skip rule checked with build and preview.
 - 2026-11-18, Part I: link-preview tags with full addresses, two small phone fixes, ink splatters (SVG) and the stripe strip; real phone tested.
+- 2026-11-19, Part EA: optional member pronouns (infobox and Featured member) and automatic fandom pictures from `public/fandoms/`; made by Almira with another AI, now in the docs. Part H status corrected to Done.
+- 2026-11-19, Part J: `docs/guide-for-editors.md` written for Katz and Kate.

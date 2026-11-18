@@ -12,7 +12,12 @@ const fandoms = getFandoms(entries.map((e) => ({ ...e.data, slug: e.id })));
 <Base title="Fandoms" description="The fandoms of the HalilintarSMP members.">
   <Box title="Fandoms">
     {fandoms.map((f) => (
-      <Row href={`/fandoms/${f.slug}/`} title={f.name} sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`} />
+      <Row
+        href={`/fandoms/${f.slug}/`}
+        title={f.name}
+        sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`}
+        pic={f.pic}
+      />
     ))}
   </Box>
 </Base>

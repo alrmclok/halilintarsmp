@@ -22,7 +22,13 @@ const paragraphs = (text) => text.split(/\n\s*\n/);
         {member.picture ? <img class="info-pic" src={member.picture} alt="" /> : <div class="info-pic"></div>}
         <dl class="info-list">
           <dt>Handle</dt>
-          <dd>{member.handle}</dd>
+          <dd>@{member.handle}</dd>
+          {member.pronouns && (
+            <>
+              <dt>Pronouns</dt>
+              <dd>{member.pronouns}</dd>
+            </>
+          )}
           <dt>Fandoms</dt>
           <dd>{member.fandoms.length ? member.fandoms.map((f, i) => (<>{i > 0 && ', '}<a href={`/fandoms/${toSlug(f)}/`}>{f}</a></>)) : 'None yet'}</dd>
           <dt>Joined</dt>

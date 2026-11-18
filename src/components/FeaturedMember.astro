@@ -35,8 +35,14 @@ const href = member ? `/members/${member.slug}/` : '';
       </p>
     )}
 
-    {(member.fandoms?.length > 0 || member.joined) && (
+    {(member.pronouns || member.fandoms?.length > 0 || member.joined) && (
       <dl class="feat-meta">
+        {member.pronouns && (
+          <>
+            <dt>Pronouns:</dt>
+            <dd>{member.pronouns}</dd>
+          </>
+        )}
         {member.fandoms?.length > 0 && (
           <>
             <dt>Fandoms:</dt>

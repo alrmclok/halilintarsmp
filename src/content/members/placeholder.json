@@ -3,20 +3,19 @@
   "handle": "placeholder",
   "picture": "/putinxtrump.png",
   "fandoms": [
-    "Lesbian Space Princess",
-    "Placeholder"
+    "[Placeholder]"
   ],
   "joined": "2026-11-01",
-  "intro": "One short line about this member.",
-  "custom": false,
+  "intro": "blah blah blah this is a placeholder text...",
+  "custom": true,
   "sections": [
     {
       "heading": "About",
-      "text": "Placeholder text about this member. It can have more than one paragraph.\n\nA blank line starts a new paragraph."
+      "text": "blah blah blah this is a placeholder text... blah blah\n\n blah- THE LINE BREAKS?!"
     },
     {
-      "heading": "On the SMP",
-      "text": "Placeholder text about what this member does on the server."
+      "heading": "tuobA",
+      "text": "blah blah blah this is a placeholder text..."
     }
   ]
 }

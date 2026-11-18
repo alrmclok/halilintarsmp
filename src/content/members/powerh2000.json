@@ -1,0 +1,22 @@
+{
+  "name": "Power",
+  "handle": "powerh2000",
+  "picture": "/members/powerh2000/photo-profile.jpg",
+  "fandoms": [
+    "[Placeholder]"
+  ],
+  "joined": "[2026-11-01]",
+  "featured": false,
+  "intro": "[One short line about you.]",
+  "custom": false,
+  "sections": [
+    {
+      "heading": "About",
+      "text": "[Placeholder text about you. It can have more than one paragraph.\n\nA blank line starts a new paragraph.]"
+    },
+    {
+      "heading": "Section 2",
+      "text": "[You could add more than 2 sections.]"
+    }
+  ]
+}
