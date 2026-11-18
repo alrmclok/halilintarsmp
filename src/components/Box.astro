@@ -1,0 +1,12 @@
+---
+// The box: maroon title bar, yellow "More" link, light body.
+// Use it as <Box title="Members" moreHref="/members/" moreLabel="More members"> ...rows... </Box>
+const { title, moreHref, moreLabel } = Astro.props;
+---
+<section class="box">
+  <div class="box-head">
+    <h2>{title}</h2>
+    {moreHref && <a class="more" href={moreHref}>{moreLabel ?? 'More'}</a>}
+  </div>
+  <div class="box-body"><slot /></div>
+</section>

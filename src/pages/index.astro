@@ -1,13 +1,11 @@
 ---
-// Test page for Part A. It gets replaced in Part C.
+// Test page for Part B. It gets replaced in Part C.
+import Base from '../layouts/Base.astro';
+import Box from '../components/Box.astro';
 ---
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>HalilintarSMP</title>
-  </head>
-  <body>
-    <p>HalilintarSMP is coming soon.</p>
-  </body>
-</html>
+<Base title="HalilintarSMP">
+  <Box title="Members" moreHref="/members/" moreLabel="More members">
+    <div class="row"><div class="row-pic"></div><div><span class="row-title"><a href="#">Member one</a></span><span class="row-sub">by Placeholder</span></div></div>
+    <div class="row"><div class="row-pic"></div><div><span class="row-title"><a href="#">Member two</a></span><span class="row-sub">by Placeholder</span></div></div>
+  </Box>
+</Base>

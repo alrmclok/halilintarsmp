@@ -21,39 +21,48 @@ Status words: **Not started**, **In progress**, **Done**.
 
 ## Part A: Project setup
 
-Status: In progress
+Status: Done
 
 Goal: an empty Astro site that is on GitHub and live on Vercel.
 
 - [x] Create the Astro project with the folder layout from the main document (Part 1, "Folder layout").
-- [ ] Put it in the GitHub project.
-- [ ] Connect the GitHub project to Vercel, so a push rebuilds the site.
-- [ ] Check that a one-line test page shows on the Vercel address.
+- [x] Put it in the GitHub project.
+- [x] Connect the GitHub project to Vercel, so a push rebuilds the site.
+- [x] Check that a one-line test page shows on the Vercel address.
 - [x] Write a short `README.md` that says how to run the site on a computer and how a change goes live.
 - [ ] When Alvira and Kate say yes, invite them to the GitHub project.
 
 Notes:
 
 - The project is made and builds without errors on the AI's side (Astro 5.14.1). It has the folder layout, a one-line test page (`src/pages/index.astro`), the starter folder `templates/custom-member/` and the README.
-- The AI cannot reach Almira's GitHub or Vercel account, so the three unticked steps below the project are for Almira to do by hand. The steps were given in the chat.
+- Almira did the GitHub and Vercel steps by hand and checked that the test page shows on the Vercel address.
+- The invite for Alvira and Kate is still open. It waits until they say yes. It does not block any other part.
 - Empty folders hold a `.gitkeep` file, because Git does not keep empty folders. Delete the `.gitkeep` once a folder has real files.
 
 ## Part B: Look base
 
-Status: Not started
+Status: Done
 
 Goal: the colors, the layout frame and the Box, so every later page is built from them.
 
-- [ ] Write `public/style.css`: the colors from Part 2 section 3 as variables, the font stack, the square flat look, the dotted row lines.
-- [ ] Build `Base.astro`: header band, yellow tab bar, maroon second bar, footer (Part 2 section 4).
-- [ ] Tabs: Home, Members, Fandoms, Gallery, About. Credits in the footer.
-- [ ] Build `Box.astro`: maroon title bar, yellow "More" link with the orange arrow, light body, rows with a small square picture (Part 2 section 5).
-- [ ] Use the placeholder logo `halilintarsmp-logo.png` in the header, the tab icon and the link preview.
-- [ ] Header figure: a plain empty labeled box.
-- [ ] Black corner box: Discord and WhatsApp links, with placeholder addresses.
-- [ ] Check text sizes and contrast against Part 2.
+- [x] Write `public/style.css`: the colors from Part 2 section 3 as variables, the font stack, the square flat look, the dotted row lines.
+- [x] Build `Base.astro`: header band, yellow tab bar, maroon second bar, footer (Part 2 section 4).
+- [x] Tabs: Home, Members, Fandoms, Gallery, About. Credits in the footer.
+- [x] Build `Box.astro`: maroon title bar, yellow "More" link with the orange arrow, light body, rows with a small square picture (Part 2 section 5).
+- [x] Use the placeholder logo `halilintarsmp-logo.png` in the header, the tab icon and the link preview.
+- [x] Header figure: a plain empty labeled box.
+- [x] Black corner box: Discord and WhatsApp links, with placeholder addresses.
+- [x] Check text sizes and contrast against Part 2.
 
 Notes:
+
+- Files made: `public/style.css`, `src/layouts/Base.astro`, `src/components/Box.astro`, `public/halilintarsmp-logo.png` (a plain placeholder), and a test home page with one Box.
+- `Base.astro` loads the style with a normal link to `/style.css`, so custom member pages can link to the same file later.
+- Second bar links (Almira picked the suggested ones): Join, Rules, Server address, News. They point to `#` for now, because there is no Rules or Server address page yet.
+- Search box is a stub: it shows, but does nothing. Almira's plan for it later is in the main document.
+- Tab links go to `/members/`, `/fandoms/`, `/gallery/` and `/about/`. They show a "not found" page until Parts D to G make them.
+- Splatters and the stripe strip are not in yet. They wait for the drawn pictures.
+- Link previews: the preview picture needs the full web address, so it is set properly in Part I.
 
 ---
 
@@ -187,15 +196,15 @@ Notes:
 
 Ask about these when the part that needs them starts. Do not decide them silently.
 
-- The second bar's left links: which links go there? (Part B)
-- The search box in the second bar: make it work over member and fandom names, or leave it out? (Part B)
 - Real facts for the hero list. Placeholders for now. (Part C)
 - The orange line on the hero button ("Ask an admin" is a first try). (Part C)
 - May custom member pages break the Part 2 style rules, or must they follow them? (Part H)
+- Search, later: the plan mentions searching in "posts", but there is no Posts page. What are posts: the News items? (Part for search, not yet planned)
 - The drawn logo, header figure, hero title picture, ink splatters and stripe strip. Placeholders until drawn.
 
 ## Progress log
 
 One line per finished part: date, part, what was done.
 
--
+- 2026-11-18, Part A: Astro project made, put on GitHub, live on Vercel with a test page. README written.
+- 2026-11-18, Part B: colors, frame (header, tabs, maroon bar, footer) and Box built. Search is a stub.

@@ -1,0 +1,69 @@
+---
+// The frame of every page: header, yellow tabs, maroon bar, footer.
+const { title = 'HalilintarSMP', description = 'The community website of the HalilintarSMP.' } = Astro.props;
+const fullTitle = title === 'HalilintarSMP' ? title : `${title} | HalilintarSMP`;
+const path = Astro.url.pathname;
+const tabs = [
+  { label: 'Home', href: '/' },
+  { label: 'Members', href: '/members/' },
+  { label: 'Fandoms', href: '/fandoms/' },
+  { label: 'Gallery', href: '/gallery/' },
+  { label: 'About', href: '/about/' },
+];
+const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href));
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/halilintarsmp-logo.png" />
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="icon" type="image/png" href="/halilintarsmp-logo.png" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="header">
+        <a class="logo" href="/"><img src="/halilintarsmp-logo.png" alt="HalilintarSMP" /></a>
+        <div class="header-right">
+          <div class="figure">Header figure</div>
+          <div class="corner">
+            <a href="#">Discord</a>
+            <a href="#">WhatsApp</a>
+          </div>
+        </div>
+      </header>
+      <nav class="tabs" aria-label="Main">
+        {tabs.map((t) => <a href={t.href} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>)}
+      </nav>
+      <div class="subbar">
+        <div class="subbar-links">
+          <a href="#">Join</a>
+          <a href="#">Rules</a>
+          <a href="#">Server address</a>
+          <a href="#">News</a>
+        </div>
+        <!-- Search is a stub for now: it does nothing yet. -->
+        <form class="search" role="search" onsubmit="return false">
+          <input type="search" placeholder="Search" aria-label="Search" readonly />
+          <button type="button" disabled>GO</button>
+        </form>
+      </div>
+      <main class="page"><slot /></main>
+      <footer>
+        <div class="footer">
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/credits/">Credits</a></li>
+          </ul>
+        </div>
+        <p class="copy">Copyright &copy; HalilintarSMP</p>
+      </footer>
+    </div>
+  </body>
+</html>

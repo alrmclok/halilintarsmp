@@ -167,6 +167,8 @@ Ink splatters sit near the right end of the tab bar, above the footer, and at th
 
 - **Top tabs:** Home, Members, Fandoms, Gallery, About. Credits goes in the footer.
 - **Corner box (the small black one):** the Discord and WhatsApp links.
+- **Maroon second bar, left links:** Join, Rules, Server address, News. They point nowhere yet, until their pages or sections exist.
+- **Search box (right side of the second bar):** a stub for now. It is shown but does nothing. Almira's plan for later: while typing, a list drops down with fuzzy matches (spelling does not have to be exact), each with its kind (fandom or member) on the right. Under those matches, always visible, are three lines: Search the typed words in Fandoms, in Members, or in Posts. Picking one opens that page with the search applied. Still open: what "posts" are.
 - **Header figure:** a plain empty box with a label until the real one is drawn.
 - **Big hero button:** two lines, like the original. Top line in white: "Join the SMP". Bottom line in orange: "Ask an admin". The bottom line is a first try and can change.
 - **Hero facts list:** placeholders for now. Use four short lines with round bullets. The first one is bold and red-orange like in the screenshot, the others are bold black. Write real facts later.
