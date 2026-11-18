@@ -17,7 +17,7 @@ It has two parts.
 - When something in the real app changes what this file says (a folder or file name, a decision, a color or size, a rule), update this file too, so it always matches the real site.
 - At the end of the chat, hand back the updated files.
 
-Writing rule for both files: when a person is mentioned, write them with they/them. This covers Alvira, Kate and anyone added later. Almira is the owner of the project and is written by name.
+Writing rule for both files: when a person is mentioned, write them with they/them. This covers Katz, Kate and anyone added later. Almira is the owner of the project and is written by name.
 
 ---
 
@@ -36,11 +36,12 @@ Pages:
 | Fandoms | A list of fandoms. Each fandom is a category page that lists its members. |
 | Gallery | Pictures with a title, a short description and a credit |
 | About | Short info about the SMP |
-| Credits | Linked from the footer |
+| Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
+| News, Join, Rules | Decided, built in Part K: News is one page with all items. Join holds how to join and the server address (the maroon-bar link "Server address" jumps to it). Rules is its own page. No pop-ups |
 
 ## Who can change files
 
-Three people have access to the GitHub project: Almira, Alvira and Kate. Alvira and Kate are trusted people, not SMP admins. They have not been asked yet.
+Three people have access to the GitHub project: Almira, Katz and Kate. Katz and Kate are trusted people, not SMP admins. They have not been asked yet.
 
 - They edit files on GitHub. Vercel puts the change live by itself.
 - Any of the three can put a custom page live. If none of them can, Almira does it.
@@ -75,6 +76,8 @@ src/
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
   lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages)
   pages/                    home, members, fandoms, gallery, about, credits
+  pages/about.astro         the About page
+  pages/credits.astro       the Credits page: a note and every member's name, A to Z
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
   pages/fandoms/index.astro   the Fandoms list
@@ -90,6 +93,7 @@ public/
   gallery/                  the gallery pictures
   members/member-name/      a custom page: index.html, style.css, script.js
 templates/custom-member/    a starter folder to copy for a custom page
+templates/README.md         the steps and rules for custom pages, written for members (outside public/, so it is not shown)
 ```
 
 ### How the custom pages work
@@ -233,6 +237,7 @@ Ink splatters sit near the right end of the tab bar, above the footer, and at th
   - Row one: Gallery highlights (wide) and Featured member (narrow).
   - Row two: Fandoms, Members list and News (three equal boxes).
   - Each box has the same build (section 5), and a "More" link in the title bar.
+  - Each list box (Gallery highlights, Fandoms, Members, News) shows at most 3 rows. The full list is behind its "More" link.
 
 ## 5. The box (the main building block)
 
@@ -336,8 +341,8 @@ These were shared as inspiration for the wiki side. They are for ideas only. We 
 | Site | Suggested by | Notes |
 |---|---|---|
 | tolololpedia.org, the Prabowo_Subianto page | Nabil (they suggested it as the joke) | A parody wiki, the Indonesian counterpart of Uncyclopedia. It copies Wikipedia's layout for silly, made-up articles. This page is a joke biography with a Wikipedia-style infobox and sections. Our tool could not open it, so this comes from another AI's description. Nothing on it is a reliable source of facts. |
-| tfwiki.net, the Your_mom page | Alvira (they are not sure about it) | Could not be opened, so it is not summarized here. Open it by hand to check. |
-| knockoutfangirl.nekoweb.org | Alvira (their site) | Read in full. See below. |
+| tfwiki.net, the Your_mom page | Katz (they are not sure about it) | Could not be opened, so it is not summarized here. Open it by hand to check. |
+| knockoutfangirl.nekoweb.org | Katz (their site) | Read in full. See below. |
 
 What we take from tolololpedia: the wiki layout is so recognizable that even a joke site uses it. That supports our member-page layout in section 7 (infobox on the right, sections, categories at the bottom). We take the layout only, not the humor.
 

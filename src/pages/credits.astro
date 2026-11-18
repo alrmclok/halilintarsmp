@@ -1,0 +1,25 @@
+---
+// The Credits page, linked from the footer.
+// Box one: a short note (not connected to Winamp, fonts, pictures). Box two: every member's name, A to Z, linked to their page.
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Box from '../components/Box.astro';
+
+const entries = await getCollection('members');
+// The file name is the member's address (see the main document), so the link uses e.id.
+const members = entries
+  .map((e) => ({ name: e.data.name, slug: e.id }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+---
+<Base title="Credits" description="Credits and thanks for the HalilintarSMP website.">
+  <Box title="Credits">
+    <p>The HalilintarSMP website is made by the community. Placeholder: add who built it and who helped.</p>
+    <p>The look is inspired by the Winamp website from 2004. HalilintarSMP is not connected to Winamp. The pictures on this site are drawn by us.</p>
+    <p>Text is set in Verdana and Trebuchet MS, two fonts that are already on most computers.</p>
+  </Box>
+  <Box title="Members" moreHref="/members/" moreLabel="More members">
+    <ul>
+      {members.map((m) => <li><a href={`/members/${m.slug}/`}>{m.name}</a></li>)}
+    </ul>
+  </Box>
+</Base>

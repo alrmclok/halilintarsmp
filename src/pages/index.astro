@@ -1,37 +1,51 @@
 ---
 // Home page. Every box is filled from data files, not typed into the page.
+// Each list box shows at most 3 rows (the "More" link in its title bar leads to the full list).
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Box from '../components/Box.astro';
 import Row from '../components/Row.astro';
+import FeaturedMember from '../components/FeaturedMember.astro';
 import news from '../content/news.json';
 import { getFandoms } from '../lib/fandoms.js';
 import { getGallery } from '../lib/gallery.js';
 import { buildLookup, linkCredit } from '../lib/mentions.js';
+
+const SHOW = 3; // how many rows each list box shows on the home page
 
 const entries = await getCollection('members');
 const members = entries.map((e) => ({ ...e.data, slug: e.id }));
 const lookup = buildLookup(members);
 
 // Fandoms box: built by the shared helper, so it matches the Fandoms pages.
-const fandoms = getFandoms(members);
+const fandoms = getFandoms(members).slice(0, SHOW);
 
-// Gallery highlights: the three newest pictures (getGallery sorts newest first).
-const newestGallery = getGallery().slice(0, 3);
+// Gallery highlights: the newest pictures (getGallery sorts newest first).
+const newestGallery = getGallery().slice(0, SHOW);
 // Featured member: the one with "featured": true in their file, or the first member if none has it.
 const featured = members.find((m) => m.featured) ?? members[0];
-// Members box: the newest six, newest first.
-const newestMembers = [...members].sort((a, b) => b.joined.localeCompare(a.joined)).slice(0, 6);
+// Members box: the newest members, newest first.
+const newestMembers = [...members].sort((a, b) => b.joined.localeCompare(a.joined)).slice(0, SHOW);
+// News box: the first items in news.json (keep the newest on top in that file).
+const latestNews = news.slice(0, SHOW);
 ---
 <Base title="HalilintarSMP">
   <a class="hero" href="#"><img class="hero-art" src="/hero-title.png" alt="Join the HalilintarSMP" /></a>
 
   <div class="grid grid-2">
     <Box title="Gallery highlights" moreHref="/gallery/" moreLabel="More gallery">
-      {newestGallery.map((g) => <Row href={`/gallery/${g.slug}/`} title={g.title} sub={linkCredit(g.credit, lookup)} pic={g.file} alt={g.alt} />)}
+      {newestGallery.map((g) => (
+        <Row
+          href={`/gallery/${g.slug}/`}
+          title={g.title}
+          sub={linkCredit(g.credit, lookup)}
+          pic={g.file}
+          alt={g.alt}
+        />
+      ))}
     </Box>
     <Box title="Featured member" moreHref="/members/" moreLabel="More members">
-      {featured && <Row href={`/members/${featured.slug}/`} title={featured.name} sub={featured.intro} pic={featured.picture} />}
+      <FeaturedMember member={featured} />
     </Box>
   </div>
 
@@ -43,7 +57,7 @@ const newestMembers = [...members].sort((a, b) => b.joined.localeCompare(a.joine
       {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />)}
     </Box>
     <Box id="news" title="News" moreHref="#" moreLabel="More news">
-      {news.map((n) => <Row href="#" title={n.title} sub={`by ${n.by}, ${n.date}`} />)}
+      {latestNews.map((n) => <Row href="#" title={n.title} sub={`by ${n.by}, ${n.date}`} />)}
     </Box>
   </div>
 </Base>

@@ -73,6 +73,25 @@ img { max-width: 100%; }
 .row-title a:hover { color: var(--headline); text-decoration: underline; }
 .row-sub { display: block; }
 
+/* featured member box */
+.feat { padding: 8px 4px 10px; }
+.feat-top { display: flex; gap: 10px; align-items: flex-start; }
+.feat-pic-link { display: block; flex: none; line-height: 0; }
+.feat-pic { width: 108px; aspect-ratio: 4 / 3; background: #a8a496; border: 1px solid var(--line); object-fit: cover; display: block; }
+.feat-head { min-width: 0; }
+.feat-name { display: block; font: bold 17px/1.2 var(--font-head); color: var(--headline); text-decoration: none; }
+.feat-name:hover { color: var(--link); text-decoration: underline; }
+.feat-handle { display: block; color: var(--ink); opacity: .7; font-size: 13px; margin-top: 2px; }
+.feat-intro { margin: 8px 0 0; }
+.feat-meta { display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; margin: 8px 0 0; padding-top: 7px; border-top: 1px dotted var(--line); font-size: 13px; }
+.feat-meta dt { font-weight: bold; }
+.feat-meta dd { margin: 0; }
+.feat-foot { margin-top: 8px; padding-top: 6px; border-top: 1px dotted var(--line); text-align: right; font-family: var(--font-head); font-weight: bold; }
+.feat-link { color: var(--link); text-decoration: none; }
+.feat-link:hover { color: var(--headline); text-decoration: underline; }
+.feat-link::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 5px; background: var(--orange); transform: rotate(-45deg); clip-path: polygon(0 35%, 55% 35%, 55% 0, 100% 50%, 55% 100%, 55% 65%, 0 65%); }
+.feat-fandoms a { white-space: nowrap; }
+
 /* home page: hero and grid */
 .hero { display: block; margin: -7px -7px 10px; }
 .hero-art { display: block; width: 100%; height: auto; }

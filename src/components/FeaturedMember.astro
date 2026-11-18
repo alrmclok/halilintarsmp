@@ -1,0 +1,66 @@
+---
+// src/components/FeaturedMember.astro
+import Parts from './Parts.astro';
+import { toSlug } from '../lib/slug.js'; // adjust path if toSlug lives elsewhere
+
+const { member } = Astro.props;
+const href = member ? `/members/${member.slug}/` : '';
+---
+{member && (
+  <div class="feat">
+    <div class="feat-top">
+      <a class="feat-pic-link" href={href} tabindex="-1">
+        {member.picture ? (
+          <img
+            class="feat-pic"
+            src={member.picture}
+            alt={member.name}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div class="feat-pic"></div>
+        )}
+      </a>
+
+      <div class="feat-head">
+        <a class="feat-name" href={href}>{member.name}</a>
+        {member.handle && <span class="feat-handle">@{member.handle}</span>}
+      </div>
+    </div>
+
+    {member.intro && (
+      <p class="feat-intro">
+        {Array.isArray(member.intro) ? <Parts parts={member.intro} /> : member.intro}
+      </p>
+    )}
+
+    {(member.fandoms?.length > 0 || member.joined) && (
+      <dl class="feat-meta">
+        {member.fandoms?.length > 0 && (
+          <>
+            <dt>Fandoms:</dt>
+            <dd class="feat-fandoms">
+              {member.fandoms.map((f, i) => (
+                <>
+                  {i > 0 && ', '}
+                  <a href={`/fandoms/${toSlug(f)}/`}>{f}</a>
+                </>
+              ))}
+            </dd>
+          </>
+        )}
+        {member.joined && (
+          <>
+            <dt>Joined:</dt>
+            <dd>{member.joined}</dd>
+          </>
+        )}
+      </dl>
+    )}
+
+    <div class="feat-foot">
+      <a class="feat-link" href={href}>Read member page</a>
+    </div>
+  </div>
+)}

@@ -30,13 +30,13 @@ Goal: an empty Astro site that is on GitHub and live on Vercel.
 - [x] Connect the GitHub project to Vercel, so a push rebuilds the site.
 - [x] Check that a one-line test page shows on the Vercel address.
 - [x] Write a short `README.md` that says how to run the site on a computer and how a change goes live.
-- [ ] When Alvira and Kate say yes, invite them to the GitHub project.
+- [ ] When Katz and Kate say yes, invite them to the GitHub project.
 
 Notes:
 
 - The project is made and builds without errors on the AI's side (Astro 5.14.1). It has the folder layout, a one-line test page (`src/pages/index.astro`), the starter folder `templates/custom-member/` and the README.
 - Almira did the GitHub and Vercel steps by hand and checked that the test page shows on the Vercel address.
-- The invite for Alvira and Kate is still open. It waits until they say yes. It does not block any other part.
+- The invite for Katz and Kate is still open. It waits until they say yes. It does not block any other part.
 - Empty folders hold a `.gitkeep` file, because Git does not keep empty folders. Delete the `.gitkeep` once a folder has real files.
 
 ## Part B: Look base
@@ -87,6 +87,7 @@ Notes:
 - The "News" link in the maroon bar now jumps to the News box on the home page. "More news" points to `#` because there is no news page.
 - All words and members here are placeholders. Boxes fill with real text later.
 - The grid stacks on phones in Part I, not here.
+- Later change: every list box on the home page (Gallery highlights, Fandoms, Members, News) shows at most 3 rows. The number is one line, `SHOW = 3`, at the top of `src/pages/index.astro`. Members shows the newest three. News shows the first three items in `news.json`, so keep the newest on top there.
 
 ---
 
@@ -235,30 +236,46 @@ Notes:
 
 ## Part G: About and Credits
 
-Status: Not started
+Status: Done
 
 Goal: the last two pages.
 
-- [ ] About page with placeholder text about the SMP.
-- [ ] Credits page, linked from the footer.
+- [x] About page with placeholder text about the SMP.
+- [x] Credits page, linked from the footer.
 
 Notes:
+
+- New files: `src/pages/about.astro` (one Box with three placeholder paragraphs) and `src/pages/credits.astro` (two Boxes). Neither needs new CSS or new components: they only use `Base.astro` and `Box.astro`.
+- The footer and the About tab already linked to `/credits/` and `/about/` (Part B), so `Base.astro` did not change.
+- Credits box one is a short note: the look is inspired by the Winamp website but not connected to it, the pictures are drawn by us, and the two fonts. Almira said yes to this idea. The line about who built the site is still a placeholder.
+- Credits box two ("Members") lists every member's name, A to Z. It reads the same member files as the Members list, and each name links to `/members/<file name>/`. A member with a custom page links to the same address, so it works for both kinds.
+- The lists are plain `<ul>` and `<p>` text inside the Box. If the spacing looks cramped on Vercel, Almira can send `public/style.css` and the AI will add a small rule.
+- Spotted in `Base.astro`, not changed: the link-preview picture and the tab icon point to `/putinxtrump.png`, while this document says the placeholder logo `halilintarsmp-logo.png`. The footer line still says "futer". Both are for Almira to decide.
+- Not run on the AI's side (no Astro here). Almira checks `/about/` and `/credits/` on Vercel, and on a phone.
 
 ---
 
 ## Part H: Custom member pages
 
-Status: Not started
+Status: In progress
 
 Goal: members can have their own page as a plain folder.
 
-- [ ] Make `templates/custom-member/` with `index.html`, an empty `style.css`, an empty `script.js` and a link back to `/members/`.
-- [ ] Make one test custom page in `public/members/` and check it at `/members/member-name/`.
-- [ ] Set `custom: true` for that member and check that the default page maker skips them.
-- [ ] Check that a custom page can link to `public/style.css` to get the box look.
-- [ ] Write the "Rules for custom pages" from the main document into a short `members/README` style note for members.
+- [x] Make `templates/custom-member/` with `index.html`, an empty `style.css`, an empty `script.js` and a link back to `/members/`.
+- [x] Make one test custom page in `public/members/`.
+- [x] Set `custom: true` for that member.
+- [x] Write the "Rules for custom pages" from the main document into a short note for members.
+- [ ] Check the test page at `/members/custom-test/` on Vercel (the box look shows, and the line "The script works." shows).
+- [ ] Check that the default page maker skipped that member (no second page, and the Members list and the Fandoms page still link to `/members/custom-test/`).
 
 Notes:
+
+- New files: `templates/custom-member/` (`index.html`, empty `style.css`, empty `script.js`), `templates/README.md` (the member note: how to make a page, the rules, the shared look), `public/members/custom-test/` (the test page, with a one-line script), `src/content/members/custom-test.json` (a test member with `"custom": true`).
+- The starter `index.html` already has the same box markup as `Box.astro`. The line that links `/style.css` is commented out, so a member who wants the box look removes the arrows. This keeps the open decision open (see below). The test page does link `/style.css`, which is how "a custom page can link to the shared style" is tested.
+- The folder from Part A may have had a simpler starter. These files replace it.
+- The note for members is `templates/README.md`, not inside `public/`, because everything in `public/` is shown on the site.
+- The test member is a placeholder with the fandom "Fandom A". Delete `src/content/members/custom-test.json` and `public/members/custom-test/` when a real custom page exists.
+- Not run on the AI's side (no Astro here). The two checks above are Almira's, on Vercel. Tick them when they work. This part stays In progress until then.
 
 ---
 
@@ -279,7 +296,7 @@ Goal: the site works well on a phone.
 Notes:
 
 - Most of this part was done early in Part DA. What is left needs the drawn pictures or a real phone.
-- New pages (Fandoms, Gallery, About, Credits) must be checked on a phone when they are built. The Gallery list and the picture page with its lightbox (Part FA) are among them.
+- New pages (Fandoms, Gallery, About, Credits) must be checked on a phone when they are built. About and Credits (Part G) still need that check. The Gallery list and the picture page with its lightbox (Part FA) are among them.
 
 ---
 
@@ -287,13 +304,30 @@ Notes:
 
 Status: Not started
 
-Goal: a short plain guide for Alvira and Kate.
+Goal: a short plain guide for Katz and Kate.
 
 - [ ] How to get the invite and open the project.
 - [ ] How to edit a file in the browser on GitHub and save it (a "commit").
 - [ ] Where member files, custom pages and gallery files are.
 - [ ] The rules for custom pages.
 - [ ] What to do if something breaks (GitHub keeps old versions).
+
+Notes:
+
+---
+
+## Part K: News, Join and Rules pages
+
+Status: Not started
+
+Goal: the links that still point to `#` lead to real pages. Almira picked pages, not pop-ups.
+
+- [ ] News page (`/news/`): all items from `news.json`, newest first, built with the same Box and Row as the other lists. "More news" and each news row on the home page point to it.
+- [ ] Join page (`/join/`): how to join, and the server address in its own Box with the address `server-address` (so `/join/#server-address` jumps to it). The second-bar link "Join" and the hero button lead to this page. The second-bar link "Server address" leads to `/join/#server-address`.
+- [ ] Rules page (`/rules/`): the second-bar link "Rules" leads here.
+- [ ] Real addresses for the Discord and WhatsApp links in the black corner box (still `#`).
+- [ ] Add the three pages to the pages table and the folder layout in the main document.
+- [ ] Check every new page on a phone.
 
 Notes:
 
@@ -307,6 +341,8 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - The orange line on the hero button ("Ask an admin" is a first try). (Part C)
 - May custom member pages break the Part 2 style rules, or must they follow them? (Part H)
 - The drawn logo, header figure, hero title picture, ink splatters and stripe strip. Placeholders until drawn.
+- The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
+- Which picture is the tab icon and link preview (`putinxtrump.png` now, the docs say `halilintarsmp-logo.png`), and the real footer line (now "futer"). (Part I)
 
 ## Progress log
 
@@ -321,3 +357,4 @@ One line per finished part: date, part, what was done.
 - 2026-11-18, Part E: Fandoms list and one page per fandom, built from member data with one shared helper. Same-fandom matching ignores capitals, spaces and symbols.
 - 2026-11-18, Part F: Gallery page (list with captions) and shared helper, `alt` field and `alt`/`note` on Row, `public/gallery/` folder, docs now live in `docs/`.
 - 2026-11-18, Part FA: Gallery rework: a page per picture with a lightbox, rows link to it, @member and credit links only when a member is found, two columns.
+- 2026-11-18, Part G: About page (placeholder text) and Credits page (note, Winamp disclaimer, fonts, and a list of all member names).
