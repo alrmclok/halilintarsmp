@@ -7,7 +7,7 @@
   ],
   "joined": "2026-11-01",
   "intro": "blah blah blah this is a placeholder text...",
-  "custom": true,
+  "custom": false,
   "sections": [
     {
       "heading": "About",
