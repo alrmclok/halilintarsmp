@@ -57,7 +57,7 @@ const latestNews = news.slice(0, SHOW);
       {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />)}
     </Box>
     <Box id="news" title="News" moreHref="/news/" moreLabel="More news">
-      {latestNews.map((n) => <Row href="/news/" title={n.title} sub={`by ${n.by}, ${n.date}`} />)}
+      {latestNews.map((n) => <Row href="/news/" title={n.title} sub={`by ${n.by}, ${n.date}`} pic={n.pic} />)}
     </Box>
   </div>
 </Base>

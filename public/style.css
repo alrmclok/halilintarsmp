@@ -67,7 +67,7 @@ img { max-width: 100%; }
 .row:first-child { padding-top: 7px; }
 .row:last-child { border-bottom: 0; }
 .row:hover { background: rgba(255, 255, 255, .45); }
-.row-pic { flex: none; width: 76px; height: 58px; background: #a8a496; border: 1px solid var(--line); object-fit: cover; display: block; }
+.row-pic { flex: none; width: 76px; height: 76px; background: #a8a496; border: 1px solid var(--line); object-fit: cover; display: block; }
 .row-title { display: block; font-weight: bold; font-size: 15px; }
 .row-title a { color: var(--link); text-decoration: none; }
 .row-title a:hover { color: var(--headline); text-decoration: underline; }

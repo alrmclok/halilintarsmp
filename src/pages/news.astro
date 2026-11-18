@@ -12,6 +12,6 @@ const items = [...news].sort((a, b) => b.date.localeCompare(a.date));
 <Base title="News" description="News from the HalilintarSMP.">
   <Box title="News">
     {items.length === 0 && <p>No news yet.</p>}
-    {items.map((n) => <Row title={n.title} sub={`by ${n.by}, ${n.date}`} note={n.summary} />)}
+    {items.map((n) => <Row title={n.title} sub={`by ${n.by}, ${n.date}`} note={n.summary} pic={n.pic} />)}
   </Box>
 </Base>

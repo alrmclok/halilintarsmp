@@ -1,26 +1,10 @@
 [
   {
-    "title": "Gallery picture one",
-    "description": "Short description goes here. Say hi to @member_one!",
+    "title": "putin x trump",
+    "description": "who even requested this...",
     "credit": "Member One",
     "file": "/putinxtrump.png",
-    "alt": "Describe what the picture shows.",
-    "added": "2026-11-12"
-  },
-  {
-    "title": "Gallery picture two",
-    "description": "Short description goes here.",
-    "credit": "Placeholder",
-    "file": "",
-    "alt": "Describe what the picture shows.",
-    "added": "2026-11-15"
-  },
-  {
-    "title": "Gallery picture three",
-    "description": "Short description goes here.",
-    "credit": "Placeholder",
-    "file": "",
-    "alt": "Describe what the picture shows.",
-    "added": "2026-11-09"
+    "alt": "putin x trump doing sumthing",
+    "added": "2026-11-18"
   }
 ]

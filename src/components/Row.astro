@@ -7,11 +7,15 @@ import Parts from './Parts.astro';
 const { href, title, sub, note, pic, alt } = Astro.props;
 ---
 <div class="row">
-  {href ? (
-    <a class="row-pic-link" href={href} tabindex="-1">
-      {pic ? <img class="row-pic" src={pic} alt={alt ?? ''} loading="lazy" decoding="async" /> : <div class="row-pic"></div>}
-    </a>
-  ) : pic ? <img class="row-pic" src={pic} alt={alt ?? ''} loading="lazy" decoding="async" /> : <div class="row-pic"></div>}
+  {pic && (
+    href ? (
+      <a class="row-pic-link" href={href} tabindex="-1">
+        <img class="row-pic" src={pic} alt={alt ?? ''} loading="lazy" decoding="async" />
+      </a>
+    ) : (
+      <img class="row-pic" src={pic} alt={alt ?? ''} loading="lazy" decoding="async" />
+    )
+  )}
   <div>
     <span class="row-title">{href ? <a href={href}>{title}</a> : title}</span>
     {sub && <span class="row-sub">{Array.isArray(sub) ? <Parts parts={sub} /> : sub}</span>}
