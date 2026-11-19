@@ -1,22 +1,24 @@
 {
   "name": "Power",
   "handle": "powerh2000",
+  "pronouns": "he/him",
   "picture": "/members/powerh2000/photo-profile.jpg",
   "fandoms": [
+    "Multifandom",
     "[Placeholder]"
   ],
-  "joined": "[2026-11-01]",
+  "joined": "2026-11-15",
   "featured": false,
-  "intro": "[One short line about you.]",
+  "intro": "rise and shine, I came with la peace",
   "custom": false,
   "sections": [
     {
       "heading": "About",
-      "text": "[Placeholder text about you. It can have more than one paragraph.\n\nA blank line starts a new paragraph.]"
+      "text": "heyya there you can call me powerh or even powah maybe anything I dont mind, I'm a femboy 100% and my pronounce is he/him. I'm chill almost on everything I love cosplayin as my fav chara, also I really do love sweet foods!! Yea I know too much sugar isnt healthy but what can I do?.. cant help mwehhehe, and if theres smt make one of ya uncomfortable about me just.. tell me rightaway!!!"
     },
     {
-      "heading": "Section 2",
-      "text": "[You could add more than 2 sections.]"
+      "heading": "Games",
+      "text": "oh ya, I love playin lot of games but because of my bad device I had to delete sum of it... so now I only active at roblox, but I do have mlbb and minecraft on my phone lol."
     }
   ]
 }

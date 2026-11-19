@@ -1,5 +1,7 @@
 ---
-// The Fandoms list: every fandom, A to Z, with how many members it has. Each row links to /fandoms/name/.
+// The Fandoms list: every fandom, A to Z, with how many members it has and who they are.
+// Each row links to /fandoms/name/. Two columns on a computer, one on a phone.
+// public/search.js filters this page by the fandom name only (the .row-title), so keep the name as the title.
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
@@ -8,16 +10,32 @@ import { getFandoms } from '../../lib/fandoms.js';
 
 const entries = await getCollection('members');
 const fandoms = getFandoms(entries.map((e) => ({ ...e.data, slug: e.id })));
+
+// The members of a fandom as links, at most MEMBER_LIMIT, then "and 2 more" linking to the fandom page.
+const MEMBER_LIMIT = 3;
+const memberLine = (f) => {
+  const parts = [];
+  f.members.slice(0, MEMBER_LIMIT).forEach((m, i) => {
+    if (i > 0) parts.push({ text: ', ' });
+    parts.push({ text: m.name, href: `/members/${m.slug}/` });
+  });
+  const more = f.members.length - MEMBER_LIMIT;
+  if (more > 0) parts.push({ text: ` and ${more} more`, href: `/fandoms/${f.slug}/` });
+  return parts.length ? parts : undefined;
+};
 ---
 <Base title="Fandoms" description="The fandoms of the HalilintarSMP members.">
-  <Box title="Fandoms">
-    {fandoms.map((f) => (
-      <Row
-        href={`/fandoms/${f.slug}/`}
-        title={f.name}
-        sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`}
-        pic={f.pic}
-      />
-    ))}
+  <Box title={`Fandoms (${fandoms.length})`}>
+    <div class="list-cols">
+      {fandoms.map((f) => (
+        <Row
+          href={`/fandoms/${f.slug}/`}
+          title={f.name}
+          sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`}
+          note={memberLine(f)}
+          pic={f.pic}
+        />
+      ))}
+    </div>
   </Box>
 </Base>

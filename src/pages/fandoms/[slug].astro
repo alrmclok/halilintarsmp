@@ -1,24 +1,81 @@
 ---
-// One fandom page (a wiki "category" page): a short list of the members in that fandom.
+// One fandom page (a wiki "category" page): the members in that fandom.
 // Made from the member data files. Members with a custom page are listed too, and link to their own folder.
-import { getCollection } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import Box from '../../components/Box.astro';
-import Row from '../../components/Row.astro';
-import { getFandoms } from '../../lib/fandoms.js';
+// Each row looks like the Members list: name, "handle · pronouns", the intro, and the member's other fandoms.
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Box from "../../components/Box.astro";
+import Row from "../../components/Row.astro";
+import { getFandoms } from "../../lib/fandoms.js";
+import { toSlug } from "../../lib/slug.js";
 
 export async function getStaticPaths() {
-  const entries = await getCollection('members');
+  const entries = await getCollection("members");
   const fandoms = getFandoms(entries.map((e) => ({ ...e.data, slug: e.id })));
-  return fandoms.map((f) => ({ params: { slug: f.slug }, props: { fandom: f } }));
+  return fandoms.map((f) => ({
+    params: { slug: f.slug },
+    props: { fandom: f },
+  }));
 }
 
 const { fandom } = Astro.props;
+
+// "handle · pronouns" (no pronouns = only the handle).
+const handleLine = (m) =>
+  m.pronouns ? `${m.handle} · ${m.pronouns}` : m.handle;
+
+// "Also in A, B, C and 2 more": the member's other fandoms as links (not this one, no repeats).
+const FANDOM_LIMIT = 3;
+const alsoIn = (m) => {
+  const others = new Map();
+  for (const name of m.fandoms) {
+    const slug = toSlug(name);
+    if (slug && slug !== fandom.slug && !others.has(slug))
+      others.set(slug, name.trim().replace(/\s+/g, " "));
+  }
+  const list = [...others];
+  if (!list.length) return undefined;
+  const parts = [{ text: "Also in " }];
+  list.slice(0, FANDOM_LIMIT).forEach(([slug, name], i) => {
+    if (i > 0) parts.push({ text: ", " });
+    parts.push({ text: name, href: `/fandoms/${slug}/` });
+  });
+  const more = list.length - FANDOM_LIMIT;
+  if (more > 0)
+    parts.push({ text: ` and ${more} more`, href: `/members/${m.slug}/` });
+  return parts;
+};
 ---
-<Base title={fandom.name} description={`Members of the HalilintarSMP in the ${fandom.name} fandom.`}>
-  <Box title={fandom.name} moreHref="/fandoms/" moreLabel="All fandoms">
-    {fandom.members.map((m) => (
-      <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />
-    ))}
+
+<Base
+  title={fandom.name}
+  description={`Members of the HalilintarSMP in the ${fandom.name} fandom.`}
+>
+  <Box
+    title={`${fandom.name} (${fandom.count})`}
+    moreHref="/fandoms/"
+    moreLabel="All fandoms"
+  >
+    {fandom.pic && (
+      <div class="fandom-head">
+        <img class="fandom-pic" src={fandom.pic} alt={fandom.name} />
+        <p>
+          {fandom.count} {fandom.count === 1 ? "member" : "members"} in this
+          fandom.
+        </p>
+      </div>
+    )}
+    <div class="list-cols">
+      {fandom.members.map((m) => (
+        <Row
+          href={`/members/${m.slug}/`}
+          title={m.name}
+          sub={handleLine(m)}
+          intro={m.intro}
+          note={alsoIn(m)}
+          pic={m.picture}
+        />
+      ))}
+    </div>
   </Box>
 </Base>

@@ -69,7 +69,7 @@ docs/
   halilintarsmp-roadmap.md  what is done and what is next
   guide-for-editors.md      a short plain guide for Katz and Kate (how to edit on GitHub)
 src/
-  layouts/Base.astro        header, tab bar, footer
+  layouts/Base.astro        header, tab bar, search box, footer
   components/Box.astro      the box (Part 2 section 5)
   components/Row.astro      one row inside a box
   components/Parts.astro    shows text with member links inside it
@@ -78,12 +78,13 @@ src/
   lib/gallery.js            reads the gallery list, newest first, and gives each picture an address (home page and Gallery pages)
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
   lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages) and picks each fandom's picture from public/fandoms/
-  pages/                    home, members, fandoms, gallery, about, credits, news, join, rules
+  pages/                    home, members, fandoms, gallery, about, credits, news, join, rules (and the search list, search.json.js)
   pages/about.astro         the About page
   pages/credits.astro       the Credits page: a note and every member's name, A to Z
   pages/news.astro          the News page: every item in news.json, newest first
   pages/join.astro          the Join page: how to join, and the server address (a line at the top of the file)
   pages/rules.astro         the Rules page
+  pages/search.json.js      makes /search.json when the site builds: the list the search box looks in (members, fandoms, news)
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
   pages/fandoms/index.astro   the Fandoms list
@@ -96,6 +97,7 @@ src/
   content/news.json         the news list
 public/
   style.css                 the shared colors and box look
+  search.js                 the search box script: the dropdown with fuzzy matches, and the filter on the list pages
   gallery/                  the gallery pictures
   fandoms/                  fandom pictures, one per fandom (optional, see "Fandom pictures")
   members/member-name/      a custom page: index.html, style.css, script.js
@@ -136,6 +138,19 @@ A fandom can have a small picture. It shows in the rows of the Fandoms list and 
 - Nothing has to be written in a data file. When the site builds, `src/lib/fandoms.js` reads the folder, drops the extension from each file name, cleans the rest the same way as fandom names, and matches it to the fandom. So `fandom-a.png` and `Fandom A.jpg` both belong to "Fandom A". Capitals, spaces and symbols do not matter.
 - Keep one picture per fandom. Two files that clean to the same name are a mix-up.
 - Keep pictures small, like the gallery ones.
+
+### The search box
+
+The search box in the maroon bar is built in Part L. Nothing has to be written in a data file for it.
+
+- **The list.** `src/pages/search.json.js` makes `/search.json` when the site builds. It holds every member (name, link, and their handle as an extra word), every fandom and every news item. A new member, fandom or news item shows up in the search after the next build.
+- **The script.** `public/search.js` loads that list the first time the box is used and does the matching in the browser. It is plain JavaScript with no library.
+- **Matching.** Capitals, accents and symbols do not matter. A name matches when it is the same as, starts with, has a word that starts with, or contains what was typed, or has the typed letters in order ("grn" finds "Grian"), or is a few typos away ("Grain" finds "Grian"). A member also matches on their handle, a little lower. Fandoms are not searched through members. Up to 6 matches show, each with its kind (member, fandom or post) on the right.
+- **The three lines.** Under the matches are always three lines: Search the typed words in Fandoms, in Members or in Posts. They open `/fandoms/`, `/members/` or `/news/` with `?q=` and the typed words on the end.
+- **The filter.** On those three list pages the script hides the rows that do not match `?q=`, and shows a note with a "Show all" link. Each list only searches its own kind: Members looks at the name and handle, Fandoms at the fandom name, News at the title and summary (not the author or date). The word filter also forgives a typo. A news item has no page of its own, so picking a post in the dropdown opens the News list filtered to its title.
+- **Keys.** Arrow keys move the highlight, Enter opens the highlighted line (if none: the first match, and if there is no match: the Members search), Escape closes the list.
+- **No JavaScript.** The form still works: GO opens `/members/?q=...`.
+- Names written only in non-Latin letters are cleaned to nothing (like in `toSlug`), so the search cannot find them.
 
 ### The gallery data file
 
@@ -246,7 +261,7 @@ Ink splatters sit near the right end of the tab bar, above the footer, and at th
 - **Top tabs:** Home, Members, Fandoms, Gallery, About. Credits goes in the footer.
 - **Corner box (the small black one):** the Discord and WhatsApp links. Both lead to the Join page on purpose. A WhatsApp number or invite does not belong on a public website, so how to reach the community is explained on Join.
 - **Maroon second bar, left links:** Join (`/join/`), Rules (`/rules/`), Server address (`/join/#server-address`) and News (`/news/`).
-- **Search box (right side of the second bar):** a stub for now. It is shown but does nothing. Almira's plan for later: while typing, a list drops down with fuzzy matches (spelling does not have to be exact), each with its kind (fandom or member) on the right. Under those matches, always visible, are three lines: Search the typed words in Fandoms, in Members, or in Posts. Picking one opens that page with the search applied. "Posts" means the News items.
+- **Search box (right side of the second bar):** built in Part L (see "The search box" in Part 1). While typing, a list drops down under the box with fuzzy matches (spelling does not have to be exact), each with its kind (member, fandom or post) on the right. Under those matches, always visible, are three lines: Search the typed words in Fandoms, in Members, or in Posts. Picking one opens that page with the search applied. "Posts" means the News items. The list is a small box with the same look as the other boxes: light body, dotted lines, and the highlighted line in maroon with white text.
 - **Header figure:** a plain empty box with a label until the real one is drawn.
 - **Big hero button:** two lines, like the original. Top line in white: "Join the SMP". Bottom line in orange: "Ask an admin". The bottom line is a first try and can change. The whole hero is a link to the Join page.
 - **Hero facts list:** placeholders for now. Use four short lines with round bullets. The first one is bold and red-orange like in the screenshot, the others are bold black. Write real facts later.
@@ -302,6 +317,7 @@ Built in Part DA with one breakpoint, 700 px wide and smaller (at the end of `pu
 - Boxes in one column. Box title bars are 44 px tall. A whole row is the tap target, not only its title.
 - Member page: the infobox goes on top, full width.
 - Text is 16 px.
+- Search box: it takes the full width under the links. The dropdown is as wide as the box, and its lines are 44 px tall.
 
 What this section asks for:
 

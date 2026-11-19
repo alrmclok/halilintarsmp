@@ -5,6 +5,28 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
 import Row from '../../components/Row.astro';
+import { toSlug } from '../../lib/slug.js';
+
+// Line 1 under the name: "handle · pronouns" (no pronouns = only the handle).
+const handleLine = (m) => (m.pronouns ? `${m.handle} · ${m.pronouns}` : m.handle);
+
+// Line 2: the fandoms as links, at most FANDOM_LIMIT, then "and 2 more" linking to the member's page.
+// A fandom with no letters or numbers has no page, so it stays plain text.
+const FANDOM_LIMIT = 3;
+const fandomLine = (m) => {
+  const parts = [];
+  m.fandoms.slice(0, FANDOM_LIMIT).forEach((f, i) => {
+    const slug = toSlug(f);
+    if (i > 0) parts.push({ text: ', ' });
+    parts.push(slug ? { text: f, href: `/fandoms/${slug}/` } : { text: f });
+  });
+  const more = m.fandoms.length - FANDOM_LIMIT;
+  if (more > 0) {
+    parts.push({ text: ', ' });
+    parts.push({ text: `and ${more} more`, href: `/members/${m.slug}/` });
+  }
+  return parts.length ? parts : undefined;
+};
 
 const entries = await getCollection('members');
 const members = entries
@@ -12,9 +34,20 @@ const members = entries
   .sort((a, b) => a.name.localeCompare(b.name));
 ---
 <Base title="Members" description="The members of the HalilintarSMP.">
-  <Box title="Members">
-    {members.map((m) => (
-      <Row href={`/members/${m.slug}/`} title={m.name} sub={`${m.handle} · ${m.fandoms.join(', ')}`} pic={m.picture} />
-    ))}
+  <Box title={`Members (${members.length})`}>
+    <!-- Two columns on a computer, one on a phone. A row has: picture, name, "handle · pronouns" and the fandoms.
+         public/search.js reads the first small line (the handle) for the search filter, so keep the handle first on that line. -->
+    <div class="list-cols">
+      {members.map((m) => (
+        <Row
+          href={`/members/${m.slug}/`}
+          title={m.name}
+          sub={handleLine(m)}
+          intro={m.intro}
+          note={fandomLine(m)}
+          pic={m.picture}
+        />
+      ))}
+    </div>
   </Box>
 </Base>

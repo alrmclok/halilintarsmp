@@ -1,50 +1,110 @@
 ---
-// One picture's own page: the big picture, its description and credit. Click the picture to open it in a lightbox.
-// A picture with no file yet shows a gray box. Made from gallery.json, one page per entry.
-import { getCollection } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import Parts from '../../components/Parts.astro';
-import { getGallery } from '../../lib/gallery.js';
-import { buildLookup, linkMentions, linkCredit } from '../../lib/mentions.js';
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Parts from "../../components/Parts.astro";
+import { getGallery } from "../../lib/gallery.js";
+import { buildLookup, linkMentions, linkCredit } from "../../lib/mentions.js";
 
 export async function getStaticPaths() {
-  return getGallery().map((g) => ({ params: { slug: g.slug }, props: { picture: g } }));
+  const all = getGallery();
+  return all.map((g, i) => ({
+    params: { slug: g.slug },
+    props: {
+      picture: g,
+      prev: all[i - 1] ?? null,
+      next: all[i + 1] ?? null,
+    },
+  }));
 }
 
-const { picture } = Astro.props;
-const entries = await getCollection('members');
+const { picture, prev, next } = Astro.props;
+const entries = await getCollection("members");
 const lookup = buildLookup(entries.map((e) => ({ ...e.data, slug: e.id })));
 ---
+
 <Base title={picture.title} description={picture.description}>
   <article class="article">
     <h1>{picture.title}</h1>
-    {picture.description && <p class="lead"><Parts parts={linkMentions(picture.description, lookup)} /></p>}
 
-    <figure class="gallery-full">
+    <!-- Dark Matte Stage (Classic DeviantArt / Photobucket look) -->
+    <figure class="gallery-stage">
       {picture.file ? (
-        <button type="button" class="zoom" id="open-lightbox" aria-label="Open the picture full size">
+        <button
+          type="button"
+          class="zoom"
+          id="open-lightbox"
+          aria-label="Open full size"
+        >
           <img src={picture.file} alt={picture.alt} />
+          <span class="zoom-badge">[+] Full View</span>
         </button>
       ) : (
-        <div class="ph" role="img" aria-label="No picture yet"></div>
+        <div class="ph" role="img" aria-label="No picture yet">
+          [ NO IMAGE UPLOADED ]
+        </div>
       )}
     </figure>
 
-    <p class="gallery-meta"><Parts parts={linkCredit(picture.credit, lookup)} />{picture.added && ` · Added ${picture.added}`}</p>
-    <p class="categories"><a href="/gallery/">Back to the gallery</a></p>
+    <!-- Classic "Deviation Information" / Metadata Box -->
+    <div class="box gal-details">
+      <div class="box-head">
+        <h2>Image Details &amp; Notes</h2>
+        {picture.file && (
+          <a href={picture.file} target="_blank" rel="noopener" class="more">
+            Direct File
+          </a>
+        )}
+      </div>
+      <div class="box-body gal-grid">
+        <div class="gal-desc">
+          {picture.description ? (
+            <p>
+              <Parts parts={linkMentions(picture.description, lookup)} />
+            </p>
+          ) : (
+            <p class="muted">
+              <em>No artist description provided.</em>
+            </p>
+          )}
+        </div>
+        <dl class="info-list gal-specs">
+          <dt>Artist / Credit</dt>
+          <dd>
+            <Parts parts={linkCredit(picture.credit, lookup)} />
+          </dd>
+          {picture.added && (
+            <>
+              <dt>Submitted</dt>
+              <dd>{picture.added}</dd>
+            </>
+          )}
+          {picture.file && (
+            <>
+              <dt>Filename</dt>
+              <dd>
+                <code>{picture.file.split("/").pop()}</code>
+              </dd>
+            </>
+          )}
+        </dl>
+      </div>
+    </div>
   </article>
 
   {picture.file && (
     <dialog id="lightbox" class="lightbox" aria-label={picture.title}>
       <img src={picture.file} alt={picture.alt} />
-      <button type="button" class="lb-close">Close</button>
+      <button type="button" class="lb-close">
+        [X] Close Window
+      </button>
     </dialog>
   )}
 </Base>
 
 <script>
-  // Lightbox: the picture opens in a dialog. A click anywhere in it, or the Esc key, closes it.
-  const dlg = document.getElementById('lightbox') as HTMLDialogElement | null;
-  document.getElementById('open-lightbox')?.addEventListener('click', () => dlg?.showModal());
-  dlg?.addEventListener('click', () => dlg.close());
+  const dlg = document.getElementById("lightbox") as HTMLDialogElement | null;
+  document
+    .getElementById("open-lightbox")
+    ?.addEventListener("click", () => dlg?.showModal());
+  dlg?.addEventListener("click", () => dlg.close());
 </script>

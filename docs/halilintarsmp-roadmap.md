@@ -354,7 +354,7 @@ Notes:
 
 ## Part K: News, Join and Rules pages
 
-Status: In progress
+Status: Done
 
 Goal: the links that still point to `#` lead to real pages. Almira picked pages, not pop-ups.
 
@@ -363,7 +363,7 @@ Goal: the links that still point to `#` lead to real pages. Almira picked pages,
 - [x] Rules page (`/rules/`): the second-bar link "Rules" leads here.
 - [x] Discord and WhatsApp links in the black corner box: decided to send both to the Join page (see Notes).
 - [x] Add the three pages to the pages table and the folder layout in the main document.
-- [ ] Check every new page on a phone (Almira).
+- [x] Check every new page on a phone (Almira).
 
 Notes:
 
@@ -374,7 +374,33 @@ Notes:
 - Discord and WhatsApp: Almira decided both corner links go to the Join page, because a WhatsApp number does not belong on a public website. The labels still say "Discord" and "WhatsApp". Almira can rename them (for example "Join"), since they no longer open those apps.
 - Rules page: one Box with placeholder text and three placeholder rules.
 - Built here in a small test Astro project (5.14.1) with the real `Base`, `Box` and `Row`: the three pages build, the titles show, the order is newest first, the `server-address` id exists and the bar links are right. The edited `index.astro` was not built here, because it needs the whole project. Almira checks it with `npm run build` and on Vercel.
-- Still to do by Almira: look at `/news/`, `/join/`, `/rules/` and the home page on a phone, then set this part to Done.
+- Almira checked the new pages and the home page, and said Part K is done. Small changes will be made locally by Almira.
+
+---
+
+## Part L: Search box
+
+Status: Done
+
+Goal: the search box in the maroon bar works, as planned in the main document (Part 2 section 4).
+
+- [x] `src/pages/search.json.js`: makes `/search.json` when the site builds, from the member files, the fandoms and `news.json`.
+- [x] `public/search.js`: the dropdown with fuzzy matches (each with its kind on the right) and, always under them, the three lines "Search ... in Fandoms / Members / Posts".
+- [x] The three list pages (`/members/`, `/fandoms/`, `/news/`) hide the rows that do not match when the address ends in `?q=words`, with a note and a "Show all" link.
+- [x] `Base.astro`: the real search form and the script link. `public/style.css`: the dropdown, the note, the phone sizes.
+- [x] Look at it on Vercel and on a phone (Almira).
+
+Notes:
+
+- New files: `src/pages/search.json.js`, `public/search.js`. Changed: `src/layouts/Base.astro` (the form, and one script line at the end) and `public/style.css` (a new block before the phone rules, three phone lines). The three list pages did not change: the script finds their rows by itself (only `/members/`, `/fandoms/` and `/news/`).
+- No outside library. The fuzzy matching is a few small functions in `search.js`. It cleans both sides (capitals, accents and symbols do not matter), then scores each entry: same, starts with, a word starts with, inside, letters in order (short names only), or a few typos (a swapped, missing, extra or wrong letter; 1 allowed for words of 4 to 5 letters, 2 for 6 or more). A member also matches on their handle, a bit lower. At most 6 matches show.
+- A news item has no page of its own, so picking a post opens `/news/` filtered to its title.
+- Enter or GO: the highlighted line if there is one, else the first match, else "Search in Members" (that last choice is the AI's own, see "Open decisions"). Arrow keys move the highlight, Escape closes the list.
+- Without JavaScript the form still works: GO opens `/members/?q=...`.
+- Each list filter only searches its own kind (Almira's choice): Members = name and handle, Fandoms = fandom name, News = title and summary. The row text is read from the page, so if the Members row line (`handle · fandoms`) in `members/index.astro` changes, `searchedText()` in `search.js` must change too.
+- The word filter on the list pages also forgives a typo ("grain" finds "Grian"), and the search box shows the typed words again on those pages.
+- Names with only non-Latin letters (for example only Arabic or Japanese letters) are cleaned to nothing, like in `toSlug`, so they cannot be found. Latin names with accents work.
+- Tested here: a real Astro build (5.14.1) of a small test project with the real `Base.astro`, `Row.astro`, `slug.js`, `fandoms.js`, the three list pages and three test members: `/search.json` is made with all kinds, and a fake browser (jsdom) ran the dropdown, the keys and the filter on the built pages. `Box.astro` and `Parts.astro` were simple stand-ins. Almira checked it on the real site and said it is done.
 
 ---
 
@@ -389,7 +415,7 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
 - Tab icon and link preview stay putinxtrump.png, and the footer line stays futer, until Almira changes them.
 - Which folder holds member pictures. The main document says only "path to a small square picture", so the guide tells members to send theirs to Almira for now. (Part J)
-- When to build the search box (the plan is in the main document, Part 2 section 4). Suggestion: a Part L after this one. It needs a small search list made when the site builds (members, fandoms, news) and a little script.
+- What Enter does in the search box when no line is highlighted: now it opens the first match, and if there is none it searches the Members. Almira can change this. (Part L)
 - Which files Katz and Kate may edit. The guide suggests data files, pictures and custom page folders only, and "ask Almira first" for code (`.astro`, `.js`, `.ts`, `style.css`). Almira can loosen or tighten this. (Part J)
 
 ## Progress log
@@ -410,4 +436,5 @@ One line per finished part: date, part, what was done.
 - 2026-11-18, Part I: link-preview tags with full addresses, two small phone fixes, ink splatters (SVG) and the stripe strip; real phone tested.
 - 2026-11-19, Part EA: optional member pronouns (infobox and Featured member) and automatic fandom pictures from `public/fandoms/`; made by Almira with another AI, now in the docs. Part H status corrected to Done.
 - 2026-11-19, Part J: `docs/guide-for-editors.md` written for Katz and Kate.
-- 2026-11-19, Part K: News, Join and Rules pages built (placeholder words, masked server address); corner, second-bar, hero and News box links now lead to them. Phone check still open.
+- 2026-11-19, Part K: News, Join and Rules pages built (placeholder words, masked server address); corner, second-bar, hero and News box links now lead to them. Phone check done by Almira.
+- 2026-11-19, Part L: search box built: a list made at build time (`/search.json`), `public/search.js` with the dropdown and fuzzy matching, and the filter on the Members, Fandoms and News lists. Almira checked it and said it is done.

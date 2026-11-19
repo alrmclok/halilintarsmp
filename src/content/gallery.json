@@ -2,9 +2,17 @@
   {
     "title": "putin x trump",
     "description": "who even requested this...",
-    "credit": "Member One",
+    "credit": "alrmclok",
     "file": "/putinxtrump.png",
     "alt": "putin x trump doing sumthing",
     "added": "2026-11-18"
+  },
+  {
+    "title": "yuri vs yuri",
+    "description": "image test",
+    "credit": "alrmclok",
+    "file": "/gallery/yuri.jpg",
+    "alt": "yuri gagarin vs yuri",
+    "added": "2026-11-19"
   }
 ]

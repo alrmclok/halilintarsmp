@@ -54,11 +54,12 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
           <a href="/join/#server-address">Server address</a>
           <a href="/news/">News</a>
         </div>
-        <!-- Search is a stub for now: it does nothing yet. -->
-        <form class="search" role="search" onsubmit="return false">
+        <!-- Search box. public/search.js adds the dropdown. Without JavaScript, GO searches the Members list. -->
+        <form class="search" role="search" action="/members/" method="get">
           <span>Search</span>
-          <input type="search" aria-label="Search" readonly />
-          <button type="button" disabled>GO</button>
+          <input id="site-search" type="search" name="q" aria-label="Search" autocomplete="off" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="search-drop" aria-autocomplete="list" />
+          <button type="submit">GO</button>
+          <div class="search-drop" id="search-drop" role="listbox" aria-label="Search results" hidden></div>
         </form>
       </div>
       <main class="page"><slot /></main>
@@ -73,5 +74,6 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
         <p class="copy">futer</p>
       </footer>
     </div>
+    <script is:inline src="/search.js" defer></script>
   </body>
 </html>
