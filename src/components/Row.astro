@@ -4,7 +4,7 @@
 // sub and note can be a plain string, or "parts" (a list from lib/mentions.js) when they hold member links.
 // When the row has a link (href), the picture is a link too.
 import Parts from './Parts.astro';
-const { href, title, sub, intro, note, pic, alt } = Astro.props;
+const { href, title, sub, intro, note, pic, alt, atHandle } = Astro.props;
 ---
 <div class="row">
   {pic && (
@@ -18,7 +18,11 @@ const { href, title, sub, intro, note, pic, alt } = Astro.props;
   )}
   <div>
     <span class="row-title">{href ? <a href={href}>{title}</a> : title}</span>
-    {sub && <span class="row-sub">{Array.isArray(sub) ? <Parts parts={sub} /> : sub}</span>}
+    {sub && (
+      <span class="row-sub">
+        {atHandle && '@'}{Array.isArray(sub) ? <Parts parts={sub} /> : sub}
+      </span>
+    )}
     {intro && <span class="row-sub row-intro">{intro}</span>}
     {note && <span class="row-sub">{Array.isArray(note) ? <Parts parts={note} /> : note}</span>}
   </div>

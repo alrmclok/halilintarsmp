@@ -9,7 +9,7 @@ import FeaturedMember from '../components/FeaturedMember.astro';
 import news from '../content/news.json';
 import { getFandoms } from '../lib/fandoms.js';
 import { getGallery } from '../lib/gallery.js';
-import { buildLookup, linkCredit } from '../lib/mentions.js';
+import { buildLookup, linkCredit, linkMentions } from '../lib/mentions.js';
 
 const SHOW = 3; // how many rows each list box shows on the home page
 
@@ -54,10 +54,10 @@ const latestNews = news.slice(0, SHOW);
       {fandoms.map((f) => <Row href={`/fandoms/${f.slug}/`} title={f.name} sub={`${f.count} ${f.count === 1 ? 'member' : 'members'}`} pic={f.pic} />)}
     </Box>
     <Box title="Members" moreHref="/members/" moreLabel="More members">
-      {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={m.handle} pic={m.picture} />)}
+      {newestMembers.map((m) => <Row href={`/members/${m.slug}/`} title={m.name} sub={linkMentions(m.handle, lookup)} atHandle pic={m.picture} />)}
     </Box>
     <Box id="news" title="News" moreHref="/news/" moreLabel="More news">
-      {latestNews.map((n) => <Row href="/news/" title={n.title} sub={`by ${n.by}, ${n.date}`} pic={n.pic} />)}
+      {latestNews.map((n) => <Row href="/news/" title={n.title || (n.summary.length > 50 ? n.summary.slice(0, 50) + '...' : n.summary)} sub={linkCredit(n.by, lookup).concat([{ text: `, ${n.date}` }])} />)}
     </Box>
   </div>
 </Base>

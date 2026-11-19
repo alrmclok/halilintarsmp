@@ -4,14 +4,22 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
+import Parts from '../../components/Parts.astro';
+import { buildLookup, linkMentions } from '../../lib/mentions.js';
 import { toSlug } from '../../lib/slug.js';
 
 export async function getStaticPaths() {
   const entries = await getCollection('members', (e) => !e.data.custom);
-  return entries.map((e) => ({ params: { slug: e.id }, props: { member: e.data } }));
+  const members = entries.map((e) => ({ ...e.data, slug: e.id }));
+  const lookup = buildLookup(members);
+
+  return entries.map((e) => ({
+    params: { slug: e.id },
+    props: { member: e.data, lookup }
+  }));
 }
 
-const { member } = Astro.props;
+const { member, lookup } = Astro.props;
 const edited = member.edited || member.joined;
 const paragraphs = (text) => text.split(/\n\s*\n/);
 ---
@@ -42,12 +50,12 @@ const paragraphs = (text) => text.split(/\n\s*\n/);
     </aside>
 
     <h1>{member.name}</h1>
-    <p class="lead">{member.intro}</p>
+    <p class="lead"><Parts parts={linkMentions(member.intro, lookup)} /></p>
 
     {member.sections.map((s) => (
       <section>
-        <h2>{s.heading}</h2>
-        {paragraphs(s.text).map((p) => <p>{p}</p>)}
+        <h2><Parts parts={linkMentions(s.heading, lookup)} /></h2>
+        {paragraphs(s.text).map((p) => <p><Parts parts={linkMentions(p, lookup)} /></p>)}
       </section>
     ))}
 

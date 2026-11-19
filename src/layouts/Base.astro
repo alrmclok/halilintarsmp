@@ -34,6 +34,14 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
     <link rel="icon" type="image/png" href={PREVIEW_IMAGE} />
   </head>
   <body>
+  <div class="corner-fig-wrap left-wrap">
+      <span class="fig-close" title="Remove figure">× Remove</span>
+      <img src="/figures/figuret.png" alt="" class="corner-fig" />
+    </div>
+    <div class="corner-fig-wrap right-wrap">
+      <span class="fig-close" title="Remove figure">× Remove</span>
+      <img src="/figures/figurep.png" alt="" class="corner-fig" />
+    </div>
     <div class="wrap">
       <header class="top">
         <a class="logo" href="/"><img src="/halilintarsmp-logo.png" alt="HalilintarSMP" /></a>
@@ -75,5 +83,13 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
       </footer>
     </div>
     <script is:inline src="/search.js" defer></script>
+    <script is:inline>
+      document.querySelectorAll('.corner-fig-wrap').forEach((wrap) => {
+        wrap.addEventListener('click', () => {
+          wrap.classList.add('fade-out');
+          setTimeout(() => wrap.remove(), 500);
+        });
+      });
+    </script>
   </body>
 </html>
