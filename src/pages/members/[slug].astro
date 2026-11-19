@@ -31,8 +31,12 @@ const paragraphs = (text) => text.split(/\n\s*\n/);
           )}
           <dt>Fandoms</dt>
           <dd>{member.fandoms.length ? member.fandoms.map((f, i) => (<>{i > 0 && ', '}<a href={`/fandoms/${toSlug(f)}/`}>{f}</a></>)) : 'None yet'}</dd>
-          <dt>Joined</dt>
-          <dd>{member.joined}</dd>
+          {member.joined && (
+            <>
+              <dt>Joined</dt>
+              <dd>{member.joined}</dd>
+            </>
+          )}
         </dl>
       </Box>
     </aside>
