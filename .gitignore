@@ -5,4 +5,4 @@ dist/
 .env
 .env.*
 !.env.example
-sumthing-google-secret.json
+sumthing-google-secret.json.vercel/
