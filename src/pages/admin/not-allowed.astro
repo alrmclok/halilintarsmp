@@ -1,0 +1,12 @@
+---
+import Base from '../../layouts/Base.astro';
+import Box from '../../components/Box.astro';
+
+export const prerender = false;
+---
+<Base title="Not allowed" description="This Google account is not an admin.">
+  <Box title="Not allowed">
+    <p>This Google account is not on the admin list. If you think it should be, ask Almira to add your email.</p>
+    <p><a href="/admin/login/">Try another account</a> · <a href="/">Back to the site</a></p>
+  </Box>
+</Base>

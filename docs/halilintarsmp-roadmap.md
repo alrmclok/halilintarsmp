@@ -223,7 +223,7 @@ Goal: the gallery as a list with captions.
 Notes:
 
 - New files: `src/lib/gallery.js` (reads and tidies the list, newest first; used by the home page and the Gallery page) and `src/pages/gallery/index.astro` (one Box, one row per picture: thumbnail, title, description, "by credit"). New empty folder `public/gallery/` (with a `.gitkeep`) for the pictures.
-- Changed: `gallery.json` has a new field `alt`. `Row.astro` has two new optional props: `alt` (what the picture shows) and `note` (a second small line, used for the credit). `src/pages/index.astro` now gets the highlights from `await getGallery()`.
+- Changed: `gallery.json` has a new field `alt`. `Row.astro` has two new optional props: `alt` (what the picture shows) and `note` (a second small line, used for the credit). `src/pages/index.astro` now gets the highlights from `getGallery()`.
 - Each Gallery row links to that picture's own page (see Part FA).
 - Pictures are not shrunk by the site (files in `public/` are served as they are). The rule is in the main document: about 1200 px wide at most and under 300 KB. Almira can change this number.
 - The gallery list is not checked by Astro like the member files are. `gallery.js` gives safe defaults for a missing field instead.
@@ -429,20 +429,20 @@ Notes:
 
 ## Part M: Supabase setup, tables and import
 
-Status: In progress
+Status: Done
 
 Goal: a Supabase project with the tables, the access rules and all current content copied in. Nothing on the public site changes yet.
 
 - [x] Almira made the Supabase project.
 - [x] `.env.example` lists the setting names without values.
-- [ ] Almira makes `.env` with the three keys for this part and adds `.env` to `.gitignore` (steps in the chat).
+- [x] Almira makes `.env` with the three keys for this part and adds `.env` to `.gitignore` (steps in the chat).
 - [x] `supabase/schema.sql`: the tables from Part 3 section 3.3, final names and types, and the read rules (the public key reads only rows that are not hidden, and cannot write).
-- [ ] Almira runs `supabase/schema.sql` in the Supabase SQL Editor.
+- [x] Almira runs `supabase/schema.sql` in the Supabase SQL Editor.
 - [x] `scripts/import-json.mjs`: copies `src/content/members/*.json`, `gallery.json` and `news.json` into the tables, builds the fandom list from the members and links them. Safe to run again without making doubles.
 - [x] Each member `slug` equals the old file name, and each gallery `slug` equals its old address, so no address changes.
 - [x] Pictures keep their current paths in `public/`.
-- [ ] Almira runs `npm run db:import:dry`, then `npm run db:import`, and compares the counts with the JSON files.
-- [ ] Almira runs `npm run db:check`: the public key cannot write and cannot read hidden rows.
+- [x] Almira runs `npm run db:import:dry`, then `npm run db:import`, and compares the counts with the JSON files.
+- [x] Almira runs `npm run db:check`: the public key cannot write and cannot read hidden rows.
 - [ ] Almira runs `supabase/migrations.sql` once in the SQL Editor (drops the unused `site_text` table), then `npm run db:check` again.
 - [x] Update Part 3 in the main document where the real tables differ from the draft.
 
@@ -459,46 +459,68 @@ Notes:
 - The import fills `fandoms.picture` from `public/fandoms/`. Four pictures there match no fandom today (`deltarune.jpg`, `multifandom.jpg`, `placeholder.png`, `undertale.jpg`), so they are not used, the same as on the site now.
 - The import copies fields as they are and does not fix wording. It checks that `joined`, `edited` and `added` are real dates, and stops before writing if a file is wrong.
 - A normal import run overwrites existing rows with the file contents. After the dashboards are in use, run it only with `--only-new`, or not at all.
+- Almira confirmed in the Part N chat: the `.env` is filled, the schema was run, the data is in the database and correct, and `db:check` passed. `migrations.sql` was not mentioned, so its box stays open. The empty `site_text` table is harmless, and `schema.sql` no longer makes it.
 
 ---
 
 ## Part N: Public pages read from Supabase
 
-Status: Not started
+Status: Done
 
 Goal: the public site is built from the database and looks and works exactly as before.
 
-- [ ] `src/lib/db.js`: one small client and the shared loaders (members, fandoms, gallery, news).
-- [ ] Replace the JSON reading in the home page, the Members, Fandoms, Gallery, News and Credits pages, `mentions.js`, `fandoms.js`, `gallery.js` and `search.json.js`.
-- [ ] Keep the warning in the build log for a bad row, like the old member schema did.
-- [ ] Fandom pictures come from the `fandoms` table. Until Part R, keep the `public/fandoms/` scan as a fallback for a fandom with no picture.
-- [ ] Add the `@astrojs/vercel` adapter. Keep the site prerendered by default.
-- [ ] Set the Supabase settings in Vercel. Make the Vercel deploy hook and keep its address in a setting.
-- [ ] Check: the list of built addresses is the same as before, the search works, custom member pages still work, and a build with Supabase unreachable fails clearly.
+- [x] `src/lib/db.js`: one small client and the shared loaders (members, fandoms, gallery, news).
+- [x] Replace the JSON reading in the home page, the Members, Fandoms, Gallery, News and Credits pages, `mentions.js`, `fandoms.js`, `gallery.js` and `search.json.js`.
+- [x] Keep the warning in the build log for a bad row, like the old member schema did.
+- [x] Fandom pictures come from the `fandoms` table. Until Part R, keep the `public/fandoms/` scan as a fallback for a fandom with no picture.
+- [x] Add the `@astrojs/vercel` adapter. Keep the site prerendered by default.
+- [x] Set the Supabase settings in Vercel (the two `PUBLIC_` keys).
+- [ ] Make the Vercel deploy hook and keep its address in `VERCEL_DEPLOY_HOOK_URL`. Moved to Part P, where the Publish button first needs it.
+- [x] Check: the list of built addresses is the same as before, the search works, custom member pages still work, and a build with Supabase unreachable fails clearly.
 
 Notes:
 
 - The site must not call Supabase when a visitor opens a page. Only the build does.
 - Check what `news.astro` and the home News box do with a news item that has no `title`, and with a `pic`. The real data has both, and the old documents did not mention them. The `news` table keeps both.
 - Order: the home News box takes the first three by `position`. The News page sorts by `date`. Gallery sorts by `added`, newest first, and `position` breaks ties.
+- New file `src/lib/db.js` has the loaders `getMembers`, `getMemberEntries`, `getFandomRows`, `getGalleryRows` and `getNews`. It uses the public key, so hidden rows never come back. It reads in pages of 1000 rows, remembers each answer for the whole build, warns in the build log for a bad row (a member missing a required field, a section with no text), and stops the build with a clear message when Supabase cannot be read or the settings are missing.
+- The loaders give the same shapes as the old files, so the pages changed very little. `getMemberEntries()` returns `{ id, data }` like Astro's old content entries, so `e.id` and `e.data` still work in the pages. Part T can remove this bridge.
+- `getFandoms()` and `getGallery()` are now async, so the pages call them with `await`. A fandom's name, picture and description come from the `fandoms` table first. The `public/fandoms/` scan stays as the fallback until Part R.
+- Gallery addresses come from the `slug` column (made once at import), so no address changed. Order: `added` newest first, `position` breaks ties.
+- News: `by` is read from the `author` column. A missing `title` or `pic` comes back as `undefined`, like the old JSON.
+- `mentions.js` needed no change. `content.config.ts` and the JSON files stay until Part T, because the import still reads them.
+- `astro.config.mjs` now uses the `@astrojs/vercel` adapter (`^8.0.0` in `package.json`). Pages are still built ahead of time.
+- The build needs only the two `PUBLIC_` settings. The secret key is not used by the build.
+- In `npm run dev` each loader asks Supabase once, so a change in the database shows after the dev server restarts.
+- Important for editors: editing the JSON files no longer changes the site. Until Part P, change rows in the Supabase Table Editor (or edit the JSON and run `npm run db:import`), then rebuild the site (push a commit or press Redeploy in Vercel). `docs/guide-for-editors.md` still says the old way and needs fixing (Part T, or sooner if Katz or Kate start editing).
+- Almira ran `npm run build` on the real project: it passes with no errors. The AI only syntax-checked the new files here (no network, no Astro run).
+- Not checked in a chat: how `news.astro` and the home News box show an item with no `title` or with a `pic`, and what a build does when Supabase is unreachable (the code stops with a clear message, but nobody tried it on purpose).
+- Two slips while editing, both fixed: the find-and-replace also changed the function lines in `fandoms.js` and `gallery.js`, and `await getFandoms(...).slice(...)` needed brackets. Remember both if the pages are edited by search-and-replace again.
 
 ---
 
 ## Part O: Login and roles
 
-Status: Not started
+Status: Done
 
 Goal: Google login that lets in only the super-admin and the admins on the list.
 
-- [ ] Google Cloud OAuth client and Supabase Auth set up (Almira, with the AI's steps).
-- [ ] `/admin/login`, the callback, logout, and the "not allowed" page.
-- [ ] `src/middleware.ts` guards `/admin/*` and `/api/admin/*`.
-- [ ] Role check: the email in `SUPER_ADMIN_EMAIL` is super-admin, emails in `admins` are admins, everyone else is refused.
-- [ ] Check: a listed email gets in, an unlisted Google account is refused, logged out means no access, and the browser's public key cannot write.
+- [x] Google Cloud OAuth client and Supabase Auth set up (Almira, with the AI's steps).
+- [x] `/admin/login`, the callback, logout, and the "not allowed" page.
+- [x] `src/middleware.ts` guards `/admin/*` and `/api/admin/*`.
+- [x] Role check: the email in `SUPER_ADMIN_EMAIL` is super-admin, emails in `admins` are admins, everyone else is refused.
+- [x] Check: a listed email gets in, an unlisted Google account is refused, logged out means no access, and the browser's public key cannot write.
 
 Notes:
 
 - The first admin emails are added by hand in the table until Part S makes the screen for it.
+- New files: `src/lib/auth.ts`, `src/middleware.ts`, `src/env.d.ts`, and in `src/pages/admin/`: `login.astro`, `callback.ts`, `logout.ts`, `not-allowed.astro`, `index.astro`. New package: `@supabase/ssr`. Details of the flow and the rules are in Part 3, section 3.4 of the main document.
+- `/admin/index.astro` is a plain stand-in that shows who is signed in and a Log out button. Part P replaces it.
+- Settings: `SUPER_ADMIN_EMAIL` is in `.env` and in Vercel. `SUPABASE_SECRET_KEY` is now also in Vercel, because the server reads the `admins` table with it. It is never sent to a browser.
+- Supabase and Google Cloud were set up by Almira with the AI's steps (Google provider on, Email provider off, redirect addresses, Google app published). The first admin emails were added by hand in the `admins` table, in lowercase.
+- Almira tested on the real project: a listed email gets in, an unlisted Google account lands on the not-allowed page, and after Log out `/admin/` sends the person back to the login. The AI only syntax-checked the files here.
+- Known and accepted: Google's login screen shows the Supabase project address instead of the site name (see "Open decisions").
+- A rule to keep: the middleware must stay out of the public pages. Those pages are built ahead of time and must not read cookies. It returns early for every address outside `/admin` and `/api/admin`.
 
 ---
 
@@ -604,7 +626,7 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - Which files Katz and Kate may edit. The guide suggests data files, pictures and custom page folders only, and "ask Almira first" for code (`.astro`, `.js`, `.ts`, `style.css`). Almira can loosen or tighten this. The guide is rewritten in Part T. (Part J)
 - Who may press Publish. This plan says the super-admin only. Almira can allow admins too. (Part P)
 - The look of the dashboards. Proposed: the same Box and colors as the site, plain forms. (Part P)
-- Who the first admins are (their Google emails). (Part O)
+- Google's login screen shows the Supabase address, not the site name. To show the site name: verify the branding in Google Cloud (needs a domain Almira owns, and can take days or weeks) or buy a Supabase custom domain. Left as it is for now, since only admins see it. (Part O)
 - Should the member form have an "update my page" choice, or only new members? Without a member login a request cannot prove who sent it. (Part Q)
 - Keep the Web3Forms email as a backup notice for new requests, or drop it? (Part Q)
 - Only the hidden trap field plus a rate limit, or also a free captcha (for example Cloudflare Turnstile)? (Part Q)
@@ -634,3 +656,6 @@ One line per finished part: date, part, what was done.
 - 2026-11-19, Part L: search box built: a list made at build time (`/search.json`), `public/search.js` with the dropdown and fuzzy matching, and the filter on the Members, Fandoms and News lists. Almira checked it and said it is done.
 - 2026-11-20, Part LA: member form page (`member-form.astro`, Web3Forms email) written down. Made by Almira outside the parts list.
 - 2026-11-20, planning: Supabase move planned (Parts M to T). Decided: hybrid (public pages built, dashboards server-rendered), Google login, Publish button, add/remove admin emails, fandoms as their own list, member form becomes a request queue, keep-alive button plus weekly cron. Plan is Part 3 of the main document.
+- 2026-11-20, Part M: Supabase project, tables, access rules and import done; the data is in the database and `db:check` passes. `migrations.sql` not confirmed (harmless).
+- 2026-11-20, Part N: the public pages and the search list now read Supabase at build time through `src/lib/db.js`; `@astrojs/vercel` adapter added; build passes. Deploy hook moved to Part P.
+- 2026-11-20, Part O: Google login with roles (super-admin, admins list, everyone else refused), `/admin/*` and `/api/admin/*` guarded by `src/middleware.ts`, plain admin home. Tested by Almira.

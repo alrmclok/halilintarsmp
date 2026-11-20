@@ -1,0 +1,18 @@
+---
+// A first, plain admin home so there is somewhere to land after login. Part P replaces it with the real dashboard.
+import Base from '../../layouts/Base.astro';
+import Box from '../../components/Box.astro';
+
+export const prerender = false;
+
+const { email, role } = Astro.locals.user; // set by src/middleware.ts, which only lets allowed people reach this page
+---
+<Base title="Admin" description="HalilintarSMP admin.">
+  <Box title="Admin">
+    <p>Signed in as {email} ({role === 'super' ? 'super-admin' : 'admin'}).</p>
+    <p>The dashboards come in Part P.</p>
+    <form method="post" action="/admin/logout/">
+      <button type="submit">Log out</button>
+    </form>
+  </Box>
+</Base>

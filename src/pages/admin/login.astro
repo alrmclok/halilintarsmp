@@ -1,0 +1,35 @@
+---
+// The login page. The button is a small form: pressing it sends the person to Google.
+import Base from '../../layouts/Base.astro';
+import Box from '../../components/Box.astro';
+import { createAuthClient } from '../../lib/auth';
+
+export const prerender = false;
+
+let problem = Astro.url.searchParams.has('error') ? 'The login did not work. Please try again.' : '';
+
+if (Astro.request.method === 'POST') {
+  const supabase = createAuthClient(Astro.request, Astro.cookies);
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${Astro.url.origin}/admin/callback`,
+      queryParams: { prompt: 'select_account' },
+    },
+  });
+  if (error || !data.url) {
+    problem = 'Could not start the Google login. Please try again.';
+  } else {
+    return Astro.redirect(data.url);
+  }
+}
+---
+<Base title="Admin login" description="Login for the HalilintarSMP admins.">
+  <Box title="Admin login">
+    <p>Only the admins of the HalilintarSMP can sign in here. Use your Google account.</p>
+    {problem && <p role="alert">{problem}</p>}
+    <form method="post">
+      <button type="submit">Sign in with Google</button>
+    </form>
+  </Box>
+</Base>

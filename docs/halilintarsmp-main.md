@@ -8,7 +8,7 @@ It has three parts.
 
 - **Part 1** says what the site is and how it is built. It describes the real site.
 - **Part 2** says how the site looks (the style guide).
-- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. It is a plan, not the real site yet.
+- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M, N and O of it are built (the database, the public pages reading it, and the admin login). The dashboards and the rest are still planned.
 
 ## How the two files are used
 
@@ -41,7 +41,7 @@ Pages:
 | Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
 | News, Join, Rules | Three pages, built in Part K. News (`/news/`) lists every news item, newest first. Join (`/join/`) holds how to join and, in its own box, the server address (`/join/#server-address`). Rules (`/rules/`) is its own page. No pop-ups. They have no tab: they are reached from the maroon bar, the hero and the News box. The words on them are placeholders until the admins send the real ones |
 | Member form | `/member-form/`, not in the tabs. A page where a member fills in their profile (name, handle, pronouns, fandoms, joined date, intro, sections). Today it sends the profile to the admins by email as a ready-to-paste member file (Web3Forms). Part 3 turns it into a request that waits for approval |
-| Admin (planned) | `/admin/`, behind Google login. The dashboards for the admins and the super-admin. Not built yet, see Part 3 |
+| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (for now a plain page that shows who is signed in, with a Log out button). The dashboards come in Part P, see Part 3 |
 
 ## Who can change files
 
@@ -51,20 +51,22 @@ Three people have access to the GitHub project: Almira, Katz and Kate. Katz and 
 - Any of the three can put a custom page live. If none of them can, Almira does it.
 - Anyone who does not want to use GitHub can send the files to Almira, who adds them.
 
-Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. This is planned, not built.
+Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. The login is built (Part O). The dashboards are planned, not built.
 
 ## Tech stack (decided)
 
 - **The main site uses Astro.** It has reusable components (like the Box), shared layouts and pages made from data.
 - **Custom member pages use plain HTML, CSS and JS.** Each one is its own folder. A member only needs to know those three things, and does not need to know Astro.
 - **Hosting is Vercel**, connected to the GitHub project.
-- **There is no external database.** All the content lives in files in the project: member data files, the gallery list and the pictures. This stays true for the public pages until Part N of the roadmap, and for the whole project until Part T. A move to Supabase is under way: see Part 3. Part M has made the tables and the import, but the site still reads the files.
+- **The content lives in a Supabase database** (members, fandoms, gallery and news, plus the admin tables). The public pages are still built ahead of time: only the build reads the database, with the public key, under read-only rules (Part N). The old data files in `src/content/` are kept until Part T and are now used only by the import script. Pictures still live in `public/` until Part R. See Part 3.
 
-A change to the site is a code change:
+A change to the site's code is:
 
 1. Edit or add a file.
 2. Push it to GitHub.
 3. Vercel rebuilds the site by itself, in about a minute.
+
+A change to the content (members, fandoms, gallery, news) is different since Part N: editing the JSON files no longer changes the site, because the pages read the database. Until the dashboard exists (Part P), change a row in the Supabase Table Editor, or edit the JSON file and run `npm run db:import` on a computer that has the `.env` file (it overwrites rows with the file contents). Then the site must be built again: push a commit, or press Redeploy in Vercel. `guide-for-editors.md` still describes the old way and is rewritten in Part T.
 
 ### Folder layout
 
@@ -80,13 +82,15 @@ src/
   components/Parts.astro    shows text with member links inside it
   components/FeaturedMember.astro  the card in the home page "Featured member" box
   lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
-  lib/gallery.js            reads the gallery list, newest first, and gives each picture an address (home page and Gallery pages)
+  lib/db.js                 the one place the site reads Supabase (Part N): members, fandoms, gallery and news, with the public key. Used only while the site builds
+  lib/auth.ts               server only (Part O): the login client, the secret-key client, and getRole (super, admin or no access)
+  lib/gallery.js            reads the gallery rows from the database, newest first (same day: the old file order), for the home page and Gallery pages. The address of each picture is stored in its row. Async: use `await`
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
-  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages) and picks each fandom's picture from public/fandoms/
+  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages). Name, picture and description come from the `fandoms` table first; the folder public/fandoms/ is only a fallback until Part R. Async: use `await`
   pages/                    home, members, fandoms, gallery, about, credits, news, join, rules (and the search list, search.json.js)
   pages/about.astro         the About page
   pages/credits.astro       the Credits page: a note and every member's name, A to Z
-  pages/news.astro          the News page: every item in news.json, newest first
+  pages/news.astro          the News page: every news item from the database, newest first
   pages/join.astro          the Join page: how to join, and the server address (a line at the top of the file)
   pages/rules.astro         the Rules page
   pages/member-form.astro   the member form (sends a profile to the admins, see Part 3)
@@ -97,10 +101,13 @@ src/
   pages/fandoms/[slug].astro  one fandom page: its members
   pages/gallery/index.astro   the Gallery list (two columns)
   pages/gallery/[slug].astro  one picture's own page, with a lightbox
-  content.config.ts         what a member data file must contain
-  content/members/          one data file per member
-  content/gallery.json      the gallery list (see "The gallery data file")
-  content/news.json         the news list
+  pages/admin/              the admin login (Part O): login.astro, callback.ts, logout.ts, not-allowed.astro, and index.astro (a plain page for now). Server-rendered (prerender = false)
+  middleware.ts             guards /admin/* and /api/admin/* (Part O). Public pages are untouched
+  env.d.ts                  tells the editor that Astro.locals.user exists (set by the middleware)
+  content.config.ts         what a member data file must contain (only checks the old files; removed in Part T)
+  content/members/          one data file per member (old format; now only read by the import script, until Part T)
+  content/gallery.json      the gallery list (old format; see "The gallery data file")
+  content/news.json         the news list (old format)
 public/
   style.css                 the shared colors and box look
   search.js                 the search box script: the dropdown with fuzzy matches, and the filter on the list pages
@@ -114,6 +121,7 @@ supabase/migrations.sql     changes to run once in the Supabase SQL Editor (migr
 scripts/import-json.mjs     copies the content files into Supabase (Part M). Safe to run again
 scripts/check-access.mjs    checks that the public key reads only visible rows and cannot write (Part M)
 .env.example                the names of the settings, without values. The real `.env` is never committed
+astro.config.mjs            Astro settings: the `@astrojs/vercel` adapter (pages are still built ahead of time; only the admin pages run on the server)
 ```
 
 ### How the custom pages work
@@ -124,6 +132,8 @@ scripts/check-access.mjs    checks that the public key reads only visible rows a
 - The starter folder in `templates/custom-member/` has a ready `index.html`, an empty `style.css`, an empty `script.js` and a link back to `/members/`. It sits outside `public/` so it is not shown on the site.
 
 ### The member data file
+
+> Since Part N the site reads the database, not this file. The file is only the source for `npm run db:import` and is removed in Part T. The fields below are still the fields of the database row.
 
 One JSON file per member in `src/content/members/`. The file name is the member's address: `member-one.json` becomes `/members/member-one/`.
 
@@ -146,7 +156,7 @@ One JSON file per member in `src/content/members/`. The file name is the member'
 A fandom can have a small picture. It shows in the rows of the Fandoms list and the home page Fandoms box. A fandom with no picture shows the gray square.
 
 - Put the picture in `public/fandoms/`. Any file type for a picture works (`.png`, `.jpg` and so on).
-- Nothing has to be written in a data file. When the site builds, `src/lib/fandoms.js` reads the folder, drops the extension from each file name, cleans the rest the same way as fandom names, and matches it to the fandom. So `fandom-a.png` and `Fandom A.jpg` both belong to "Fandom A". Capitals, spaces and symbols do not matter.
+- Nothing has to be written in a data file. When the site builds, `src/lib/fandoms.js` reads the folder, drops the extension from each file name, cleans the rest the same way as fandom names, and matches it to the fandom. So `fandom-a.png` and `Fandom A.jpg` both belong to "Fandom A". Capitals, spaces and symbols do not matter. Since Part N the `picture` column of the `fandoms` table is used first; this folder is only the fallback until Part R.
 - Keep one picture per fandom. Two files that clean to the same name are a mix-up.
 - Keep pictures small, like the gallery ones.
 
@@ -164,6 +174,8 @@ The search box in the maroon bar is built in Part L. Nothing has to be written i
 - Names written only in non-Latin letters are cleaned to nothing (like in `toSlug`), so the search cannot find them.
 
 ### The gallery data file
+
+> Since Part N the site reads the database, not this file. The file is only the source for `npm run db:import` and is removed in Part T. The fields below are still the fields of the database row.
 
 `src/content/gallery.json` is one list. Each picture is one entry. The picture files go in `public/gallery/`, and `file` is the address of the picture, for example `/gallery/my-picture.png`.
 
@@ -185,6 +197,8 @@ Member links in gallery text. They are made when the site builds, and only when 
 Keep pictures small: about 1200 px wide at most and under 300 KB each. Files in `public/` are served as they are, so nothing shrinks them for you.
 
 ### The news data file
+
+> Since Part N the site reads the database, not this file. The file is only the source for `npm run db:import` and is removed in Part T. The fields below are still the fields of the database row.
 
 `src/content/news.json` is one list. Each item is one entry. Keep the newest on top: the home page News box shows the first three items of the file. The News page sorts by `date` by itself.
 
@@ -418,9 +432,9 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 
 ---
 
-# Part 3: Supabase and the dashboards (planned)
+# Part 3: Supabase and the dashboards (Parts M, N and O built)
 
-Status: Part M is built (the tables, the access rules and the import, section 3.3). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. Until Part N, the real site still reads the files, not the database. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+Status: Parts M, N and O are built: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), and the Google login with roles (section 3.4). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
 
 ## 3.1 Why
 
@@ -428,7 +442,7 @@ The content moves from files in the project to a Supabase database. So people wh
 
 ## 3.2 How the pages get their data
 
-- **Hybrid.** The public pages (Home, Members, Fandoms, Gallery, News, Credits, About, Join, Rules and the search list) stay built pages, like now. When the site builds, they read Supabase instead of the JSON files. They are not made again for each visitor. About, Join and Rules keep their words in the page code.
+- **Hybrid.** The public pages (Home, Members, Fandoms, Gallery, News, Credits, About, Join, Rules and the search list) stay built pages, like now. When the site builds, they read Supabase instead of the JSON files (done in Part N, through `src/lib/db.js`). They are not made again for each visitor. About, Join and Rules keep their words in the page code.
 - **Server-rendered** (`export const prerender = false`, with the `@astrojs/vercel` adapter): only the dashboards, the login and its callback, and the endpoint that receives the member form.
 - **Publish button.** Saving in a dashboard writes to the database at once, but the public site does not change. The super-admin presses Publish, which calls a Vercel deploy hook, and the site rebuilds in about a minute. The dashboard shows how many changes are not published yet.
 - If Supabase is paused or down, the public site keeps working. A build would fail, and Vercel keeps showing the last working version.
@@ -475,6 +489,16 @@ The import (Part M):
 - Anyone else who signs in sees a "not allowed" page.
 - The dashboard is at `/admin/`. The server checks the role on every dashboard page and on every write. The secret key lives only on the server, never in the browser.
 - The public key in the browser can read published rows only and cannot write.
+
+Built in Part O:
+
+- **Files:** `src/lib/auth.ts` (the login client, the secret-key client, `getRole`), `src/middleware.ts` (the guard), `src/pages/admin/` (login, callback, logout, not-allowed, and a plain home), `src/env.d.ts` (the type of `Astro.locals.user`).
+- **Flow:** the login page has a button (a small form). It sends the person to Google. Google sends them to Supabase, and Supabase sends them to `/admin/callback`, which swaps the one-time code for a login cookie and checks the role. Allowed people land on `/admin/`. A person with no role is signed out at once and sees the not-allowed page.
+- **Role rules (`getRole`):** the email must come from a Google login and be confirmed. It is `super` when it equals `SUPER_ADMIN_EMAIL`, `admin` when it is in the `admins` table, and no access otherwise. Any doubt or database error means no access.
+- **The guard:** the middleware only acts on `/admin/*` and `/api/admin/*`, so the built public pages never read cookies. It asks Supabase who is logged in on every request (`getUser`, not the cookie alone), sends these pages with no-cache and noindex headers, and answers API calls with 401 (not logged in) or 403 (not allowed). A removed admin loses the login on the next request.
+- **Settings outside the code:** in Supabase, the Google provider is on with the Google client id and secret, the Email provider is off (so no one can make an account by email), and the Site URL and the Redirect URLs include `/admin/callback` for localhost:4321 and for the live site. In Google Cloud, the OAuth client is a Web application whose redirect address is the Supabase auth callback, and the app is published (not in test mode).
+- **First admins:** added by hand in the `admins` table, with the email in lowercase, until Part S makes the screen.
+- **Known and accepted:** Google's login screen shows the Supabase project address instead of the site name. It changes only after Google verifies the branding (needs a domain the project owner owns) or with a paid Supabase custom domain. Only admins see this screen.
 
 ## 3.5 Who can do what
 
@@ -524,8 +548,8 @@ Kept in `.env` (never committed) and in the Vercel settings. `.env.example` list
 |---|---|
 | `PUBLIC_SUPABASE_URL` | The project address |
 | `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | The public key (starts with `sb_publishable_`), read-only under the rules |
-| `SUPABASE_SECRET_KEY` | The strong key (starts with `sb_secret_`). Server only |
-| `SUPER_ADMIN_EMAIL` | Almira's Google email |
+| `SUPABASE_SECRET_KEY` | The strong key (starts with `sb_secret_`). Server only. Also set in Vercel since Part O (the login reads the `admins` table with it). The build does not use it |
+| `SUPER_ADMIN_EMAIL` | Almira's Google email. Used by the login since Part O, set in `.env` and in Vercel |
 | `VERCEL_DEPLOY_HOOK_URL` | The address the Publish button calls |
 | `CRON_SECRET` | Protects the weekly keep-alive call |
 
