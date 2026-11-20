@@ -10,6 +10,7 @@ import { toSlug } from '../../lib/slug.js';
 
 export async function getStaticPaths() {
   (await getMemberEntries()).filter((e) => !e.data.custom)
+  const entries = (await getMemberEntries()).filter((e) => !e.data.custom);
   const members = entries.map((e) => ({ ...e.data, slug: e.id }));
   const lookup = buildLookup(members);
 

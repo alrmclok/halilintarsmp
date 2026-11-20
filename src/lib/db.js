@@ -6,6 +6,15 @@ import { createClient } from '@supabase/supabase-js';
 
 const URL = import.meta.env.PUBLIC_SUPABASE_URL;
 const KEY = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+/**
+ * @typedef {{ heading: string, text: string }} Section
+ * @typedef {{ slug: string, name: string, handle: string, pronouns?: string, picture: string, joined: string, intro: string, custom: boolean, featured: boolean, edited?: string, sections: Section[], fandoms: string[] }} Member
+ * @typedef {{ id: string, data: Omit<Member, 'slug'> }} MemberEntry
+ * @typedef {{ slug: string, title: string, description: string, credit: string, file: string, alt: string, added: string, position: number }} GalleryRow
+ * @typedef {{ title?: string, pic?: string, by: string, date: string, summary: string }} NewsItem
+ * @typedef {{ name: string, picture?: string, description?: string }} FandomRow
+ */
+
 const PAGE = 1000; // Supabase returns at most 1000 rows per request, so we ask in pages
 
 let client;
@@ -19,13 +28,26 @@ function db() {
   return client;
 }
 
+/** @type {Map<string, Promise<any>>} */
 const cache = new Map();
-const once = (name, load) => {
+/**
+ * @template T
+ * @param {string} name
+ * @param {() => Promise<T>} load
+ * @returns {Promise<T>}
+ */
+function once(name, load) {
   if (!cache.has(name)) cache.set(name, load());
   return cache.get(name);
-};
+}
 
 // Reads a whole table, page by page. `order` is a list of [column, ascending]; id is added so pages never overlap.
+/**
+ * @param {string} table
+ * @param {string} columns
+ * @param {Array<[string, boolean]>} order
+ * @returns {Promise<any[]>}
+ */
 async function fetchAll(table, columns, order) {
   const rows = [];
   for (let from = 0; ; from += PAGE) {
@@ -45,7 +67,9 @@ async function fetchAll(table, columns, order) {
 // Members: { slug, name, handle, pronouns?, picture, joined, intro, custom, featured, edited?, sections, fandoms }
 // ---------------------------------------------------------------------------
 
+/** @returns {Section[]} */
 function cleanSections(slug, sections) {
+  /** @type {Section[]} */
   const ok = [];
   (Array.isArray(sections) ? sections : []).forEach((s, i) => {
     if (s && typeof s.text === 'string') {
@@ -57,6 +81,7 @@ function cleanSections(slug, sections) {
   return ok;
 }
 
+/** @returns {Promise<Member[]>} */
 export function getMembers() {
   return once('members', async () => {
     const rows = await fetchAll(
@@ -64,6 +89,7 @@ export function getMembers() {
       'id, slug, name, handle, pronouns, picture, joined, intro, custom, featured, edited, sections, member_fandoms(position, fandoms(name))',
       [['slug', true]]
     );
+    /** @type {Member[]} */
     const members = [];
     for (const r of rows) {
       if (!r.slug || !r.name || !r.handle || !r.joined || !r.intro) {
@@ -95,6 +121,7 @@ export function getMembers() {
 }
 
 // The same list shaped like Astro's old content entries ({ id, data }), so `e.id` and `e.data` in the pages keep working.
+/** @returns {Promise<MemberEntry[]>} */
 export async function getMemberEntries() {
   return (await getMembers()).map(({ slug, ...data }) => ({ id: slug, data }));
 }
@@ -103,6 +130,7 @@ export async function getMemberEntries() {
 // Fandoms: a Map of slug -> { name, picture, description }. fandoms.js uses it for pictures.
 // ---------------------------------------------------------------------------
 
+/** @returns {Promise<Map<string, FandomRow>>} */
 export function getFandomRows() {
   return once('fandoms', async () => {
     const rows = await fetchAll('fandoms', 'id, slug, name, picture, description', [['slug', true]]);
@@ -114,6 +142,7 @@ export function getFandomRows() {
 // Gallery: raw rows. gallery.js tidies and sorts them.
 // ---------------------------------------------------------------------------
 
+/** @returns {Promise<GalleryRow[]>} */
 export function getGalleryRows() {
   return once('gallery', () =>
     fetchAll('gallery', 'id, slug, title, description, credit, file, alt, added, position', [['position', true]])
@@ -124,6 +153,7 @@ export function getGalleryRows() {
 // News: { title?, pic?, by, date, summary } in file order (the home box takes the first three).
 // ---------------------------------------------------------------------------
 
+/** @returns {Promise<NewsItem[]>} */
 export function getNews() {
   return once('news', async () => {
     const rows = await fetchAll('news', 'id, title, pic, author, date, summary, position', [['position', true]]);

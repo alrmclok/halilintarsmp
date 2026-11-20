@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Member Wiki Form | HalilintarSMP</title><meta name="description" content="Submit your member profile details for the HalilintarSMP directory."><meta property="og:type" content="website"><meta property="og:site_name" content="HalilintarSMP"><meta property="og:title" content="Member Wiki Form | HalilintarSMP"><meta property="og:description" content="Submit your member profile details for the HalilintarSMP directory."><meta property="og:url" content="https://halilintarsmp.vercel.app/member-form/"><meta property="og:image" content="https://halilintarsmp.vercel.app/putinxtrump.png"><link rel="canonical" href="https://halilintarsmp.vercel.app/member-form/"><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/png" href="/putinxtrump.png"></head> <body> <div class="corner-fig-wrap left-wrap"> <span class="fig-close" title="Remove figure">× Remove</span> <img src="/figures/figuret.png" alt="" class="corner-fig"> </div> <div class="corner-fig-wrap right-wrap"> <span class="fig-close" title="Remove figure">× Remove</span> <img src="/figures/figurep.png" alt="" class="corner-fig"> </div> <div class="wrap"> <header class="top"> <a class="logo" href="/"><img src="/halilintarsmp-logo.png" alt="HalilintarSMP"></a> </header> <div class="navrow"> <nav class="tabs" aria-label="Main"> <a href="/">Home</a><a href="/members/">Members</a><a href="/fandoms/">Fandoms</a><a href="/gallery/">Gallery</a><a href="/about/">About</a> </nav> <div class="corner"> <a href="/join/">Discord</a> <a href="/join/">WhatsApp</a> </div> </div> <div class="subbar"> <div class="subbar-links"> <a href="/join/">Join</a> <a href="/rules/">Rules</a> <a href="/join/#server-address">Server address</a> <a href="/news/">News</a> </div> <!-- Search box. public/search.js adds the dropdown. Without JavaScript, GO searches the Members list. --> <form class="search" role="search" action="/members/" method="get"> <span>Search</span> <input id="site-search" type="search" name="q" aria-label="Search" autocomplete="off" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="search-drop" aria-autocomplete="list"> <button type="submit">GO</button> <div class="search-drop" id="search-drop" role="listbox" aria-label="Search results" hidden></div> </form> </div> <main class="page"> <div class="form-wrap"> <section class="box"> <div class="box-head"> <h2>Member Wiki Submission</h2>  </div> <div class="box-body"> <div id="form-status" class="status-banner" hidden></div> <form id="member-form" class="smp-form" action="https://api.web3forms.com/submit" method="POST"> <input type="hidden" name="access_key" value="xxxxx"> <input type="hidden" name="subject" value="HalilintarSMP — New Member Profile"> <input type="checkbox" name="botcheck" style="display: none;"> <p class="form-note">
+Fill out your details below to submit your page for the <strong>Members</strong> directory.
+        Fields marked with <span class="req">*</span> are required. For your profile picture, send your image directly to Almira.
+</p> <div class="field"> <label for="f-name">Display Name <span class="req">*</span></label> <input id="f-name" type="text" name="name" placeholder="Name shown on your wiki page" required> </div> <div class="field"> <label for="f-handle">Handle / Username <span class="req">*</span></label> <input id="f-handle" type="text" name="handle" placeholder="e.g. your handle or IGN" required> </div> <div class="field"> <label for="f-pronouns">Pronouns</label> <input id="f-pronouns" type="text" name="pronouns" placeholder="e.g. she/her, he/him, they/them"> </div> <div class="field"> <label for="f-fandoms">Fandoms</label> <input id="f-fandoms" type="text" name="fandoms" placeholder="Separate multiple fandoms with commas"> </div> <div class="field"> <label for="f-joined">When did you join HalilintarSMP?</label> <input id="f-joined" type="date" name="joined"> </div> <div class="field"> <label for="f-intro">Short Intro <span class="req">*</span></label> <textarea id="f-intro" name="intro" rows="2" placeholder="1–2 sentences shown at the top of your page and on your member card..." required></textarea> </div> <!-- Dynamic Wiki Sections Container --> <div id="sections-list"> <div class="section-block" data-section> <div class="section-bar"> <span class="section-num">Section 1</span> </div> <div class="field-inner"> <label>Heading <span class="req">*</span></label> <input type="text" data-sec-heading value="About" required> </div> <div class="field-inner"> <label>Text <span class="req">*</span></label> <textarea data-sec-text rows="5" placeholder="Write your wiki bio here. Leave an empty line between paragraphs..." required></textarea> </div> </div> </div> <div class="add-row"> <button type="button" class="btn-add" id="add-section-btn">+ Add Another Section</button> </div> <div class="form-actions"> <button type="submit" class="btn-submit" id="submit-btn">Send Profile</button> </div> </form> </div> </section> </div> </main> <footer> <div class="footer"> <ul> <li><a href="/">Home</a></li> <li><a href="/about/">About</a></li> <li><a href="/credits/">Credits</a></li> </ul> </div> <p class="copy">futer</p> </footer> </div> <script src="/search.js" defer></script> <script>
+      document.querySelectorAll('.corner-fig-wrap').forEach((wrap) => {
+        wrap.addEventListener('click', () => {
+          wrap.classList.add('fade-out');
+          setTimeout(() => wrap.remove(), 500);
+        });
+      });
+    </script> </body> </html> <script>
+  const form = document.getElementById('member-form');
+  const status = document.getElementById('form-status');
+  const btn = document.getElementById('submit-btn');
+  const sectionsList = document.getElementById('sections-list');
+  const addBtn = document.getElementById('add-section-btn');
+
+  function renumberSections() {
+    const blocks = sectionsList.querySelectorAll('[data-section]');
+    blocks.forEach((block, i) => {
+      block.querySelector('.section-num').textContent = `Section ${i + 1}`;
+    });
+  }
+
+  addBtn?.addEventListener('click', () => {
+    const count = sectionsList.querySelectorAll('[data-section]').length + 1;
+    const block = document.createElement('div');
+    block.className = 'section-block';
+    block.setAttribute('data-section', '');
+    block.innerHTML = `
+      <div class="section-bar">
+        <span class="section-num">Section ${count}</span>
+        <button type="button" class="btn-remove">Remove</button>
+      </div>
+      <div class="field-inner">
+        <label>Heading <span class="req">*</span></label>
+        <input type="text" data-sec-heading placeholder="e.g. Trivia, Builds, Lore, Favorites..." required />
+      </div>
+      <div class="field-inner">
+        <label>Text <span class="req">*</span></label>
+        <textarea data-sec-text rows="4" placeholder="Write section text... Leave an empty line between paragraphs." required></textarea>
+      </div>
+    `;
+    sectionsList.appendChild(block);
+    block.querySelector('input').focus();
+  });
+
+  sectionsList?.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-remove')) {
+      e.target.closest('[data-section]').remove();
+      renumberSections();
+    }
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    status.hidden = true;
+
+    const name = form.querySelector('[name="name"]').value.trim();
+    const handle = form.querySelector('[name="handle"]').value.trim();
+    const pronouns = form.querySelector('[name="pronouns"]').value.trim();
+    const joined = form.querySelector('[name="joined"]').value.trim();
+    const rawFandoms = form.querySelector('[name="fandoms"]').value;
+    const fandoms = rawFandoms
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const intro = form.querySelector('[name="intro"]').value.trim();
+
+    const sections = [];
+    sectionsList.querySelectorAll('[data-section]').forEach((block) => {
+      const heading = block.querySelector('[data-sec-heading]').value.trim();
+      const text = block.querySelector('[data-sec-text]').value.trim();
+      if (heading || text) {
+        sections.push({ heading, text });
+      }
+    });
+
+    const memberJson = {
+      name,
+      handle,
+      ...(pronouns && { pronouns }), // Includes pronouns only if they typed one
+      picture: '/putinxtrump.png',
+      fandoms,
+      joined,
+      intro,
+      custom: false,
+      sections,
+    };
+
+    const formData = new FormData();
+    formData.append('access_key', form.querySelector('[name="access_key"]').value);
+    formData.append('subject', `HalilintarSMP Member: ${name} (@${handle})`);
+    formData.append('name', name);
+    formData.append('handle', handle);
+    formData.append('Ready-to-Paste JSON', JSON.stringify(memberJson, null, 2));
+
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        },
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        status.className = 'status-banner status-ok';
+        status.textContent = 'Submitted! Your member profile has been sent to the admins.';
+        status.hidden = false;
+        form.reset();
+        const extras = sectionsList.querySelectorAll('[data-section]');
+        extras.forEach((el, idx) => {
+          if (idx > 0) el.remove();
+        });
+        renumberSections();
+      } else {
+        throw new Error(data.message || 'Submission failed');
+      }
+    } catch (err) {
+      status.className = 'status-banner status-err';
+      status.textContent = 'Something went wrong. Please try again or message an admin directly.';
+      status.hidden = false;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Profile';
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+</script>
