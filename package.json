@@ -9,7 +9,9 @@
     "preview": "astro preview",
     "db:import:dry": "node scripts/import-json.mjs --dry-run",
     "db:import": "node --env-file=.env scripts/import-json.mjs",
-    "db:check": "node --env-file=.env scripts/check-access.mjs"
+    "db:check": "node --env-file=.env scripts/check-access.mjs",
+    "db:move-pictures:dry": "node --env-file=.env scripts/move-pictures.mjs --dry-run",
+    "db:move-pictures": "node --env-file=.env scripts/move-pictures.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^9.0.5",

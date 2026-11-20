@@ -27,9 +27,9 @@ if (Astro.request.method === 'POST') {
 <Base title="Admin login" description="Login for the HalilintarSMP admins.">
   <Box title="Admin login">
     <p>Only the admins of the HalilintarSMP can sign in here. Use your Google account.</p>
-    {problem && <p role="alert">{problem}</p>}
+    {problem && <p role="alert" class="adm-err">{problem}</p>}
     <form method="post">
-      <button type="submit">Sign in with Google</button>
+      <button type="submit" class="adm-btn">Sign in with Google</button>
     </form>
   </Box>
 </Base>

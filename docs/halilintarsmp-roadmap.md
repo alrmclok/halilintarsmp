@@ -196,7 +196,7 @@ Notes:
 
 ## Part Q: Public requests and review
 
-Status: In progress
+Status: Done
 
 Goal: anyone can ask for a new member page, a change to a member page or a new fandom description. Admins review in the dashboard.
 
@@ -218,26 +218,29 @@ Notes:
 - The edit pages are built with the site, so they show the content of the last Publish. Two people editing the same page: the reviewer sees "Now" against "Proposed" and the last approval wins.
 - Not atomic: the rate limit reads then writes, so a burst can slip a request or two past it. Accepted.
 - Requests are never applied by themselves. See Part 3 section 3.6.
-- The AI only wrote the code here (no Astro run, no database). Nothing tested yet.
+- Tested by Almira on 2026-11-20 and works.
 
 
 ---
 
 ## Part R: Picture uploads
 
-Status: Not started
+Status: In progress
 
 Goal: pictures are uploaded in the dashboard and stored in Supabase Storage.
 
-- [ ] Storage bucket and rules.
-- [ ] A choose-a-picture control for members, fandoms and gallery. The browser shrinks the picture (about 1200 px wide, under 300 KB) before it uploads.
-- [ ] The row stores the picture's address. The gallery `alt` field stays required.
-- [ ] Remove the `public/fandoms/` scan from `src/lib/fandoms.js`.
-- [ ] Optional: move the existing pictures from `public/gallery/` and `public/fandoms/` into Storage.
+- [x] Storage bucket and rules (in `supabase/schema.sql`: public bucket `pictures`, only the secret key writes).
+- [x] A choose-a-picture control for members, fandoms and gallery. The browser shrinks the picture (about 1200 px wide, under 300 KB) before it uploads.
+- [x] The row stores the picture's address. The gallery `alt` field stays required.
+- [x] Remove the `public/fandoms/` scan from `src/lib/fandoms.js`.
+- [x] Optional: `npm run db:move-pictures` (written, not run yet) moves the old pictures into Storage.
 
 Notes:
 
 - Site art (logo, hero, splatters) stays in `public/`.
+- Written by the AI only (no Astro run, no database): nothing tested yet. To do: run `supabase/schema.sql`, add the two npm scripts, test an upload for each of members, fandoms and gallery, run the move script, Publish, check the site, then delete the old files in `public/`.
+- The browser sends the shrunk picture with the form; the server uploads it (`applyUploads` in `lib/admin.ts`). The address text box stays for pasting an address or emptying it. Names: members `<slug>-photo-profile`, fandoms `<fandom-slug>`, gallery `<title-slug>-<timestamp>` (the move script uses the same rule). The replaced file is removed after a successful save unless another row uses it. News pictures stay a text box.
+- The live address is `halilintarsmp-dev.vercel.app` first (the main domain stays hidden). Almira set the Supabase and Google URLs.
 
 ---
 

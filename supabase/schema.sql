@@ -260,3 +260,15 @@ create policy "public reads visible news" on public.news
 -- admins, member_requests, heartbeat and publish_state get no policy and no grant:
 -- the public key cannot read or write them. Only the secret key can.
 -- No table has an insert, update or delete policy, so the public key can never write.
+
+-- ---------------------------------------------------------------------------
+-- Pictures (Part R): one public Storage bucket
+-- ---------------------------------------------------------------------------
+-- Anyone can open a picture by its address, but only the secret key can add or change files:
+-- no policy is made on storage.objects, so the public key cannot write or list. Folders: members/, fandoms/, gallery/.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('pictures', 'pictures', true, 2097152, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;

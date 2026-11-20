@@ -414,28 +414,62 @@ img { max-width: 100%; }
   }
 }
 
-/* admin dashboards (Part P) */
+/* admin dashboards (Parts P to R). The ONE place for admin styles: replace the old block of this name in style.css with this whole file.
+   (The <style> inside AdminNav.astro is removed, so nothing fights this block.) */
+
+/* top bar: links and Log out share one box size and a little breathing room on top, so everything lines up */
+.adm-nav { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 14px; padding: 8px 0 10px; border-bottom: 2px solid var(--maroon); }
+.adm-nav a, .adm-nav button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 0; font: bold 14px/1 var(--font-head); text-decoration: none; cursor: pointer; }
+.adm-nav a { background: var(--content); color: var(--maroon); }
+.adm-nav a:hover { background: var(--white); border-color: var(--maroon); }
+.adm-nav a[aria-current] { background: var(--maroon); border-color: var(--maroon); color: var(--white); }
+.adm-nav form { display: flex; margin: 0 0 0 auto; }
+.adm-nav button { background: var(--white); border-color: var(--maroon); color: var(--maroon); }
+.adm-nav button:hover { background: var(--content); }
+
+/* buttons: maroon = main action, outlined = side action (Hide, Remove, Add section, Log out) */
+.adm-btn, .adm-pub button, .adm-form button, .adm-list button { display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; background: var(--maroon); color: var(--white); border: 1px solid var(--maroon); border-radius: 0; font: bold 14px/1.3 var(--font-head); text-decoration: none; cursor: pointer; }
+.adm-btn:hover, .adm-pub button:hover, .adm-form button:hover, .adm-list button:hover { color: var(--orange); text-decoration: underline; }
+.adm-list button, .adm-form .adm-sec button, .adm-form #add-sec { background: var(--white); color: var(--maroon); }
+.adm-list button:hover, .adm-form .adm-sec button:hover, .adm-form #add-sec:hover { background: var(--content); border-color: var(--maroon); color: var(--maroon); }
+
+/* forms */
 .adm-form { padding: 8px 4px 12px; max-width: 660px; }
 .adm-form label { display: block; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dotted var(--line); font-family: var(--font-head); font-weight: bold; color: var(--maroon); }
-.adm-form small { display: block; margin-top: 3px; font: 12px/1.4 var(--font); font-weight: normal; color: var(--ink); }
+.adm-form small, .adm-help { display: block; margin-top: 3px; font: 12px/1.4 var(--font); font-weight: normal; color: var(--ink); }
 .adm-form input[type="text"], .adm-form input[type="date"], .adm-form input[type="number"], .adm-form textarea {
-  display: block; width: 100%; margin-top: 4px; padding: 6px 8px; background: var(--white);
+  display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 6px 8px; background: var(--white);
   border: 1px solid var(--line); color: var(--ink); font: 14px/1.45 var(--font);
 }
 .adm-form input:focus, .adm-form textarea:focus { outline: 2px solid var(--orange); outline-offset: -1px; border-color: var(--maroon); }
 .adm-form input[readonly] { background: var(--content); }
 .adm-form textarea { resize: vertical; }
-.adm-form fieldset { margin: 0 0 10px; padding: 8px; border: 1px solid var(--line); }
+.adm-form fieldset { min-width: 0; margin: 0 0 10px; padding: 8px; border: 1px solid var(--line); }
 .adm-form legend { padding: 0 4px; font-family: var(--font-head); font-weight: bold; color: var(--maroon); }
+.adm-form > button[type="submit"] { margin-top: 4px; }
 .adm-check { display: flex !important; align-items: center; gap: 8px; }
 .adm-check input { width: 18px; height: 18px; margin: 0; }
 .adm-sec { margin-bottom: 8px; padding: 8px; background: var(--content); border: 1px solid var(--line); }
 .adm-sec input, .adm-sec textarea { margin-bottom: 6px; }
-.adm-btn, .adm-pub button, .adm-sec button, #add-sec {
-  padding: 6px 14px; background: var(--maroon); color: var(--white); border: 0; border-radius: 0;
-  font: bold 14px var(--font-head); cursor: pointer;
+
+/* picture box (Part R) */
+.adm-pic { display: block; width: 96px; height: 96px; margin: 4px 0; object-fit: cover; background: var(--content); border: 1px solid var(--line); }
+.adm-form input[type="file"] { display: block; margin-top: 4px; font: 13px var(--font); color: var(--ink); }
+.adm-form input[type="file"]::file-selector-button {
+  margin-right: 8px; padding: 4px 10px; background: var(--white); color: var(--maroon); border: 1px solid var(--maroon);
+  border-radius: 0; font: bold 13px var(--font-head); cursor: pointer;
 }
-.adm-btn:hover, .adm-pub button:hover, #add-sec:hover { background: var(--link); }
+.adm-form input[type="file"]::file-selector-button:hover { background: var(--content); }
+
+/* lists (Members, Fandoms, Gallery, News) */
+.adm-list { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.adm-list li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px dotted var(--line); }
+.adm-list li:hover { background: var(--content); }
+.adm-list .grow { flex: 1 1 14rem; min-width: 0; overflow-wrap: anywhere; }
+.adm-list form { display: flex; margin: 0; }
+.adm-tag { margin-left: 4px; padding: 1px 6px; background: var(--content); border: 1px solid var(--line); color: var(--maroon); font: bold 11px var(--font-head); text-transform: uppercase; }
+
+/* messages and the dashboard table */
 .adm-pub { margin: 10px 0; }
 .adm-err { margin: 8px 0; padding: 8px 10px; background: #f6deda; border: 1px solid var(--headline); color: var(--maroon); }
 .adm-err ul { margin: 4px 0 0 18px; padding: 0; }
@@ -443,8 +477,18 @@ img { max-width: 100%; }
 .adm-stats { width: 100%; margin: 8px 0; border-collapse: collapse; }
 .adm-stats th, .adm-stats td { padding: 4px 8px; text-align: left; border-bottom: 1px dotted var(--line); }
 .adm-stats th { font-family: var(--font-head); color: var(--maroon); }
+
 @media (max-width: 700px) {
   .adm-form input[type="text"], .adm-form input[type="date"], .adm-form input[type="number"], .adm-form textarea { font-size: 16px; padding: 8px; }
-  .adm-btn, .adm-pub button, .adm-sec button, #add-sec { min-height: 44px; font-size: 16px; }
-  .adm-btn, .adm-pub button { width: 100%; }
+  .adm-btn, .adm-pub button, .adm-form button, .adm-list button { min-height: 44px; font-size: 16px; }
+  /* nav: 3 even columns for the links, Log out full width underneath */
+  .adm-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .adm-nav a, .adm-nav button { min-height: 44px; padding: 0 4px; font-size: 15px; }
+  .adm-nav form { grid-column: 1 / -1; margin: 0; }
+  .adm-nav button { width: 100%; }
+  .adm-btn, .adm-pub button, .adm-form > button[type="submit"] { width: 100%; text-align: center; }
+  /* list rows: text on top, Edit and Hide as two equal buttons below */
+  .adm-list .grow { flex-basis: 100%; }
+  .adm-list .adm-btn, .adm-list form { flex: 1 1 0; width: auto; }
+  .adm-list form button { width: 100%; }
 }

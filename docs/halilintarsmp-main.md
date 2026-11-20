@@ -94,10 +94,10 @@ src/
   lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
   lib/db.js                 the one place the site reads Supabase (Part N): members, fandoms, gallery and news, with the public key. Used only while the site builds
   lib/auth.ts               server only (Part O): the login client, the secret-key client, and getRole (super, admin or no access)
-  lib/admin.ts              server only (Part P): the field lists, the save rules and the database work behind the content dashboards
+  lib/admin.ts              server only (Part P): the field lists, the save rules and the database work behind the content dashboards, and (Part R) the picture upload to Storage
   lib/gallery.js            reads the gallery rows from the database, newest first (same day: the old file order), for the home page and Gallery pages. The address of each picture is stored in its row. Async: use `await`
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
-  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages). Name, picture and description come from the `fandoms` table first; the folder public/fandoms/ is only a fallback until Part R. Async: use `await`
+  lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages). Name, picture and description come from the `fandoms` table. The folder public/fandoms/ is no longer read (Part R). Async: use `await`
   pages/                    home, members, fandoms, gallery, about, credits, news, join, rules (and the search list, search.json.js)
   pages/about.astro         the About page
   pages/credits.astro       the Credits page: a note and every member's name, A to Z
@@ -127,8 +127,8 @@ src/
 public/
   style.css                 the shared colors and box look
   search.js                 the search box script: the dropdown with fuzzy matches, and the filter on the list pages
-  gallery/                  the gallery pictures
-  fandoms/                  fandom pictures, one per fandom (optional, see "Fandom pictures")
+  gallery/                  the gallery pictures (old pictures; moved to Storage by `npm run db:move-pictures`)
+  fandoms/                  fandom pictures, one per fandom (optional, see "Fandom pictures") (old pictures; `npm run db:move-pictures` moves them to Storage, then the folder can go)
   members/member-name/      a custom page: index.html, style.css, script.js
 templates/custom-member/    a starter folder to copy for a custom page
 templates/README.md         the steps and rules for custom pages, written for members (outside public/, so it is not shown)
@@ -161,7 +161,7 @@ One JSON file per member in `src/content/members/`. The file name is the member'
 | `name` | yes | The name shown on the page |
 | `handle` | yes | Their online name |
 | `pronouns` | no | Short text, for example `they/them`. Shown in the infobox under the handle and in the home page "Featured member" box. Empty = nothing is shown. Custom pages do not show it by themselves |
-| `picture` | no | Path to a small square picture. Empty = gray box |
+| `picture` | no | Address of a small square picture (chosen in the dashboard, stored in Storage). Empty = gray box |
 | `fandoms` | yes | A list of fandom names. Capitals, extra spaces and symbols do not matter: "Fandom A" and "fandom-a" are the same fandom. The first spelling found is the one shown |
 | `joined` | yes | Date, written `2026-11-01` |
 | `intro` | yes | One short line |
@@ -174,10 +174,8 @@ One JSON file per member in `src/content/members/`. The file name is the member'
 
 A fandom can have a small picture. It shows in the rows of the Fandoms list and the home page Fandoms box. A fandom with no picture shows the gray square.
 
-- Put the picture in `public/fandoms/`. Any file type for a picture works (`.png`, `.jpg` and so on).
-- Nothing has to be written in a data file. When the site builds, `src/lib/fandoms.js` reads the folder, drops the extension from each file name, cleans the rest the same way as fandom names, and matches it to the fandom. So `fandom-a.png` and `Fandom A.jpg` both belong to "Fandom A". Capitals, spaces and symbols do not matter. Since Part N the `picture` column of the `fandoms` table is used first; this folder is only the fallback until Part R.
-- Keep one picture per fandom. Two files that clean to the same name are a mix-up.
-- Keep pictures small, like the gallery ones.
+- Since Part R a fandom picture is chosen in the dashboard (Fandoms, Edit) and stored in Supabase Storage. Its address is in the `picture` column. `src/lib/fandoms.js` no longer reads `public/fandoms/`.
+- Keep pictures small. The dashboard shrinks them for you.
 
 ### The search box
 
@@ -196,7 +194,7 @@ The search box in the maroon bar is built in Part L. Nothing has to be written i
 
 > Since Part N the site reads the database, not this file. The file is only the source for `npm run db:import` and is removed in Part T. The fields below are still the fields of the database row.
 
-`src/content/gallery.json` is one list. Each picture is one entry. The picture files go in `public/gallery/`, and `file` is the address of the picture, for example `/gallery/my-picture.png`.
+`src/content/gallery.json` is one list. Each picture is one entry. Since Part R the pictures are chosen in the dashboard and `file` holds the Storage address. The old files in `public/gallery/` are moved by `npm run db:move-pictures`.
 
 | Field | Needed? | What it is |
 |---|---|---|
@@ -213,7 +211,7 @@ Member links in gallery text. They are made when the site builds, and only when 
 - In a credit, the name links when it matches a member's `name` or `handle` (capitals do not matter). If nobody matches, it stays plain.
 - The links are red-orange and bold (the `.mention` style).
 
-Keep pictures small: about 1200 px wide at most and under 300 KB each. Files in `public/` are served as they are, so nothing shrinks them for you.
+Keep pictures small: about 1200 px wide at most and under 300 KB each. The dashboard shrinks each picture in the browser before it uploads.
 
 ### The news data file
 
@@ -451,9 +449,9 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 
 ---
 
-# Part 3: Supabase and the dashboards (Parts M to P built; Part Q written, not tested)
+# Part 3: Supabase and the dashboards (Parts M to Q built; Part R written, not tested)
 
-Status: Parts M to P are built and tested, and Part Q (public requests and the review screens) is written but not tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+Status: Parts M to Q are built and tested, and Part R (picture uploads) is written but not tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
 
 ## 3.1 Why
 
@@ -497,6 +495,7 @@ The database holds only members, fandoms, gallery and news (plus the admin table
 The import (Part M):
 
 - `npm run db:import:dry` reads the content files, checks them and prints a report. It writes nothing and needs no keys.
+- `npm run db:move-pictures` (and `db:move-pictures:dry`) moves the old pictures from `public/` into Supabase Storage (Part R). Safe to run again. It needs the keys in `.env`.
 - `npm run db:import` copies the files into the tables. Members, fandoms and gallery pictures are matched by `slug`, and news by a fingerprint of its text (`import_key`), so running it again makes no doubles. It never changes `hidden` and never deletes a row.
 - A normal run overwrites the fields of rows that already exist with what is in the files. `npm run db:import -- --only-new` adds only rows that are not in the database yet. Once the dashboards are in use, use `--only-new` or do not run the import.
 - The fandoms are built from the members the same way as `src/lib/fandoms.js` (same address rule, first spelling shown), and each fandom's `picture` is filled from `public/fandoms/`. Pictures in that folder that match no fandom are listed in the report and not used.
@@ -542,7 +541,7 @@ How the content dashboards work (written in Part P, not tested yet):
 - New news items go first (the home box shows the lowest position first); new gallery items go last.
 - Code: `src/lib/admin.ts` (rules and database work), `src/components/AdminNav.astro`, `src/pages/admin/index.astro`, `src/pages/admin/[kind]/index.astro`, `src/pages/admin/[kind]/[id].astro`, `src/pages/api/admin/publish.ts`.
 
-## 3.6 Requests from the public (Part Q, written, not tested)
+## 3.6 Requests from the public (Part Q)
 
 Anyone can send a request. A request is never public by itself. There is no member login, so a request cannot prove who sent it: the reviewer is the check. There is no separate editor role: admins review (Katz and Kate can be admins if they are asked).
 
@@ -554,11 +553,12 @@ Anyone can send a request. A request is never public by itself. There is no memb
 - **Links and noindex:** the member page and the fandom page have an "Edit this page" link. `Base.astro` takes a `noindex` prop, used by the form and both edit pages. The fandom page now shows the fandom's `description` when it has one (if it does not show, `src/lib/fandoms.js` does not pass `description` on: send that file).
 
 
-## 3.7 Pictures
+## 3.7 Pictures (Part R, written, not tested)
 
-- Part R: Supabase Storage. The dashboard has a choose-a-picture control. The browser shrinks the picture to about 1200 px wide and under 300 KB (the same rule as now) and then uploads it. The row stores the picture's address.
-- Fandom pictures become a column on `fandoms`. The scan of `public/fandoms/` in `src/lib/fandoms.js` is removed.
-- Until Part R, a picture field is a text box for an address, and the existing pictures stay in `public/`.
+- Part R (written, not tested): pictures live in one public Supabase Storage bucket called `pictures`, with the folders `members/`, `fandoms/` and `gallery/`. `supabase/schema.sql` makes the bucket. Anyone can open a picture by its address; only the secret key can add files.
+- The dashboard form has a choose-a-picture box for members, fandoms and gallery. The browser shrinks the picture (about 1200 px wide, under 300 KB, as .webp) and sends it with the form. The server (`applyUploads` in `lib/admin.ts`) stores it under one naming rule (members `members/<slug>-photo-profile`, fandoms `fandoms/<fandom-slug>`, gallery `gallery/<title-slug>-<timestamp>`) and writes the address, with a `?v=` number so an old cached picture is not shown, in the row. The address text box stays: paste an address to use another picture, empty it to remove the picture. After a successful save the replaced picture file is removed from Storage, unless another row still uses it. News pictures stay a text box.
+- `npm run db:move-pictures` moves the old files from `public/gallery/`, `public/fandoms/` and any member picture path into Storage, and updates the rows. `:dry` only shows what it would do. It deletes nothing.
+- The scan of `public/fandoms/` is removed from `src/lib/fandoms.js`.
 - Site art (logo, hero, splatters, stripe strip) stays in `public/`.
 
 ## 3.8 Keep-alive

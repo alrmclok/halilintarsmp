@@ -2,31 +2,12 @@
 // Two spellings count as the same fandom when they make the same address piece ("Fandom A" = "fandom  a" = "FANDOM-A").
 // The name shown is the first spelling found. Members are read in file-name order, so the shown name stays the same.
 // Each member needs a `slug`, as the pages add it.
-// A fandom's picture comes from the `fandoms` table. Until Part R, a fandom with no picture there falls back to public/fandoms/.
-import fs from 'node:fs';
-import path from 'node:path';
+// A fandom's picture comes from the `fandoms` table (Supabase Storage since Part R). No picture there = the gray square.
 import { toSlug } from './slug.js';
 import { getFandomRows } from './db.js';
 
-const FANDOMS_DIR = path.join(process.cwd(), 'public', 'fandoms');
-
-function getFandomImages() {
-  const map = new Map();
-  if (!fs.existsSync(FANDOMS_DIR)) return map;
-
-  for (const file of fs.readdirSync(FANDOMS_DIR)) {
-    const ext = path.extname(file);
-    const base = path.basename(file, ext);
-    if (ext && base) {
-      map.set(toSlug(base), `/fandoms/${file}`);
-    }
-  }
-  return map;
-}
-
 export async function getFandoms(members) {
   const byKey = new Map();
-  const images = getFandomImages();
   const rows = await getFandomRows();
   const ordered = [...members].sort((a, b) => a.slug.localeCompare(b.slug));
 
@@ -43,7 +24,7 @@ export async function getFandoms(members) {
         byKey.set(slug, {
           name: row?.name ?? name,
           slug,
-          pic: row?.picture || images.get(slug),
+          pic: row?.picture || undefined,
           description: row?.description,
           members: [],
         });

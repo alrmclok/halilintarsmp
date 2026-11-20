@@ -5,7 +5,7 @@ import { adminDb } from './auth';
 import { toSlug } from './slug.js';
 
 export type Kind = 'members' | 'fandoms' | 'gallery' | 'news';
-type FieldType = 'text' | 'textarea' | 'date' | 'number' | 'checkbox' | 'sections';
+type FieldType = 'text' | 'textarea' | 'date' | 'number' | 'checkbox' | 'sections' | 'picture';
 export type Field = { name: string; label: string; type: FieldType; help?: string };
 type Section = { heading: string; text: string };
 
@@ -36,7 +36,7 @@ export const KINDS: Record<Kind, {
       { name: 'name', label: 'Name', type: 'text' },
       { name: 'handle', label: 'Handle (without @)', type: 'text' },
       { name: 'pronouns', label: 'Pronouns (optional)', type: 'text' },
-      { name: 'picture', label: 'Picture (path or address, optional)', type: 'text', help: 'Empty = gray box. Uploads come in Part R.' },
+      { name: 'picture', label: 'Picture (path or address, optional)', type: 'picture', help: 'Empty = gray box.' },
       { name: 'joined', label: 'Joined', type: 'date' },
       { name: 'intro', label: 'Intro', type: 'textarea' },
       { name: 'fandoms', label: 'Fandoms, in order, separated by commas', type: 'text', help: 'Each one must already exist in Fandoms.' },
@@ -53,7 +53,7 @@ export const KINDS: Record<Kind, {
     sub: (r) => `/${r.slug}/`,
     fields: [
       { name: 'name', label: 'Name', type: 'text', help: 'The page address comes from the name ("Pokémon" becomes pokemon), so renaming a fandom changes its page address. Two names that make the same address cannot both exist.' },
-      { name: 'picture', label: 'Picture (path or address, optional)', type: 'text', help: 'Empty = gray square.' },
+      { name: 'picture', label: 'Picture (optional)', type: 'picture', help: 'Empty = gray square.' },
       { name: 'description', label: 'Description (optional)', type: 'textarea' },
       hiddenField,
     ],
@@ -67,7 +67,7 @@ export const KINDS: Record<Kind, {
       { name: 'title', label: 'Title', type: 'text' },
       { name: 'description', label: 'Description', type: 'textarea' },
       { name: 'credit', label: 'Credit', type: 'text' },
-      { name: 'file', label: 'Picture file (path or address)', type: 'text', help: 'Empty = gray box and no lightbox.' },
+      { name: 'file', label: 'Picture', type: 'picture', help: 'Empty = gray box and no lightbox.' },
       { name: 'alt', label: 'Alt text (what the picture shows)', type: 'text' },
       { name: 'added', label: 'Added', type: 'date' },
       { name: 'position', label: 'Position (optional)', type: 'number', help: 'Breaks ties between pictures added on the same day. Empty = last.' },
@@ -116,6 +116,63 @@ export function readForm(kind: Kind, form: FormData): Record<string, any> {
     } else raw[f.name] = String(form.get(f.name) ?? '').trim();
   }
   return raw;
+}
+
+// ---------------------------------------------------------------------------
+// Part R: picture uploads. The browser shrinks the picture and posts it with the form as `<field>_file`.
+// The server stores it in the public Storage bucket and puts its address in the row.
+// ---------------------------------------------------------------------------
+
+const BUCKET = 'pictures'; // made by supabase/schema.sql
+const MAX_PICTURE_BYTES = 1024 * 1024; // the browser aims for 300 KB; this only stops a picture that was not shrunk
+const PICTURE_EXT: Record<string, string> = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif' };
+const PICTURE_FIELD: Partial<Record<Kind, string>> = { members: 'picture', fandoms: 'picture', gallery: 'file' };
+
+const PICTURE_PREFIX = '/storage/v1/object/public/pictures/';
+
+// One naming rule: members/<slug>-photo-profile.<ext>, fandoms/<fandom-slug>.<ext>, gallery/<title-slug>-<timestamp>.<ext>
+function pictureName(kind: Kind, raw: Record<string, any>, ext: string): string {
+  const ok = (v: string) => (SLUG.test(v) ? v : 'picture');
+  if (kind === 'members') return `members/${ok(String(raw.slug ?? ''))}-photo-profile.${ext}`;
+  if (kind === 'fandoms') return `fandoms/${ok(toSlug(String(raw.name ?? '')))}.${ext}`;
+  const ts = new Date().toISOString().replace(/\D/g, '').slice(0, 14); // yyyymmddhhmmss, UTC
+  return `gallery/${ok(toSlug(String(raw.title ?? '')) || String(raw.slug ?? ''))}-${ts}.${ext}`;
+}
+
+// Uploads the chosen picture (if any) and puts its address in raw[field]. Returns the errors (empty when fine) and
+// `after`, to call once the row is saved: it removes the replaced file, unless another row still uses it.
+export async function applyUploads(kind: Kind, form: FormData, raw: Record<string, any>, id: string | null): Promise<{ errors: string[]; after: () => Promise<void> }> {
+  const none = async () => {};
+  const field = PICTURE_FIELD[kind];
+  if (!field) return { errors: [], after: none };
+  const file = form.get(`${field}_file`);
+  if (!(file instanceof File) || !file.size) return { errors: [], after: none };
+  const ext = PICTURE_EXT[file.type];
+  if (!ext) return { errors: ['The picture must be a .webp, .jpg, .png or .gif file.'], after: none };
+  if (file.size > MAX_PICTURE_BYTES) return { errors: ['The picture is over 1 MB. The browser shrinks pictures by itself, so turn JavaScript on, or shrink it first.'], after: none };
+  const path = pictureName(kind, raw, ext);
+  const db = adminDb();
+  const { error } = await db.storage.from(BUCKET).upload(path, Buffer.from(await file.arrayBuffer()), {
+    contentType: file.type,
+    cacheControl: '3600',
+    upsert: true, // members and fandoms keep one fixed name, so a new picture replaces the old one
+  });
+  if (error) return { errors: [`The picture did not upload: ${error.message}`], after: none };
+
+  const old = String(raw[field] ?? '');
+  const at = old.indexOf(PICTURE_PREFIX);
+  const oldKey = at >= 0 ? decodeURIComponent(old.slice(at + PICTURE_PREFIX.length).split('?')[0]) : '';
+  // ?v= makes the address new, so a cached older picture with the same name is not shown
+  raw[field] = `${db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+
+  const after = async () => {
+    if (!oldKey || oldKey === path) return;
+    let q = db.from(kind).select('id').like(field, `%${oldKey}%`);
+    if (id) q = q.neq('id', id);
+    const { data } = await q.limit(1);
+    if (!data?.length) await db.storage.from(BUCKET).remove([oldKey]); // best effort: a failure here is harmless
+  };
+  return { errors: [], after };
 }
 
 export async function loadRaw(kind: Kind, id: string): Promise<Record<string, any> | null> {

@@ -4,7 +4,7 @@
 import Base from '../../../layouts/Base.astro';
 import Box from '../../../components/Box.astro';
 import AdminNav from '../../../components/AdminNav.astro';
-import { KINDS, defaults, loadRaw, readForm, saveRow, type Kind } from '../../../lib/admin';
+import { KINDS, applyUploads, defaults, loadRaw, readForm, saveRow, type Kind } from '../../../lib/admin';
 
 export const prerender = false;
 
@@ -24,10 +24,16 @@ if (!isNew) {
   keepSlug = found.slug;
 }
 if (Astro.request.method === 'POST') {
-  raw = readForm(kind, await Astro.request.formData());
+  const form = await Astro.request.formData();
+  raw = readForm(kind, form);
   if (keepSlug) raw.slug = keepSlug;
-  errors = (await saveRow(kind, isNew ? null : id, raw, keepSlug)).errors;
-  if (!errors.length) return Astro.redirect(`/admin/${kind}/?saved=1`, 303);
+  const up = await applyUploads(kind, form, raw, isNew ? null : id); // a new picture's address lands in raw, so it is kept if saving fails
+  errors = up.errors;
+  if (!errors.length) errors = (await saveRow(kind, isNew ? null : id, raw, keepSlug)).errors;
+  if (!errors.length) {
+    await up.after(); // removes the replaced picture file
+    return Astro.redirect(`/admin/${kind}/?saved=1`, 303);
+  }
 }
 const secs: { heading: string; text: string }[] = raw.sections ?? [];
 ---
@@ -41,7 +47,7 @@ const secs: { heading: string; text: string }[] = raw.sections ?? [];
         <ul>{errors.map((e) => <li>{e}</li>)}</ul>
       </div>
     )}
-    <form method="post" class="adm-form">
+    <form method="post" enctype="multipart/form-data" class="adm-form">
       {cfg.fields.map((f) =>
         f.type === 'checkbox' ? (
           <label class="adm-check"><input type="checkbox" name={f.name} checked={!!raw[f.name]} /><span>{f.label}</span></label>
@@ -66,6 +72,15 @@ const secs: { heading: string; text: string }[] = raw.sections ?? [];
             </template>
             <button type="button" id="add-sec">+ Add section</button>
           </fieldset>
+        ) : f.type === 'picture' ? (
+          <label>
+            {f.label}
+            {raw[f.name] && <img class="adm-pic" src={raw[f.name]} alt="" />}
+            <input type="file" name={`${f.name}_file`} accept="image/*" data-pic />
+            <small data-pic-info>Pick a file: it is shrunk (about 1200 px wide, under 300 KB) and uploaded when you press Save.</small>
+            <input type="text" name={f.name} value={raw[f.name]} placeholder="Or paste an address. Empty = no picture." />
+            {f.help && <small>{f.help}</small>}
+          </label>
         ) : f.type === 'textarea' ? (
           <label>{f.label}<textarea name={f.name} rows="6">{raw[f.name]}</textarea>{f.help && <small>{f.help}</small>}</label>
         ) : (
@@ -86,6 +101,54 @@ const secs: { heading: string; text: string }[] = raw.sections ?? [];
         box.addEventListener('click', function (e) {
           var b = e.target.closest('.rm-sec');
           if (b) b.closest('.adm-sec').remove();
+        });
+      })();
+    </script>
+    <script is:inline>
+      // Shrinks a chosen picture in the browser (max 1200 px wide, aims under 300 KB) before the form sends it.
+      (function () {
+        var MAX_W = 1200, MAX_BYTES = 300 * 1024;
+        var canWebp = document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+        var type = canWebp ? 'image/webp' : 'image/jpeg';
+        function toBlob(c, q) { return new Promise(function (res) { c.toBlob(res, type, q); }); }
+        async function shrink(file) {
+          var bmp = await createImageBitmap(file);
+          var scale = Math.min(1, MAX_W / bmp.width), last = null;
+          for (var round = 0; round < 6; round++) {
+            var c = document.createElement('canvas');
+            c.width = Math.max(1, Math.round(bmp.width * scale));
+            c.height = Math.max(1, Math.round(bmp.height * scale));
+            var ctx = c.getContext('2d');
+            if (!canWebp) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+            ctx.drawImage(bmp, 0, 0, c.width, c.height);
+            for (var q = 0.85; q >= 0.4; q -= 0.15) {
+              var b = await toBlob(c, q);
+              if (!b) return last;
+              last = b;
+              if (b.size <= MAX_BYTES) return b;
+            }
+            scale *= 0.8;
+          }
+          return last;
+        }
+        document.querySelectorAll('input[data-pic]').forEach(function (input) {
+          var info = input.parentNode.querySelector('[data-pic-info]');
+          input.addEventListener('change', async function () {
+            var f = input.files && input.files[0];
+            if (!f) return;
+            info.textContent = 'Shrinking...';
+            try {
+              var b = await shrink(f);
+              if (!b) throw new Error('no picture');
+              var dt = new DataTransfer();
+              dt.items.add(new File([b], 'picture.' + (canWebp ? 'webp' : 'jpg'), { type: b.type }));
+              input.files = dt.files;
+              info.textContent = 'Ready: ' + Math.round(b.size / 1024) + ' KB. It uploads when you press Save.';
+            } catch (e) {
+              info.textContent = 'This file could not be shrunk here. Try a .png or .jpg.';
+              input.value = '';
+            }
+          });
         });
       })();
     </script>
