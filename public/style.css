@@ -454,6 +454,7 @@ img { max-width: 100%; }
 
 /* picture box (Part R) */
 .adm-pic { display: block; width: 96px; height: 96px; margin: 4px 0; object-fit: cover; background: var(--content); border: 1px solid var(--line); }
+.adm-pic[hidden] { display: none; }
 .adm-form input[type="file"] { display: block; margin-top: 4px; font: 13px var(--font); color: var(--ink); }
 .adm-form input[type="file"]::file-selector-button {
   margin-right: 8px; padding: 4px 10px; background: var(--white); color: var(--maroon); border: 1px solid var(--maroon);

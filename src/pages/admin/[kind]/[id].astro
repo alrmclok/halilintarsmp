@@ -1,10 +1,18 @@
 ---
 // The form for one row. /admin/<kind>/new/ makes a new row; /admin/<kind>/<id>/ edits one.
 // The page handles its own POST, so a mistake shows the errors with everything you typed still in the boxes.
-import Base from '../../../layouts/Base.astro';
-import Box from '../../../components/Box.astro';
-import AdminNav from '../../../components/AdminNav.astro';
-import { KINDS, applyUploads, defaults, loadRaw, readForm, saveRow, type Kind } from '../../../lib/admin';
+import Base from "../../../layouts/Base.astro";
+import Box from "../../../components/Box.astro";
+import AdminNav from "../../../components/AdminNav.astro";
+import {
+  KINDS,
+  applyUploads,
+  defaults,
+  loadRaw,
+  readForm,
+  saveRow,
+  type Kind,
+} from "../../../lib/admin";
 
 export const prerender = false;
 
@@ -12,7 +20,7 @@ const kind = Astro.params.kind as Kind;
 const id = Astro.params.id as string;
 if (!Object.hasOwn(KINDS, kind)) return new Response(null, { status: 404 });
 const cfg = KINDS[kind];
-const isNew = id === 'new';
+const isNew = id === "new";
 
 let raw: Record<string, any> = defaults(kind);
 let errors: string[] = [];
@@ -23,13 +31,14 @@ if (!isNew) {
   raw = found;
   keepSlug = found.slug;
 }
-if (Astro.request.method === 'POST') {
+if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
   raw = readForm(kind, form);
   if (keepSlug) raw.slug = keepSlug;
   const up = await applyUploads(kind, form, raw, isNew ? null : id); // a new picture's address lands in raw, so it is kept if saving fails
   errors = up.errors;
-  if (!errors.length) errors = (await saveRow(kind, isNew ? null : id, raw, keepSlug)).errors;
+  if (!errors.length)
+    errors = (await saveRow(kind, isNew ? null : id, raw, keepSlug)).errors;
   if (!errors.length) {
     await up.after(); // removes the replaced picture file
     return Astro.redirect(`/admin/${kind}/?saved=1`, 303);
@@ -37,89 +46,169 @@ if (Astro.request.method === 'POST') {
 }
 const secs: { heading: string; text: string }[] = raw.sections ?? [];
 ---
+
 <Base title={`Admin: ${cfg.label}`} description="HalilintarSMP admin.">
-  <Box title={`${isNew ? 'New' : 'Edit'} ${cfg.one}`}>
+  <Box title={`${isNew ? "New" : "Edit"} ${cfg.one}`}>
     <AdminNav current={`/admin/${kind}/`} />
-    <p><a href={`/admin/${kind}/`}>← Back to {cfg.label}</a></p>
+    <p>
+      <a href={`/admin/${kind}/`}>← Back to {cfg.label}</a>
+    </p>
     {errors.length > 0 && (
       <div class="adm-err" role="alert">
         <strong>Not saved:</strong>
-        <ul>{errors.map((e) => <li>{e}</li>)}</ul>
+        <ul>
+          {errors.map((e) => (
+            <li>{e}</li>
+          ))}
+        </ul>
       </div>
     )}
     <form method="post" enctype="multipart/form-data" class="adm-form">
       {cfg.fields.map((f) =>
-        f.type === 'checkbox' ? (
-          <label class="adm-check"><input type="checkbox" name={f.name} checked={!!raw[f.name]} /><span>{f.label}</span></label>
-        ) : f.type === 'sections' ? (
+        f.type === "checkbox" ? (
+          <label class="adm-check">
+            <input type="checkbox" name={f.name} checked={!!raw[f.name]} />
+            <span>{f.label}</span>
+          </label>
+        ) : f.type === "sections" ? (
           <fieldset>
             <legend>{f.label}</legend>
             <div id="secs">
               {secs.map((x) => (
                 <div class="adm-sec">
-                  <input type="text" name="section_heading" placeholder="Heading (optional)" value={x.heading} />
-                  <textarea name="section_text" rows="4" placeholder="Text">{x.text}</textarea>
-                  <button type="button" class="rm-sec">Remove</button>
+                  <input
+                    type="text"
+                    name="section_heading"
+                    placeholder="Heading (optional)"
+                    value={x.heading}
+                  />
+                  <textarea
+                    name="section_text"
+                    rows="4"
+                    placeholder="Text"
+                  >{x.text}</textarea>
+                  <button type="button" class="rm-sec">
+                    Remove
+                  </button>
                 </div>
               ))}
             </div>
             <template id="sec-tpl">
               <div class="adm-sec">
-                <input type="text" name="section_heading" placeholder="Heading (optional)" />
-                <textarea name="section_text" rows="4" placeholder="Text"></textarea>
-                <button type="button" class="rm-sec">Remove</button>
+                <input
+                  type="text"
+                  name="section_heading"
+                  placeholder="Heading (optional)"
+                />
+                <textarea
+                  name="section_text"
+                  rows="4"
+                  placeholder="Text"
+                ></textarea>
+                <button type="button" class="rm-sec">
+                  Remove
+                </button>
               </div>
             </template>
-            <button type="button" id="add-sec">+ Add section</button>
+            <button type="button" id="add-sec">
+              + Add section
+            </button>
           </fieldset>
-        ) : f.type === 'picture' ? (
+        ) : f.type === "picture" ? (
           <label>
             {f.label}
-            {raw[f.name] && <img class="adm-pic" src={raw[f.name]} alt="" />}
-            <input type="file" name={`${f.name}_file`} accept="image/*" data-pic />
-            <small data-pic-info>Pick a file: it is shrunk (about 1200 px wide, under 300 KB) and uploaded when you press Save.</small>
-            <input type="text" name={f.name} value={raw[f.name]} placeholder="Or paste an address. Empty = no picture." />
+            <img
+              class="adm-pic"
+              src={raw[f.name] || undefined}
+              alt=""
+              data-pic-preview
+              hidden={!raw[f.name]}
+            />
+            <input
+              type="file"
+              name={`${f.name}_file`}
+              accept="image/*"
+              data-pic
+            />
+            <small data-pic-info>
+              Pick a file: it is shrunk (about 1200 px wide, under 300 KB) and
+              uploaded when you press Save.
+            </small>
+            <input
+              type="text"
+              name={f.name}
+              value={raw[f.name]}
+              placeholder="Or paste an address. Empty = no picture."
+            />
             {f.help && <small>{f.help}</small>}
           </label>
-        ) : f.type === 'textarea' ? (
-          <label>{f.label}<textarea name={f.name} rows="6">{raw[f.name]}</textarea>{f.help && <small>{f.help}</small>}</label>
+        ) : f.type === "textarea" ? (
+          <label>
+            {f.label}
+            <textarea name={f.name} rows="6">{raw[f.name]}</textarea>
+            {f.help && <small>{f.help}</small>}
+          </label>
         ) : (
           <label>
             {f.label}
-            <input type={f.type} name={f.name} value={raw[f.name]} readonly={f.name === 'slug' && !isNew} />
+            <input
+              type={f.type}
+              name={f.name}
+              value={raw[f.name]}
+              readonly={f.name === "slug" && !isNew}
+            />
             {f.help && <small>{f.help}</small>}
           </label>
-        )
+        ),
       )}
-      <button type="submit" class="adm-btn">Save</button>
+      <button type="submit" class="adm-btn">
+        Save
+      </button>
     </form>
     <script is:inline>
       (function () {
-        var box = document.getElementById('secs'), tpl = document.getElementById('sec-tpl'), add = document.getElementById('add-sec');
+        var box = document.getElementById("secs"),
+          tpl = document.getElementById("sec-tpl"),
+          add = document.getElementById("add-sec");
         if (!box || !tpl || !add) return;
-        add.addEventListener('click', function () { box.appendChild(tpl.content.cloneNode(true)); });
-        box.addEventListener('click', function (e) {
-          var b = e.target.closest('.rm-sec');
-          if (b) b.closest('.adm-sec').remove();
+        add.addEventListener("click", function () {
+          box.appendChild(tpl.content.cloneNode(true));
+        });
+        box.addEventListener("click", function (e) {
+          var b = e.target.closest(".rm-sec");
+          if (b) b.closest(".adm-sec").remove();
         });
       })();
     </script>
     <script is:inline>
       // Shrinks a chosen picture in the browser (max 1200 px wide, aims under 300 KB) before the form sends it.
       (function () {
-        var MAX_W = 1200, MAX_BYTES = 300 * 1024;
-        var canWebp = document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
-        var type = canWebp ? 'image/webp' : 'image/jpeg';
-        function toBlob(c, q) { return new Promise(function (res) { c.toBlob(res, type, q); }); }
+        var MAX_W = 1200,
+          MAX_BYTES = 300 * 1024;
+        var canWebp =
+          document
+            .createElement("canvas")
+            .toDataURL("image/webp")
+            .indexOf("data:image/webp") === 0;
+        var type = canWebp ? "image/webp" : "image/jpeg";
+        function toBlob(c, q) {
+          return new Promise(function (res) {
+            c.toBlob(res, type, q);
+          });
+        }
         async function shrink(file) {
           var bmp = await createImageBitmap(file);
-          var scale = Math.min(1, MAX_W / bmp.width), last = null;
+          var scale = Math.min(1, MAX_W / bmp.width),
+            last = null;
           for (var round = 0; round < 6; round++) {
-            var c = document.createElement('canvas');
+            var c = document.createElement("canvas");
             c.width = Math.max(1, Math.round(bmp.width * scale));
             c.height = Math.max(1, Math.round(bmp.height * scale));
-            var ctx = c.getContext('2d');
-            if (!canWebp) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+            var ctx = c.getContext("2d");
+            if (!canWebp) {
+              ctx.fillStyle = "#fff";
+              ctx.fillRect(0, 0, c.width, c.height);
+            }
             ctx.drawImage(bmp, 0, 0, c.width, c.height);
             for (var q = 0.85; q >= 0.4; q -= 0.15) {
               var b = await toBlob(c, q);
@@ -131,22 +220,37 @@ const secs: { heading: string; text: string }[] = raw.sections ?? [];
           }
           return last;
         }
-        document.querySelectorAll('input[data-pic]').forEach(function (input) {
-          var info = input.parentNode.querySelector('[data-pic-info]');
-          input.addEventListener('change', async function () {
+        document.querySelectorAll("input[data-pic]").forEach(function (input) {
+          var info = input.parentNode.querySelector("[data-pic-info]");
+          var prev = input.parentNode.querySelector("[data-pic-preview]");
+          input.addEventListener("change", async function () {
             var f = input.files && input.files[0];
             if (!f) return;
-            info.textContent = 'Shrinking...';
+            info.textContent = "Shrinking...";
             try {
               var b = await shrink(f);
-              if (!b) throw new Error('no picture');
+              if (!b) throw new Error("no picture");
               var dt = new DataTransfer();
-              dt.items.add(new File([b], 'picture.' + (canWebp ? 'webp' : 'jpg'), { type: b.type }));
+              dt.items.add(
+                new File([b], "picture." + (canWebp ? "webp" : "jpg"), {
+                  type: b.type,
+                }),
+              );
               input.files = dt.files;
-              info.textContent = 'Ready: ' + Math.round(b.size / 1024) + ' KB. It uploads when you press Save.';
+              info.textContent =
+                "Ready: " +
+                Math.round(b.size / 1024) +
+                " KB. It uploads when you press Save.";
+              if (prev) {
+                if (prev.dataset.blob) URL.revokeObjectURL(prev.dataset.blob);
+                prev.dataset.blob = URL.createObjectURL(b);
+                prev.src = prev.dataset.blob;
+                prev.hidden = false;
+              }
             } catch (e) {
-              info.textContent = 'This file could not be shrunk here. Try a .png or .jpg.';
-              input.value = '';
+              info.textContent =
+                "This file could not be shrunk here. Try a .png or .jpg.";
+              input.value = "";
             }
           });
         });
