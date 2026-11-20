@@ -12,10 +12,12 @@
     "db:check": "node --env-file=.env scripts/check-access.mjs"
   },
   "dependencies": {
-    "@astrojs/vercel": "^8.0.0",
+    "@astrojs/vercel": "^9.0.5",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.2",
     "astro": "5.14.1"
   },
-  "engines": { "node": "22.x" }
+  "engines": {
+    "node": "22.x"
+  }
 }
