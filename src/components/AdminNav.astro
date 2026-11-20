@@ -1,0 +1,41 @@
+---
+// Links across the top of every admin page, plus the shared plain-form styles.
+const { current = '' } = Astro.props;
+const links = [
+  ['/admin/', 'Dashboard'],
+  ['/admin/members/', 'Members'],
+  ['/admin/fandoms/', 'Fandoms'],
+  ['/admin/gallery/', 'Gallery'],
+  ['/admin/news/', 'News'],
+];
+---
+<nav class="adm-nav" aria-label="Admin">
+  {links.map(([href, label]) => <a href={href} aria-current={href === current ? 'page' : undefined}>{label}</a>)}
+  <form method="post" action="/admin/logout/"><button type="submit">Log out</button></form>
+</nav>
+<style is:global>
+  .adm-nav { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 0 0 1rem; }
+  .adm-nav a, .adm-btn { display: inline-block; padding: .4rem .7rem; border: 1px solid currentColor; text-decoration: none; }
+  .adm-nav a[aria-current] { font-weight: bold; text-decoration: underline; }
+  .adm-nav form { margin: 0 0 0 auto; }
+  .adm-form label, .adm-form fieldset { display: block; margin: 0 0 1rem; }
+  .adm-form fieldset { border: 1px solid #aaa; padding: .6rem; }
+  .adm-form input[type=text], .adm-form input[type=date], .adm-form input[type=number], .adm-form textarea {
+    display: block; width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: .5rem; margin-top: .25rem;
+  }
+  .adm-form small, .adm-help { display: block; opacity: .75; }
+  .adm-check { display: flex; gap: .5rem; align-items: flex-start; }
+  .adm-err, .adm-ok { padding: .6rem .8rem; margin: 0 0 1rem; border: 1px solid; }
+  .adm-err { background: #fde8e8; color: #7a1010; }
+  .adm-ok { background: #e6f4e6; color: #14531a; }
+  .adm-sec { border: 1px solid #aaa; padding: .6rem; margin: 0 0 .6rem; }
+  .adm-sec button { margin-top: .4rem; }
+  .adm-list { list-style: none; padding: 0; margin: 1rem 0 0; }
+  .adm-list li { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid #ccc; }
+  .adm-list .grow { flex: 1 1 14rem; min-width: 0; overflow-wrap: anywhere; }
+  .adm-list form { margin: 0; }
+  .adm-tag { font-size: .8em; padding: 0 .4rem; border: 1px solid; }
+  .adm-form button, .adm-list button, .adm-btn, .adm-nav button, .adm-pub button { font: inherit; min-height: 2.5rem; padding: .3rem .8rem; cursor: pointer; }
+  .adm-stats { width: 100%; border-collapse: collapse; margin: 0 0 1rem; }
+  .adm-stats th, .adm-stats td { padding: .4rem; border-bottom: 1px solid #ccc; text-align: left; }
+</style>

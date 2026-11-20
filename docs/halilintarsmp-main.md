@@ -432,9 +432,9 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 
 ---
 
-# Part 3: Supabase and the dashboards (Parts M, N and O built)
+# Part 3: Supabase and the dashboards (Parts M, N, O and P built)
 
-Status: Parts M, N and O are built: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), and the Google login with roles (section 3.4). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+Status: Parts M, N, O and P are built: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), and the content dashboards with the Publish button (section 3.5; Part P, code written, not yet tested by Almira). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
 
 ## 3.1 Why
 
@@ -444,7 +444,7 @@ The content moves from files in the project to a Supabase database. So people wh
 
 - **Hybrid.** The public pages (Home, Members, Fandoms, Gallery, News, Credits, About, Join, Rules and the search list) stay built pages, like now. When the site builds, they read Supabase instead of the JSON files (done in Part N, through `src/lib/db.js`). They are not made again for each visitor. About, Join and Rules keep their words in the page code.
 - **Server-rendered** (`export const prerender = false`, with the `@astrojs/vercel` adapter): only the dashboards, the login and its callback, and the endpoint that receives the member form.
-- **Publish button.** Saving in a dashboard writes to the database at once, but the public site does not change. The super-admin presses Publish, which calls a Vercel deploy hook, and the site rebuilds in about a minute. The dashboard shows how many changes are not published yet.
+- **Publish button.** Saving in a dashboard writes to the database at once, but the public site does not change. An admin or the super-admin presses Publish, which calls a Vercel deploy hook, and the site rebuilds in about a minute. The dashboard shows how many changes are not published yet.
 - If Supabase is paused or down, the public site keeps working. A build would fail, and Vercel keeps showing the last working version.
 - The build reads with the public key, under read-only rules. Hidden rows are not returned.
 
@@ -507,10 +507,20 @@ Built in Part O:
 | Create and edit members, fandoms, gallery, news | yes | yes |
 | Hide and unhide | yes | yes |
 | Review member requests (fix, approve, reject) | yes | yes |
-| Press Publish | no (open decision) | yes |
+| Press Publish | yes (decided in Part P) | yes |
 | Delete for good | no | yes |
 | Add and remove admins | no | yes |
 | Keep-alive button | no | yes |
+
+How the content dashboards work (built in Part P):
+
+- `/admin/` shows counts, unpublished changes, the last publish time and the Publish button (it calls `VERCEL_DEPLOY_HOOK_URL`, then resets the count).
+- `/admin/<members|fandoms|gallery|news>/` lists rows with Edit and Hide/Unhide. `/admin/<kind>/new/` and `/admin/<kind>/<id>/` are the forms. There is no delete in these screens.
+- Every save checks the old data-file rules, writes with the secret key on the server, and raises `pending_changes`. Both roles may write.
+- Member and gallery slugs are locked after saving. A fandom's slug is always `toSlug(name)`, and a second fandom with the same slug is refused.
+- Member fandoms: a compact checkbox list of all fandoms plus an "Add fandoms not in the list" box. Typed names are created (name only) at save, or linked if the slug exists. The member's old order is kept, newly checked ones follow in list order, typed ones last. (A plain text box was tried first, but one unknown name refused the whole save, which was too hard on long lists.)
+- New news items go first (the home box shows the lowest position first); new gallery items go last.
+- Code: `src/lib/admin.ts` (rules and database work), `src/components/AdminNav.astro`, `src/pages/admin/index.astro`, `src/pages/admin/[kind]/index.astro`, `src/pages/admin/[kind]/[id].astro`, `src/pages/api/admin/publish.ts`.
 
 ## 3.6 The member form
 
@@ -520,6 +530,7 @@ Planned (Part Q):
 
 - Same page, same fields, same look. It now sends to a server endpoint that saves a row in `member_requests` with the status `pending`. A pending request is not public.
 - A requests screen in the dashboard. An admin or the super-admin opens a request, can fix words, then approves (a member row is made, and it shows on the site at the next Publish) or rejects (with an optional note).
+- Fandom names typed in the form are matched to real fandoms by slug on the requests screen. A name with no match is shown to the reviewer, who can pick from the checkbox list or create it with the "Add fandoms" box (same as the member screen from Part P).
 - Fandom names in a request are matched to the existing fandoms with the same-address rule. A name that matches nothing is shown to the reviewer, who creates it or drops it.
 - Pictures: members still send theirs to Almira. The reviewer uploads it when approving (Part R).
 - A request is never applied by itself. There is no member login, so a request cannot prove who sent it. The reviewer is the check.
@@ -550,7 +561,7 @@ Kept in `.env` (never committed) and in the Vercel settings. `.env.example` list
 | `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | The public key (starts with `sb_publishable_`), read-only under the rules |
 | `SUPABASE_SECRET_KEY` | The strong key (starts with `sb_secret_`). Server only. Also set in Vercel since Part O (the login reads the `admins` table with it). The build does not use it |
 | `SUPER_ADMIN_EMAIL` | Almira's Google email. Used by the login since Part O, set in `.env` and in Vercel |
-| `VERCEL_DEPLOY_HOOK_URL` | The address the Publish button calls |
+| `VERCEL_DEPLOY_HOOK_URL` | The address the Publish button calls (Part P). Set in `.env` and in Vercel. Treat it like a password |
 | `CRON_SECRET` | Protects the weekly keep-alive call |
 
 The Google client id and secret are set in Supabase's Auth settings, not in the project.

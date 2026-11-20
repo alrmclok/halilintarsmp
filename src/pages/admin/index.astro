@@ -1,18 +1,33 @@
 ---
-// A first, plain admin home so there is somewhere to land after login. Part P replaces it with the real dashboard.
+// Admin home: counts, unpublished changes, last publish, and the Publish button.
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
+import AdminNav from '../../components/AdminNav.astro';
+import { KINDS, stats, fmt } from '../../lib/admin';
 
 export const prerender = false;
 
-const { email, role } = Astro.locals.user; // set by src/middleware.ts, which only lets allowed people reach this page
+const { email, role } = Astro.locals.user;
+const s = await stats();
+const q = Astro.url.searchParams;
 ---
 <Base title="Admin" description="HalilintarSMP admin.">
   <Box title="Admin">
+    <AdminNav current="/admin/" />
     <p>Signed in as {email} ({role === 'super' ? 'super-admin' : 'admin'}).</p>
-    <p>The dashboards come in Part P.</p>
-    <form method="post" action="/admin/logout/">
-      <button type="submit">Log out</button>
+    {q.get('published') && <p class="adm-ok">Publish started. The site updates in about a minute.</p>}
+    {q.get('error') && <p class="adm-err">{q.get('error')}</p>}
+    <table class="adm-stats">
+      <thead><tr><th>Section</th><th>Rows</th><th>Hidden</th></tr></thead>
+      <tbody>
+        {s.counts.map((c) => (
+          <tr><td><a href={`/admin/${c.kind}/`}>{KINDS[c.kind].label}</a></td><td>{c.total}</td><td>{c.hidden}</td></tr>
+        ))}
+      </tbody>
+    </table>
+    <p><strong>{s.pending}</strong> unpublished change{s.pending === 1 ? '' : 's'}. Last published: {s.last ? fmt(s.last) : 'never'}.</p>
+    <form class="adm-pub" method="post" action="/api/admin/publish">
+      <button type="submit">Publish now</button>
     </form>
   </Box>
 </Base>

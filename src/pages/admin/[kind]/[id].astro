@@ -1,0 +1,93 @@
+---
+// The form for one row. /admin/<kind>/new/ makes a new row; /admin/<kind>/<id>/ edits one.
+// The page handles its own POST, so a mistake shows the errors with everything you typed still in the boxes.
+import Base from '../../../layouts/Base.astro';
+import Box from '../../../components/Box.astro';
+import AdminNav from '../../../components/AdminNav.astro';
+import { KINDS, defaults, loadRaw, readForm, saveRow, type Kind } from '../../../lib/admin';
+
+export const prerender = false;
+
+const kind = Astro.params.kind as Kind;
+const id = Astro.params.id as string;
+if (!Object.hasOwn(KINDS, kind)) return new Response(null, { status: 404 });
+const cfg = KINDS[kind];
+const isNew = id === 'new';
+
+let raw: Record<string, any> = defaults(kind);
+let errors: string[] = [];
+let keepSlug: string | undefined;
+if (!isNew) {
+  const found = await loadRaw(kind, id);
+  if (!found) return new Response(null, { status: 404 });
+  raw = found;
+  keepSlug = found.slug;
+}
+if (Astro.request.method === 'POST') {
+  raw = readForm(kind, await Astro.request.formData());
+  if (keepSlug) raw.slug = keepSlug;
+  errors = (await saveRow(kind, isNew ? null : id, raw, keepSlug)).errors;
+  if (!errors.length) return Astro.redirect(`/admin/${kind}/?saved=1`, 303);
+}
+const secs: { heading: string; text: string }[] = raw.sections ?? [];
+---
+<Base title={`Admin: ${cfg.label}`} description="HalilintarSMP admin.">
+  <Box title={`${isNew ? 'New' : 'Edit'} ${cfg.one}`}>
+    <AdminNav current={`/admin/${kind}/`} />
+    <p><a href={`/admin/${kind}/`}>← Back to {cfg.label}</a></p>
+    {errors.length > 0 && (
+      <div class="adm-err" role="alert">
+        <strong>Not saved:</strong>
+        <ul>{errors.map((e) => <li>{e}</li>)}</ul>
+      </div>
+    )}
+    <form method="post" class="adm-form">
+      {cfg.fields.map((f) =>
+        f.type === 'checkbox' ? (
+          <label class="adm-check"><input type="checkbox" name={f.name} checked={!!raw[f.name]} /><span>{f.label}</span></label>
+        ) : f.type === 'sections' ? (
+          <fieldset>
+            <legend>{f.label}</legend>
+            <div id="secs">
+              {secs.map((x) => (
+                <div class="adm-sec">
+                  <input type="text" name="section_heading" placeholder="Heading (optional)" value={x.heading} />
+                  <textarea name="section_text" rows="4" placeholder="Text">{x.text}</textarea>
+                  <button type="button" class="rm-sec">Remove</button>
+                </div>
+              ))}
+            </div>
+            <template id="sec-tpl">
+              <div class="adm-sec">
+                <input type="text" name="section_heading" placeholder="Heading (optional)" />
+                <textarea name="section_text" rows="4" placeholder="Text"></textarea>
+                <button type="button" class="rm-sec">Remove</button>
+              </div>
+            </template>
+            <button type="button" id="add-sec">+ Add section</button>
+          </fieldset>
+        ) : f.type === 'textarea' ? (
+          <label>{f.label}<textarea name={f.name} rows="6">{raw[f.name]}</textarea>{f.help && <small>{f.help}</small>}</label>
+        ) : (
+          <label>
+            {f.label}
+            <input type={f.type} name={f.name} value={raw[f.name]} readonly={f.name === 'slug' && !isNew} />
+            {f.help && <small>{f.help}</small>}
+          </label>
+        )
+      )}
+      <button type="submit" class="adm-btn">Save</button>
+    </form>
+  </Box>
+</Base>
+<script is:inline>
+  (function () {
+    var box = document.getElementById('secs'), tpl = document.getElementById('sec-tpl'), add = document.getElementById('add-sec');
+    if (!box || !tpl || !add) return;
+    add.addEventListener('click', function () { box.appendChild(tpl.content.cloneNode(true)); });
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('.rm-sec');
+      if (b) b.closest('.adm-sec').remove();
+    });
+  })();
+</script>
