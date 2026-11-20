@@ -36,7 +36,7 @@ export const KINDS: Record<Kind, {
       { name: 'name', label: 'Name', type: 'text' },
       { name: 'handle', label: 'Handle (without @)', type: 'text' },
       { name: 'pronouns', label: 'Pronouns (optional)', type: 'text' },
-      { name: 'picture', label: 'Picture (path or address, optional)', type: 'picture', help: 'Empty = empty duh.' },
+      { name: 'picture', label: 'Picture (path or address, optional)', type: 'picture', help: 'Empty = gray box.' },
       { name: 'joined', label: 'Joined', type: 'date' },
       { name: 'intro', label: 'Intro', type: 'textarea' },
       { name: 'fandoms', label: 'Fandoms, in order, separated by commas', type: 'text', help: 'Each one must already exist in Fandoms.' },
