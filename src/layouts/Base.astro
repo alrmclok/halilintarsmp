@@ -3,7 +3,7 @@
 const { title = 'HalilintarSMP', description = 'the community website of the HalilintarSMP', noindex = false } = Astro.props;
 const fullTitle = title === 'HalilintarSMP' ? title : `${title} | HalilintarSMP`;
 const path = Astro.url.pathname;
-const SITE = import.meta.env.PUBLIC_SITE_URL || 'https://halilintarsmp.vercel.app'; // the live address; set PUBLIC_SITE_URL in Vercel to change it without touching code
+const SITE = import.meta.env.PUBLIC_SITE_URL || 'https://halilintarsmp-dev.vercel.app'; // the live address; set PUBLIC_SITE_URL in Vercel to change it without touching code
 const PREVIEW_IMAGE = '/putinxtrump.png'; // tab icon + link preview picture (a file in public/)
 const pageUrl = new URL(path, SITE).href;
 const imageUrl = new URL(PREVIEW_IMAGE, SITE).href;
