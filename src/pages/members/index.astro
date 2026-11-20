@@ -1,7 +1,7 @@
 ---
 // The Members list: every member, A to Z. Each row links to /members/name/.
 // A member with a custom page (custom: true) links to the same address, so the list does not care.
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../../lib/db.js';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
 import Row from '../../components/Row.astro';
@@ -28,7 +28,7 @@ const fandomLine = (m) => {
   return parts.length ? parts : undefined;
 };
 
-const entries = await getCollection('members');
+const entries = await getMemberEntries();
 const members = entries
   .map((e) => ({ ...e.data, slug: e.id }))
   .sort((a, b) => a.name.localeCompare(b.name));

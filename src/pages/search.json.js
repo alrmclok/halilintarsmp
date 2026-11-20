@@ -1,12 +1,13 @@
 // Makes /search.json when the site builds: one small list of everything the search box can find.
 // Members, fandoms and news items. It reads the same data as the pages, so nothing is typed twice.
 // public/search.js loads this file and does the matching in the browser.
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../lib/db.js';
 import { getFandoms } from '../lib/fandoms.js';
-import news from '../content/news.json';
+import { getNews } from '../lib/db.js';
 
 export async function GET() {
-  const entries = await getCollection('members');
+  const entries = await getMemberEntries();
+  const news = await getNews();
   const members = entries.map((e) => ({ ...e.data, slug: e.id }));
 
   const list = [];
@@ -14,7 +15,7 @@ export async function GET() {
   for (const m of members) {
     list.push({ kind: 'member', name: m.name, url: `/members/${m.slug}/`, extra: [m.handle] });
   }
-  for (const f of getFandoms(members)) {
+  for (const f of await getFandoms(members)) {
     list.push({ kind: 'fandom', name: f.name, url: `/fandoms/${f.slug}/`, extra: [] });
   }
   // A news item has no page of its own, so it opens the News list filtered to its title.

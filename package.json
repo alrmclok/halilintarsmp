@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "db:import:dry": "node scripts/import-json.mjs --dry-run",
+    "db:import": "node --env-file=.env scripts/import-json.mjs",
+    "db:check": "node --env-file=.env scripts/check-access.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.2",
     "astro": "5.14.1"
   }
 }

@@ -1,11 +1,11 @@
 ---
 // The Credits page, linked from the footer.
 // Box one: a short note (not connected to Winamp, fonts, pictures). Box two: every member's name, A to Z, linked to their page.
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../lib/db.js';
 import Base from '../layouts/Base.astro';
 import Box from '../components/Box.astro';
 
-const entries = await getCollection('members');
+const entries = await getMemberEntries();
 // The file name is the member's address (see the main document), so the link uses e.id.
 const members = entries
   .map((e) => ({ name: e.data.name, slug: e.id }))

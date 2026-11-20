@@ -2,14 +2,14 @@
 // The Fandoms list: every fandom, A to Z, with how many members it has and who they are.
 // Each row links to /fandoms/name/. Two columns on a computer, one on a phone.
 // public/search.js filters this page by the fandom name only (the .row-title), so keep the name as the title.
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../../lib/db.js';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
 import Row from '../../components/Row.astro';
 import { getFandoms } from '../../lib/fandoms.js';
 
-const entries = await getCollection('members');
-const fandoms = getFandoms(entries.map((e) => ({ ...e.data, slug: e.id })));
+const entries = await getMemberEntries();
+const fandoms = await getFandoms(entries.map((e) => ({ ...e.data, slug: e.id })));
 
 // The members of a fandom as links, at most MEMBER_LIMIT, then "and 2 more" linking to the fandom page.
 const MEMBER_LIMIT = 3;

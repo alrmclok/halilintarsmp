@@ -1,0 +1,28 @@
+{
+  "name": "Professor Katz",
+  "handle": "knockoutfangirl.nekoweb.org",
+  "pronouns": "he/she",
+  "picture": "/putinxtrump.png",
+  "fandoms": [
+    "Transformers",
+    "Team Fortress 2",
+    "Among Us (series)"
+  ],
+  "joined": "2026-11-01",
+  "intro": "I like knockout!!!!!",
+  "custom": false,
+  "sections": [
+    {
+      "heading": "About",
+      "text": "My name is Edward, but you can also call me Katz! I have been cosplaying since 2023 and I still have lots to learn. My main hobby is drawing, though. And I also ship myself with Knockout from Transformers."
+    },
+    {
+      "heading": "Availability",
+      "text": "I usually go to cosplay events and conventions once every 2 months. My main spots are Metro Indah Mall, Cihampelas Walk, or anywhere in Bandung that isn't too far from my house or too much of a hassle, really."
+    },
+    {
+      "heading": "Costumes",
+      "text": "My current main costume is Starscream from Transformers, specifically his design from the G1 cartoon. You might also see me dressed up as The Medic from Team Fortress 2 or Purple from the Among Us show."
+    }
+  ]
+}

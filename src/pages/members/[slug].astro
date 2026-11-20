@@ -1,7 +1,7 @@
 ---
 // The default member page, made from the member's data file (wiki article style).
 // Members with custom: true are left out here, because their own folder in public/members/ is used instead.
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../../lib/db.js';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
 import Parts from '../../components/Parts.astro';
@@ -9,7 +9,7 @@ import { buildLookup, linkMentions } from '../../lib/mentions.js';
 import { toSlug } from '../../lib/slug.js';
 
 export async function getStaticPaths() {
-  const entries = await getCollection('members', (e) => !e.data.custom);
+  (await getMemberEntries()).filter((e) => !e.data.custom)
   const members = entries.map((e) => ({ ...e.data, slug: e.id }));
   const lookup = buildLookup(members);
 

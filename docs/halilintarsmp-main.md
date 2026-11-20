@@ -1,13 +1,14 @@
 # HalilintarSMP: main document
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 This is the main document for the HalilintarSMP website. It says what the site is, how it is built and how it looks. It is the context file. What is done and what comes next is in `halilintarsmp-roadmap.md`.
 
-It has two parts.
+It has three parts.
 
-- **Part 1** says what the site is and how it is built.
+- **Part 1** says what the site is and how it is built. It describes the real site.
 - **Part 2** says how the site looks (the style guide).
+- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. It is a plan, not the real site yet.
 
 ## How the two files are used
 
@@ -39,6 +40,8 @@ Pages:
 | About | Short info about the SMP |
 | Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
 | News, Join, Rules | Three pages, built in Part K. News (`/news/`) lists every news item, newest first. Join (`/join/`) holds how to join and, in its own box, the server address (`/join/#server-address`). Rules (`/rules/`) is its own page. No pop-ups. They have no tab: they are reached from the maroon bar, the hero and the News box. The words on them are placeholders until the admins send the real ones |
+| Member form | `/member-form/`, not in the tabs. A page where a member fills in their profile (name, handle, pronouns, fandoms, joined date, intro, sections). Today it sends the profile to the admins by email as a ready-to-paste member file (Web3Forms). Part 3 turns it into a request that waits for approval |
+| Admin (planned) | `/admin/`, behind Google login. The dashboards for the admins and the super-admin. Not built yet, see Part 3 |
 
 ## Who can change files
 
@@ -48,12 +51,14 @@ Three people have access to the GitHub project: Almira, Katz and Kate. Katz and 
 - Any of the three can put a custom page live. If none of them can, Almira does it.
 - Anyone who does not want to use GitHub can send the files to Almira, who adds them.
 
+Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. This is planned, not built.
+
 ## Tech stack (decided)
 
 - **The main site uses Astro.** It has reusable components (like the Box), shared layouts and pages made from data.
 - **Custom member pages use plain HTML, CSS and JS.** Each one is its own folder. A member only needs to know those three things, and does not need to know Astro.
 - **Hosting is Vercel**, connected to the GitHub project.
-- **There is no external database.** All the content lives in files in the project: member data files, the gallery list and the pictures.
+- **There is no external database.** All the content lives in files in the project: member data files, the gallery list and the pictures. This stays true for the public pages until Part N of the roadmap, and for the whole project until Part T. A move to Supabase is under way: see Part 3. Part M has made the tables and the import, but the site still reads the files.
 
 A change to the site is a code change:
 
@@ -84,6 +89,7 @@ src/
   pages/news.astro          the News page: every item in news.json, newest first
   pages/join.astro          the Join page: how to join, and the server address (a line at the top of the file)
   pages/rules.astro         the Rules page
+  pages/member-form.astro   the member form (sends a profile to the admins, see Part 3)
   pages/search.json.js      makes /search.json when the site builds: the list the search box looks in (members, fandoms, news)
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
@@ -103,6 +109,11 @@ public/
   members/member-name/      a custom page: index.html, style.css, script.js
 templates/custom-member/    a starter folder to copy for a custom page
 templates/README.md         the steps and rules for custom pages, written for members (outside public/, so it is not shown)
+supabase/schema.sql         the database tables and their access rules, as they should be now (Part M). A record; it does not have to be run again
+supabase/migrations.sql     changes to run once in the Supabase SQL Editor (migration 1 removes the unused site_text table)
+scripts/import-json.mjs     copies the content files into Supabase (Part M). Safe to run again
+scripts/check-access.mjs    checks that the public key reads only visible rows and cannot write (Part M)
+.env.example                the names of the settings, without values. The real `.env` is never committed
 ```
 
 ### How the custom pages work
@@ -172,6 +183,18 @@ Member links in gallery text. They are made when the site builds, and only when 
 - The links are red-orange and bold (the `.mention` style).
 
 Keep pictures small: about 1200 px wide at most and under 300 KB each. Files in `public/` are served as they are, so nothing shrinks them for you.
+
+### The news data file
+
+`src/content/news.json` is one list. Each item is one entry. Keep the newest on top: the home page News box shows the first three items of the file. The News page sorts by `date` by itself.
+
+| Field | Needed? | What it is |
+|---|---|---|
+| `title` | no | Short title. Some items have none |
+| `pic` | no | Path to a picture, for example `/news/nyan_cat.gif` |
+| `by` | yes | Who wrote it |
+| `date` | yes | Date, written `2026-11-19` |
+| `summary` | yes | The text of the item |
 
 ### Rules for custom pages
 
@@ -392,3 +415,122 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 - **Contact row.** A row of links to where the person is (Discord, Instagram and so on). It could be a line in the member infobox.
 - **"Link back" button.** A small button picture that others can put on their own sites. A tiny version of our logo could do this later.
 - **A tone to avoid.** That site uses lots of animated GIFs. It suits their site, but it would break our flat, tidy look. We keep pictures still.
+
+---
+
+# Part 3: Supabase and the dashboards (planned)
+
+Status: Part M is built (the tables, the access rules and the import, section 3.3). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. Until Part N, the real site still reads the files, not the database. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+
+## 3.1 Why
+
+The content moves from files in the project to a Supabase database. So people who are not on GitHub can edit safely, a typo cannot break the build, and members can send their own page for approval. The site stays a built site, so it stays fast.
+
+## 3.2 How the pages get their data
+
+- **Hybrid.** The public pages (Home, Members, Fandoms, Gallery, News, Credits, About, Join, Rules and the search list) stay built pages, like now. When the site builds, they read Supabase instead of the JSON files. They are not made again for each visitor. About, Join and Rules keep their words in the page code.
+- **Server-rendered** (`export const prerender = false`, with the `@astrojs/vercel` adapter): only the dashboards, the login and its callback, and the endpoint that receives the member form.
+- **Publish button.** Saving in a dashboard writes to the database at once, but the public site does not change. The super-admin presses Publish, which calls a Vercel deploy hook, and the site rebuilds in about a minute. The dashboard shows how many changes are not published yet.
+- If Supabase is paused or down, the public site keeps working. A build would fail, and Vercel keeps showing the last working version.
+- The build reads with the public key, under read-only rules. Hidden rows are not returned.
+
+## 3.3 Tables (made in Part M; the real file is `supabase/schema.sql`)
+
+Nine tables. Access rules are switched on for every one of them. Each public table has a `hidden` column: a hidden row is not returned to the public key.
+
+| Table | Holds |
+|---|---|
+| `members` | `slug` (the old file name, so no address changes), `name`, `handle`, `pronouns`, `picture`, `joined` (a date), `intro`, `custom`, `featured`, `edited` (a date; empty = use `joined`), `sections` (a JSON list of `heading` and `text`), `hidden` |
+| `fandoms` | `slug` (the same address-piece rule as `toSlug`, so two spellings are one fandom), `name`, `picture`, an optional `description`, `hidden` |
+| `member_fandoms` | Links a member to a fandom. It has a `position`, so a member's fandoms keep the order the member chose |
+| `gallery` | `slug`, `title`, `description`, `credit`, `file`, `alt`, `added` (a date), `position` (the order in the old file; it breaks ties between pictures added on the same day), `hidden` |
+| `news` | `title` (optional), `pic` (optional), `author` (called `by` in the old file), `date`, `summary`, `position` (the order in the old file: the home box shows the first three), `import_key` (used only by the import script), `hidden` |
+| `admins` | `email` (lowercase), `added_by`, `added_at` |
+| `member_requests` | `status` (`pending`, `approved` or `rejected`), what the form sends (`name`, `handle`, `pronouns`, `fandoms` as typed, `joined`, `intro`, `sections`), `review_note`, `reviewed_by`, `reviewed_at`, `created_at` |
+| `heartbeat` | Dummy rows for the keep-alive (see 3.8) |
+| `publish_state` | One row: `last_published_at` and `pending_changes` |
+
+Who can read what:
+
+- The public key reads `members`, `fandoms`, `member_fandoms`, `gallery` and `news`, and never a hidden row. A member-fandom link is readable only when both its member and its fandom are.
+- The public key cannot write anything. It cannot read `admins`, `member_requests`, `heartbeat` or `publish_state` either. Only the secret key (server only) can.
+- `npm run db:check` tests all of this against the real project.
+
+Nothing is deleted by an admin. A row is hidden instead, and it can come back.
+
+The database holds only members, fandoms, gallery and news (plus the admin tables). The words of the Join, Rules, About and Credits pages and the server address stay in the page code (Almira's decision).
+
+The import (Part M):
+
+- `npm run db:import:dry` reads the content files, checks them and prints a report. It writes nothing and needs no keys.
+- `npm run db:import` copies the files into the tables. Members, fandoms and gallery pictures are matched by `slug`, and news by a fingerprint of its text (`import_key`), so running it again makes no doubles. It never changes `hidden` and never deletes a row.
+- A normal run overwrites the fields of rows that already exist with what is in the files. `npm run db:import -- --only-new` adds only rows that are not in the database yet. Once the dashboards are in use, use `--only-new` or do not run the import.
+- The fandoms are built from the members the same way as `src/lib/fandoms.js` (same address rule, first spelling shown), and each fandom's `picture` is filled from `public/fandoms/`. Pictures in that folder that match no fandom are listed in the report and not used.
+
+## 3.4 Login and roles
+
+- Login is **Google OAuth**, through Supabase Auth.
+- **Super-admin:** the Google email in the setting `SUPER_ADMIN_EMAIL`. Only Almira.
+- **Admin:** the Google emails in the `admins` table. The super-admin adds and removes them in the dashboard. There are no shared keys and no secret addresses. The first idea of a key that can be regenerated became Add and Remove.
+- Anyone else who signs in sees a "not allowed" page.
+- The dashboard is at `/admin/`. The server checks the role on every dashboard page and on every write. The secret key lives only on the server, never in the browser.
+- The public key in the browser can read published rows only and cannot write.
+
+## 3.5 Who can do what
+
+| Action | Admin | Super-admin |
+|---|---|---|
+| Create and edit members, fandoms, gallery, news | yes | yes |
+| Hide and unhide | yes | yes |
+| Review member requests (fix, approve, reject) | yes | yes |
+| Press Publish | no (open decision) | yes |
+| Delete for good | no | yes |
+| Add and remove admins | no | yes |
+| Keep-alive button | no | yes |
+
+## 3.6 The member form
+
+Today (Part LA): `src/pages/member-form.astro` is a page outside the tabs. Its fields are display name, handle, pronouns, fandoms (typed, split at commas), joined date, short intro, and any number of sections (heading and text). It sends a ready-to-paste member file to the admins by email with Web3Forms, and Almira adds it by hand.
+
+Planned (Part Q):
+
+- Same page, same fields, same look. It now sends to a server endpoint that saves a row in `member_requests` with the status `pending`. A pending request is not public.
+- A requests screen in the dashboard. An admin or the super-admin opens a request, can fix words, then approves (a member row is made, and it shows on the site at the next Publish) or rejects (with an optional note).
+- Fandom names in a request are matched to the existing fandoms with the same-address rule. A name that matches nothing is shown to the reviewer, who creates it or drops it.
+- Pictures: members still send theirs to Almira. The reviewer uploads it when approving (Part R).
+- A request is never applied by itself. There is no member login, so a request cannot prove who sent it. The reviewer is the check.
+- Protection: the hidden trap field `botcheck` stays, with a rate limit and length limits added (the numbers are set in Part Q). The page stays out of the tabs and gets `noindex`.
+
+## 3.7 Pictures
+
+- Part R: Supabase Storage. The dashboard has a choose-a-picture control. The browser shrinks the picture to about 1200 px wide and under 300 KB (the same rule as now) and then uploads it. The row stores the picture's address.
+- Fandom pictures become a column on `fandoms`. The scan of `public/fandoms/` in `src/lib/fandoms.js` is removed.
+- Until Part R, a picture field is a text box for an address, and the existing pictures stay in `public/`.
+- Site art (logo, hero, splatters, stripe strip) stays in `public/`.
+
+## 3.8 Keep-alive
+
+As far as is known, a free Supabase project can pause after a while without activity (check their current rules). The super-admin dashboard has a button that adds a dummy row to `heartbeat` and deletes it right away. A weekly Vercel cron job calls the same endpoint, so it does not depend on remembering. The dashboard shows the time of the last ping. It never touches the real tables.
+
+## 3.9 What stays in files
+
+Code, `public/style.css`, the site art, `templates/`, the docs, and the custom member pages (`public/members/member-name/`). The `custom` flag of a member lives in the member's row. Katz and Kate keep GitHub for code and custom pages.
+
+## 3.10 Settings (secrets)
+
+Kept in `.env` (never committed) and in the Vercel settings. `.env.example` lists the names without values. The names were fixed in Part M. Supabase calls its old key pair `anon` and `service_role` and plans to retire them by the end of 2026, so the new pair (publishable and secret) is used here.
+
+| Name | What it is |
+|---|---|
+| `PUBLIC_SUPABASE_URL` | The project address |
+| `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | The public key (starts with `sb_publishable_`), read-only under the rules |
+| `SUPABASE_SECRET_KEY` | The strong key (starts with `sb_secret_`). Server only |
+| `SUPER_ADMIN_EMAIL` | Almira's Google email |
+| `VERCEL_DEPLOY_HOOK_URL` | The address the Publish button calls |
+| `CRON_SECRET` | Protects the weekly keep-alive call |
+
+The Google client id and secret are set in Supabase's Auth settings, not in the project.
+
+## 3.11 Backup
+
+Part T adds `scripts/export-json.mjs`, which writes the tables out as JSON, so the content is never only in Supabase.

@@ -1,15 +1,15 @@
 ---
 // The Gallery page: every picture as a row with a title, a short description and a credit. Newest first, in two columns.
 // A row opens that picture's own page (/gallery/title/). Member names in the description and credit become links.
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../../lib/db.js';
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
 import Row from '../../components/Row.astro';
 import { getGallery } from '../../lib/gallery.js';
 import { buildLookup, linkMentions, linkCredit } from '../../lib/mentions.js';
 
-const pictures = getGallery();
-const entries = await getCollection('members');
+const pictures = await getGallery();
+const entries = await getMemberEntries();
 const lookup = buildLookup(entries.map((e) => ({ ...e.data, slug: e.id })));
 ---
 <Base title="Gallery" description="Pictures from the HalilintarSMP.">

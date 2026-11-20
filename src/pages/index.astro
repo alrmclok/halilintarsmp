@@ -1,27 +1,28 @@
 ---
 // Home page. Every box is filled from data files, not typed into the page.
 // Each list box shows at most 3 rows (the "More" link in its title bar leads to the full list).
-import { getCollection } from 'astro:content';
+import { getMemberEntries } from '../lib/db.js';
 import Base from '../layouts/Base.astro';
 import Box from '../components/Box.astro';
 import Row from '../components/Row.astro';
 import FeaturedMember from '../components/FeaturedMember.astro';
-import news from '../content/news.json';
+import { getNews } from '../lib/db.js';
 import { getFandoms } from '../lib/fandoms.js';
 import { getGallery } from '../lib/gallery.js';
 import { buildLookup, linkCredit, linkMentions } from '../lib/mentions.js';
 
 const SHOW = 3; // how many rows each list box shows on the home page
 
-const entries = await getCollection('members');
+const entries = await getMemberEntries();
 const members = entries.map((e) => ({ ...e.data, slug: e.id }));
 const lookup = buildLookup(members);
+const news = await getNews();
 
 // Fandoms box: built by the shared helper, so it matches the Fandoms pages.
-const fandoms = getFandoms(members).slice(0, SHOW);
+const fandoms = (await getFandoms(members)).slice(0, SHOW);
 
 // Gallery highlights: the newest pictures (getGallery sorts newest first).
-const newestGallery = getGallery().slice(0, SHOW);
+const newestGallery = (await getGallery()).slice(0, SHOW);
 // Featured member: the one with "featured": true in their file, or the first member if none has it.
 const featured = members.find((m) => m.featured) ?? members[0];
 // Members box: the newest members, newest first.

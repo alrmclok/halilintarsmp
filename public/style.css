@@ -120,7 +120,7 @@ img { max-width: 100%; }
 .info-pic { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; margin: 8px 0; background: #a8a496; border: 1px solid var(--line); }
 .info-list { margin: 0 0 8px; }
 .info-list dt { font-weight: bold; margin-top: 6px; }
-.info-list dd { margin: 0; }
+.info-list dd { margin: 0; overflow-wrap: break-word; word-wrap: break-word; }
 .categories { clear: both; margin-top: 20px; padding-top: 6px; border-top: 1px dotted var(--line); }
 .edited { color: var(--ink); opacity: .65; margin-bottom: 4px; }
 

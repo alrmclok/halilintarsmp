@@ -1,12 +1,14 @@
 # HalilintarSMP: roadmap
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 This file is written for the AI that helps Almira build the site. It lists the work in ordered parts (A, B, C and so on). Each part is small enough to finish in one chat, and the next part is started in another chat. The context for everything is in `halilintarsmp-main.md`. This file only tracks progress.
 
+Parts A to L built the site from files. From Part M on, the work is the move to Supabase and the dashboards. The plan for that is Part 3 of the main document.
+
 ## Rules for the AI
 
-1. Almira sends both files at the start of every chat: the main document and this roadmap. Both live in the `docs/` folder of the project. The guide `docs/guide-for-editors.md` is sent only when the work changes something it explains.
+1. Almira sends both files at the start of every chat: the main document and this roadmap. Both live in the `docs/` folder of the project. The guide `docs/guide-for-editors.md` is sent only when the work changes something it explains. From Part M on, also send `supabase/schema.sql` once it exists.
 2. Read the main document first, then find the first part here that is not Done. Work only on that part.
 3. Before starting a part, say in a few plain words what it will do. Then do it.
 4. When the part is finished and nothing in the plan changed: update only this file. Set the status to Done, tick the checklist, and write short notes under "Notes".
@@ -221,7 +223,7 @@ Goal: the gallery as a list with captions.
 Notes:
 
 - New files: `src/lib/gallery.js` (reads and tidies the list, newest first; used by the home page and the Gallery page) and `src/pages/gallery/index.astro` (one Box, one row per picture: thumbnail, title, description, "by credit"). New empty folder `public/gallery/` (with a `.gitkeep`) for the pictures.
-- Changed: `gallery.json` has a new field `alt`. `Row.astro` has two new optional props: `alt` (what the picture shows) and `note` (a second small line, used for the credit). `src/pages/index.astro` now gets the highlights from `getGallery()`.
+- Changed: `gallery.json` has a new field `alt`. `Row.astro` has two new optional props: `alt` (what the picture shows) and `note` (a second small line, used for the credit). `src/pages/index.astro` now gets the highlights from `await getGallery()`.
 - Each Gallery row links to that picture's own page (see Part FA).
 - Pictures are not shrunk by the site (files in `public/` are served as they are). The rule is in the main document: about 1200 px wide at most and under 300 KB. Almira can change this number.
 - The gallery list is not checked by Astro like the member files are. `gallery.js` gives safe defaults for a missing field instead.
@@ -404,6 +406,189 @@ Notes:
 
 ---
 
+## Part LA: Member form (made outside the parts list)
+
+Status: Done
+
+Goal: members can send their profile to the admins from a page on the site.
+
+- [x] `src/pages/member-form.astro`: one Box with a form (display name, handle, pronouns, fandoms, joined date, short intro, any number of sections).
+- [x] The page builds a ready-to-paste member JSON and sends it by email with Web3Forms.
+- [x] A hidden trap field (`botcheck`) against bots.
+
+Notes:
+
+- Made by Almira, not by this AI. The AI read the file on 2026-11-20 and did not run it.
+- Fields: `name`, `handle` and `intro` are required, the rest are optional. Fandoms are typed as text and split at commas. Sections start with one called "About" and members can add more (and remove them). The JSON sets `picture` to `/putinxtrump.png` and `custom` to `false`. The form text tells members to send their picture to Almira.
+- The Web3Forms key in the file is the placeholder `xxxxx`, with a note to move it to `.env`. Part Q replaces Web3Forms, so the key goes away then.
+- The page is not in the tabs or the maroon bar. Members get its link privately. It is not in the pages table of the main document until Part Q.
+- The form's own CSS classes (`form-wrap`, `smp-form`, and so on) are not in any file the AI has seen. They are probably in `public/style.css`.
+- Almira said small changes were also made locally and not written down. The next chat should say if any of them change a file name, a field or a rule.
+
+---
+
+## Part M: Supabase setup, tables and import
+
+Status: In progress
+
+Goal: a Supabase project with the tables, the access rules and all current content copied in. Nothing on the public site changes yet.
+
+- [x] Almira made the Supabase project.
+- [x] `.env.example` lists the setting names without values.
+- [ ] Almira makes `.env` with the three keys for this part and adds `.env` to `.gitignore` (steps in the chat).
+- [x] `supabase/schema.sql`: the tables from Part 3 section 3.3, final names and types, and the read rules (the public key reads only rows that are not hidden, and cannot write).
+- [ ] Almira runs `supabase/schema.sql` in the Supabase SQL Editor.
+- [x] `scripts/import-json.mjs`: copies `src/content/members/*.json`, `gallery.json` and `news.json` into the tables, builds the fandom list from the members and links them. Safe to run again without making doubles.
+- [x] Each member `slug` equals the old file name, and each gallery `slug` equals its old address, so no address changes.
+- [x] Pictures keep their current paths in `public/`.
+- [ ] Almira runs `npm run db:import:dry`, then `npm run db:import`, and compares the counts with the JSON files.
+- [ ] Almira runs `npm run db:check`: the public key cannot write and cannot read hidden rows.
+- [ ] Almira runs `supabase/migrations.sql` once in the SQL Editor (drops the unused `site_text` table), then `npm run db:check` again.
+- [x] Update Part 3 in the main document where the real tables differ from the draft.
+
+Notes:
+
+- The JSON files stay in place. They are removed in Part T.
+- New files: `supabase/schema.sql`, `scripts/import-json.mjs`, `scripts/check-access.mjs`, `.env.example`. Changed: `package.json` (the `@supabase/supabase-js` package and three scripts: `db:import:dry`, `db:import`, `db:check`) and `.gitignore` (`.env`).
+- Tested on the AI's side with a local PostgreSQL 16 and PostgREST 12.2.12 behind a small stand-in for Supabase's address, with Almira's real files (1 member, 12 fandoms, 2 gallery pictures, 7 news items). The schema ran twice without errors. The import ran several times without doubles, kept `hidden` as it was, stopped before writing anything on a bad file, and `--only-new` kept existing rows. `db:check` passed, and failed when the rules were broken on purpose. Not run on Almira's real Supabase project yet.
+- New names for the keys: `PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` instead of `..._ANON_KEY` and `..._SERVICE_ROLE_KEY`, because Supabase plans to retire the old `anon` and `service_role` keys by the end of 2026. `SUPER_ADMIN_EMAIL`, `VERCEL_DEPLOY_HOOK_URL` and `CRON_SECRET` are listed in `.env.example` but are not needed until Parts O, P and S.
+- The Vercel settings are not needed yet, because nothing deployed reads Supabase before Part N. They move to Part N (its list already has them).
+- A `site_text` table was made first and then dropped (Almira's decision): the Join, Rules, About and Credits texts and the server address stay in the page code. The database holds only members, fandoms, gallery and news, plus the admin tables. `supabase/migrations.sql` removes the empty table from the real project, and `schema.sql` no longer has it.
+- The real data had things the documents did not say, so the tables allow them: a news item may have no `title` and may have a `pic`; a member's fandoms keep their order (`member_fandoms.position`); news and gallery keep their file order (`position`).
+- News rows have no address, so the import finds them again by `import_key`, a fingerprint of title, author, date and summary. If a news item is edited in `news.json` after the import, a second import adds it as a new row and leaves the old one. The report lists database rows that are not in the files.
+- The import fills `fandoms.picture` from `public/fandoms/`. Four pictures there match no fandom today (`deltarune.jpg`, `multifandom.jpg`, `placeholder.png`, `undertale.jpg`), so they are not used, the same as on the site now.
+- The import copies fields as they are and does not fix wording. It checks that `joined`, `edited` and `added` are real dates, and stops before writing if a file is wrong.
+- A normal import run overwrites existing rows with the file contents. After the dashboards are in use, run it only with `--only-new`, or not at all.
+
+---
+
+## Part N: Public pages read from Supabase
+
+Status: Not started
+
+Goal: the public site is built from the database and looks and works exactly as before.
+
+- [ ] `src/lib/db.js`: one small client and the shared loaders (members, fandoms, gallery, news).
+- [ ] Replace the JSON reading in the home page, the Members, Fandoms, Gallery, News and Credits pages, `mentions.js`, `fandoms.js`, `gallery.js` and `search.json.js`.
+- [ ] Keep the warning in the build log for a bad row, like the old member schema did.
+- [ ] Fandom pictures come from the `fandoms` table. Until Part R, keep the `public/fandoms/` scan as a fallback for a fandom with no picture.
+- [ ] Add the `@astrojs/vercel` adapter. Keep the site prerendered by default.
+- [ ] Set the Supabase settings in Vercel. Make the Vercel deploy hook and keep its address in a setting.
+- [ ] Check: the list of built addresses is the same as before, the search works, custom member pages still work, and a build with Supabase unreachable fails clearly.
+
+Notes:
+
+- The site must not call Supabase when a visitor opens a page. Only the build does.
+- Check what `news.astro` and the home News box do with a news item that has no `title`, and with a `pic`. The real data has both, and the old documents did not mention them. The `news` table keeps both.
+- Order: the home News box takes the first three by `position`. The News page sorts by `date`. Gallery sorts by `added`, newest first, and `position` breaks ties.
+
+---
+
+## Part O: Login and roles
+
+Status: Not started
+
+Goal: Google login that lets in only the super-admin and the admins on the list.
+
+- [ ] Google Cloud OAuth client and Supabase Auth set up (Almira, with the AI's steps).
+- [ ] `/admin/login`, the callback, logout, and the "not allowed" page.
+- [ ] `src/middleware.ts` guards `/admin/*` and `/api/admin/*`.
+- [ ] Role check: the email in `SUPER_ADMIN_EMAIL` is super-admin, emails in `admins` are admins, everyone else is refused.
+- [ ] Check: a listed email gets in, an unlisted Google account is refused, logged out means no access, and the browser's public key cannot write.
+
+Notes:
+
+- The first admin emails are added by hand in the table until Part S makes the screen for it.
+
+---
+
+## Part P: Admin dashboard (content)
+
+Status: Not started
+
+Goal: admins edit members, fandoms, gallery and news without GitHub.
+
+- [ ] `/admin/` home: counts, the unpublished changes count, last publish time.
+- [ ] A list and a form for each of members, fandoms, gallery and news: create, edit, hide, unhide.
+- [ ] The same rules as the old data files: required fields, date format, slug rules, and a warning for a duplicate slug or a fandom with the same address piece.
+- [ ] The picture field is a text box for an address until Part R.
+- [ ] Every save writes to the database and raises the unpublished changes count.
+- [ ] The Publish button (super-admin only) calls the deploy hook and resets the count.
+- [ ] Role checks on the server for every write.
+- [ ] Phone check.
+
+Notes:
+
+- Look: same Box and colors as the site, plain forms (proposed, see Open decisions).
+
+---
+
+## Part Q: Member form into the request queue
+
+Status: Not started
+
+Goal: the member form saves requests that an admin approves or rejects.
+
+- [ ] `member_requests` table and a server endpoint that saves a request as `pending`.
+- [ ] `member-form.astro` sends to that endpoint instead of Web3Forms. Same fields, same look.
+- [ ] Protection: keep `botcheck`, add a rate limit and length limits, add `noindex`.
+- [ ] Requests screen in the dashboard: list, open one, fix words, Approve (creates the member), Reject (with a note).
+- [ ] Fandom names in a request are matched to existing fandoms. A name with no match is shown to the reviewer.
+- [ ] Add the member form to the pages table in the main document.
+
+Notes:
+
+- Requests are never applied by themselves. See Part 3 section 3.6.
+
+---
+
+## Part R: Picture uploads
+
+Status: Not started
+
+Goal: pictures are uploaded in the dashboard and stored in Supabase Storage.
+
+- [ ] Storage bucket and rules.
+- [ ] A choose-a-picture control for members, fandoms and gallery. The browser shrinks the picture (about 1200 px wide, under 300 KB) before it uploads.
+- [ ] The row stores the picture's address. The gallery `alt` field stays required.
+- [ ] Remove the `public/fandoms/` scan from `src/lib/fandoms.js`.
+- [ ] Optional: move the existing pictures from `public/gallery/` and `public/fandoms/` into Storage.
+
+Notes:
+
+- Site art (logo, hero, splatters) stays in `public/`.
+
+---
+
+## Part S: Super-admin dashboard
+
+Status: Not started
+
+Goal: the things only Almira can do.
+
+- [ ] Add and remove admins by Google email.
+- [ ] Delete rows for good, and unhide.
+- [ ] Keep-alive: the button, the endpoint, the weekly Vercel cron job, and the last ping time on the screen.
+- [ ] Phone check.
+
+---
+
+## Part T: Docs, guides and clean up
+
+Status: Not started
+
+Goal: the documents match the real site, and the old JSON files are gone.
+
+- [ ] Fold Part 3 of the main document into Part 1 (tech stack, folder layout, pages, data, who can change what).
+- [ ] Rewrite `docs/guide-for-editors.md`: Katz and Kate use GitHub for code and custom pages only.
+- [ ] Write `docs/guide-for-admins.md`: how to log in, edit, review requests.
+- [ ] Update `README.md` with the Supabase and `.env` steps.
+- [ ] Add `scripts/export-json.mjs`: writes the tables out as JSON, as a backup.
+- [ ] Delete `src/content/members/*.json`, `gallery.json`, `news.json` and the unused schema, once Almira has checked the live site.
+- [ ] Final check of every page and every dashboard screen on a phone.
+
+---
+
 ## Open decisions
 
 Ask about these when the part that needs them starts. Do not decide them silently.
@@ -414,9 +599,18 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - The drawn logo, header figure and hero title picture. Placeholders until drawn.
 - The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
 - Tab icon and link preview stay putinxtrump.png, and the footer line stays futer, until Almira changes them.
-- Which folder holds member pictures. The main document says only "path to a small square picture", so the guide tells members to send theirs to Almira for now. (Part J)
+- Which folder holds member pictures. The main document says only "path to a small square picture", so the guide tells members to send theirs to Almira for now. Part R (uploads) settles this. (Part J)
 - What Enter does in the search box when no line is highlighted: now it opens the first match, and if there is none it searches the Members. Almira can change this. (Part L)
-- Which files Katz and Kate may edit. The guide suggests data files, pictures and custom page folders only, and "ask Almira first" for code (`.astro`, `.js`, `.ts`, `style.css`). Almira can loosen or tighten this. (Part J)
+- Which files Katz and Kate may edit. The guide suggests data files, pictures and custom page folders only, and "ask Almira first" for code (`.astro`, `.js`, `.ts`, `style.css`). Almira can loosen or tighten this. The guide is rewritten in Part T. (Part J)
+- Who may press Publish. This plan says the super-admin only. Almira can allow admins too. (Part P)
+- The look of the dashboards. Proposed: the same Box and colors as the site, plain forms. (Part P)
+- Who the first admins are (their Google emails). (Part O)
+- Should the member form have an "update my page" choice, or only new members? Without a member login a request cannot prove who sent it. (Part Q)
+- Keep the Web3Forms email as a backup notice for new requests, or drop it? (Part Q)
+- Only the hidden trap field plus a rate limit, or also a free captcha (for example Cloudflare Turnstile)? (Part Q)
+- Member pictures: members keep sending theirs to Almira, and the reviewer uploads it on approval. Almira can change this. (Part Q, Part R)
+- Show "last edited by" or keep a change log in the dashboard? (Part S)
+- How often to export the tables to JSON as a backup. (Part T)
 
 ## Progress log
 
@@ -438,3 +632,5 @@ One line per finished part: date, part, what was done.
 - 2026-11-19, Part J: `docs/guide-for-editors.md` written for Katz and Kate.
 - 2026-11-19, Part K: News, Join and Rules pages built (placeholder words, masked server address); corner, second-bar, hero and News box links now lead to them. Phone check done by Almira.
 - 2026-11-19, Part L: search box built: a list made at build time (`/search.json`), `public/search.js` with the dropdown and fuzzy matching, and the filter on the Members, Fandoms and News lists. Almira checked it and said it is done.
+- 2026-11-20, Part LA: member form page (`member-form.astro`, Web3Forms email) written down. Made by Almira outside the parts list.
+- 2026-11-20, planning: Supabase move planned (Parts M to T). Decided: hybrid (public pages built, dashboards server-rendered), Google login, Publish button, add/remove admin emails, fandoms as their own list, member form becomes a request queue, keep-alive button plus weekly cron. Plan is Part 3 of the main document.

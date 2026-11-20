@@ -1,10 +1,12 @@
-// Builds the list of fandoms from the member data, so the home page, the Fandoms list and the fandom pages all agree.
+// Builds the list of fandoms from the members (read from the database), so the home page, the Fandoms list and the fandom pages all agree.
 // Two spellings count as the same fandom when they make the same address piece ("Fandom A" = "fandom  a" = "FANDOM-A").
 // The name shown is the first spelling found. Members are read in file-name order, so the shown name stays the same.
-// Each member needs a `slug` (their file name), as the pages add it.
+// Each member needs a `slug`, as the pages add it.
+// A fandom's picture comes from the `fandoms` table. Until Part R, a fandom with no picture there falls back to public/fandoms/.
 import fs from 'node:fs';
 import path from 'node:path';
 import { toSlug } from './slug.js';
+import { getFandomRows } from './db.js';
 
 const FANDOMS_DIR = path.join(process.cwd(), 'public', 'fandoms');
 
@@ -22,9 +24,10 @@ function getFandomImages() {
   return map;
 }
 
-export function getFandoms(members) {
+export async function getFandoms(members) {
   const byKey = new Map();
   const images = getFandomImages();
+  const rows = await getFandomRows();
   const ordered = [...members].sort((a, b) => a.slug.localeCompare(b.slug));
 
   for (const m of ordered) {
@@ -36,7 +39,14 @@ export function getFandoms(members) {
         continue;
       }
       if (!byKey.has(slug)) {
-        byKey.set(slug, { name, slug, pic: images.get(slug), members: [] });
+        const row = rows.get(slug);
+        byKey.set(slug, {
+          name: row?.name ?? name,
+          slug,
+          pic: row?.picture || images.get(slug),
+          description: row?.description,
+          members: [],
+        });
       }
       const f = byKey.get(slug);
       if (!f.members.some((x) => x.slug === m.slug)) f.members.push(m);

@@ -1,12 +1,12 @@
 ---
-import { getCollection } from "astro:content";
+import { getMemberEntries } from '../../lib/db.js';
 import Base from "../../layouts/Base.astro";
 import Parts from "../../components/Parts.astro";
 import { getGallery } from "../../lib/gallery.js";
 import { buildLookup, linkMentions, linkCredit } from "../../lib/mentions.js";
 
 export async function getStaticPaths() {
-  const all = getGallery();
+  const all = await getGallery();
   return all.map((g, i) => ({
     params: { slug: g.slug },
     props: {
@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 }
 
 const { picture, prev, next } = Astro.props;
-const entries = await getCollection("members");
+const entries = await getMemberEntries();
 const lookup = buildLookup(entries.map((e) => ({ ...e.data, slug: e.id })));
 ---
 
