@@ -413,3 +413,38 @@ img { max-width: 100%; }
     font-size: 14px;
   }
 }
+
+/* admin dashboards (Part P) */
+.adm-form { padding: 8px 4px 12px; max-width: 660px; }
+.adm-form label { display: block; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dotted var(--line); font-family: var(--font-head); font-weight: bold; color: var(--maroon); }
+.adm-form small { display: block; margin-top: 3px; font: 12px/1.4 var(--font); font-weight: normal; color: var(--ink); }
+.adm-form input[type="text"], .adm-form input[type="date"], .adm-form input[type="number"], .adm-form textarea {
+  display: block; width: 100%; margin-top: 4px; padding: 6px 8px; background: var(--white);
+  border: 1px solid var(--line); color: var(--ink); font: 14px/1.45 var(--font);
+}
+.adm-form input:focus, .adm-form textarea:focus { outline: 2px solid var(--orange); outline-offset: -1px; border-color: var(--maroon); }
+.adm-form input[readonly] { background: var(--content); }
+.adm-form textarea { resize: vertical; }
+.adm-form fieldset { margin: 0 0 10px; padding: 8px; border: 1px solid var(--line); }
+.adm-form legend { padding: 0 4px; font-family: var(--font-head); font-weight: bold; color: var(--maroon); }
+.adm-check { display: flex !important; align-items: center; gap: 8px; }
+.adm-check input { width: 18px; height: 18px; margin: 0; }
+.adm-sec { margin-bottom: 8px; padding: 8px; background: var(--content); border: 1px solid var(--line); }
+.adm-sec input, .adm-sec textarea { margin-bottom: 6px; }
+.adm-btn, .adm-pub button, .adm-sec button, #add-sec {
+  padding: 6px 14px; background: var(--maroon); color: var(--white); border: 0; border-radius: 0;
+  font: bold 14px var(--font-head); cursor: pointer;
+}
+.adm-btn:hover, .adm-pub button:hover, #add-sec:hover { background: var(--link); }
+.adm-pub { margin: 10px 0; }
+.adm-err { margin: 8px 0; padding: 8px 10px; background: #f6deda; border: 1px solid var(--headline); color: var(--maroon); }
+.adm-err ul { margin: 4px 0 0 18px; padding: 0; }
+.adm-ok { margin: 8px 0; padding: 8px 10px; background: #e3ecd8; border: 1px solid #5b7a3a; color: #1e330b; }
+.adm-stats { width: 100%; margin: 8px 0; border-collapse: collapse; }
+.adm-stats th, .adm-stats td { padding: 4px 8px; text-align: left; border-bottom: 1px dotted var(--line); }
+.adm-stats th { font-family: var(--font-head); color: var(--maroon); }
+@media (max-width: 700px) {
+  .adm-form input[type="text"], .adm-form input[type="date"], .adm-form input[type="number"], .adm-form textarea { font-size: 16px; padding: 8px; }
+  .adm-btn, .adm-pub button, .adm-sec button, #add-sec { min-height: 44px; font-size: 16px; }
+  .adm-btn, .adm-pub button { width: 100%; }
+}

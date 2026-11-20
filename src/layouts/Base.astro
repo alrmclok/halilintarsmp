@@ -1,9 +1,9 @@
 ---
 // The frame of every page: header, yellow tabs, maroon bar, footer.
-const { title = 'HalilintarSMP', description = 'the community website of the HalilintarSMP' } = Astro.props;
+const { title = 'HalilintarSMP', description = 'the community website of the HalilintarSMP', noindex = false } = Astro.props;
 const fullTitle = title === 'HalilintarSMP' ? title : `${title} | HalilintarSMP`;
 const path = Astro.url.pathname;
-const SITE = 'https://halilintarsmp.vercel.app'; // if you get your own domain, change only this line
+const SITE = import.meta.env.PUBLIC_SITE_URL || 'https://halilintarsmp.vercel.app'; // the live address; set PUBLIC_SITE_URL in Vercel to change it without touching code
 const PREVIEW_IMAGE = '/putinxtrump.png'; // tab icon + link preview picture (a file in public/)
 const pageUrl = new URL(path, SITE).href;
 const imageUrl = new URL(PREVIEW_IMAGE, SITE).href;
@@ -23,6 +23,7 @@ const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href))
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="HalilintarSMP" />
     <meta property="og:title" content={fullTitle} />

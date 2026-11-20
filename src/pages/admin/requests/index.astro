@@ -1,0 +1,49 @@
+---
+// Part Q: the requests screen. Pending first, then the latest handled ones.
+import Base from '../../../layouts/Base.astro';
+import Box from '../../../components/Box.astro';
+import AdminNav from '../../../components/AdminNav.astro';
+import { adminDb } from '../../../lib/auth';
+import { fmt } from '../../../lib/admin';
+
+export const prerender = false;
+
+const one = (x: any) => (Array.isArray(x) ? x[0] : x);
+const db = adminDb();
+const [m, f] = await Promise.all([
+  db.from('member_requests').select('id, kind, name, handle, status, created_at, members(name)').order('created_at', { ascending: false }).limit(100),
+  db.from('fandom_requests').select('id, status, created_at, fandoms(name)').order('created_at', { ascending: false }).limit(100),
+]);
+const err = m.error?.message ?? f.error?.message ?? '';
+const rows = [
+  ...(m.data ?? []).map((r: any) => ({
+    href: `/admin/requests/member/${r.id}/`,
+    title: r.kind === 'edit' ? `Change: ${one(r.members)?.name ?? r.name}` : `New member: ${r.name}`,
+    sub: `@${r.handle}`, status: r.status as string, at: r.created_at as string,
+  })),
+  ...(f.data ?? []).map((r: any) => ({
+    href: `/admin/requests/fandom/${r.id}/`,
+    title: `Fandom change: ${one(r.fandoms)?.name ?? '(deleted fandom)'}`,
+    sub: 'description', status: r.status as string, at: r.created_at as string,
+  })),
+].sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1) || b.at.localeCompare(a.at));
+---
+<Base title="Admin: Requests" description="HalilintarSMP admin.">
+  <Box title="Requests">
+    <AdminNav current="/admin/requests/" />
+    {Astro.url.searchParams.get('done') && <p class="adm-ok">Done. If you approved something, press Publish on the dashboard.</p>}
+    {err && <p class="adm-err">{err}</p>}
+    {rows.length === 0 && <p>No requests yet.</p>}
+    <ul class="adm-list">
+      {rows.map((r) => (
+        <li>
+          <div class="grow">
+            <strong>{r.title}</strong> <span class="adm-tag">{r.status}</span>
+            <small class="adm-help">{r.sub} · {fmt(r.at)}</small>
+          </div>
+          <a class="adm-btn" href={r.href}>{r.status === 'pending' ? 'Review' : 'View'}</a>
+        </li>
+      ))}
+    </ul>
+  </Box>
+</Base>

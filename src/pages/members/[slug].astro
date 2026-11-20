@@ -66,6 +66,6 @@ const paragraphs = (text) => text.split(/\n\s*\n/);
         ? member.fandoms.map((f, i) => (<>{i > 0 && ' | '}<a href={`/fandoms/${toSlug(f)}/`}>{f}</a></>))
         : ' none yet'}
     </p>
-    <p class="edited">Last edited {edited}</p>
+    <p class="edited">Last edited {edited} · <a href={`/members/${Astro.params.slug}/edit/`}>Edit this page</a></p>
   </article>
 </Base>

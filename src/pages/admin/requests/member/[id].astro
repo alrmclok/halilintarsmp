@@ -1,0 +1,134 @@
+---
+// Part Q: review one member request (a new member or a change). The reviewer can fix every field before approving.
+import Base from '../../../../layouts/Base.astro';
+import Box from '../../../../components/Box.astro';
+import AdminNav from '../../../../components/AdminNav.astro';
+import { adminDb } from '../../../../lib/auth';
+import { defaults, ensureFandoms, fmt, loadRaw, saveRow, today } from '../../../../lib/admin';
+// @ts-ignore (plain JS file)
+import { toSlug } from '../../../../lib/slug.js';
+
+export const prerender = false;
+
+const id = Astro.params.id as string;
+const db = adminDb();
+const { data: req } = await db.from('member_requests').select('*').eq('id', id).maybeSingle();
+if (!req) return new Response(null, { status: 404 });
+const isEdit = req.kind === 'edit';
+const current = isEdit && req.member_id ? await loadRaw('members', req.member_id) : null;
+const pending = req.status === 'pending';
+const secText = (s: any[]) => (s ?? []).map((x) => `${x.heading}\n${x.text}`).join('\n\n');
+
+let errors: string[] = [];
+let form: Record<string, any> = {
+  slug: current?.slug ?? toSlug(req.handle || req.name), name: req.name, handle: req.handle, pronouns: req.pronouns ?? '',
+  joined: req.joined ?? '', intro: req.intro, fandoms: (req.fandoms ?? []).join(', '), sections: req.sections ?? [], note: req.review_note ?? '',
+};
+
+if (Astro.request.method === 'POST' && pending) {
+  const f = await Astro.request.formData();
+  const g = (k: string) => String(f.get(k) ?? '').trim();
+  const h = f.getAll('section_heading').map(String), t = f.getAll('section_text').map(String);
+  form = {
+    slug: current ? current.slug : g('slug'), name: g('name'), handle: g('handle').replace(/^@+/, ''), pronouns: g('pronouns'),
+    joined: g('joined'), intro: g('intro'), fandoms: g('fandoms'), note: g('note'),
+    sections: t.map((text, i) => ({ heading: (h[i] ?? '').trim(), text: text.trim() })).filter((s) => s.heading || s.text),
+  };
+  const act = g('act');
+  const finish = async (status: 'approved' | 'rejected') => {
+    await db.from('member_requests')
+      .update({ status, review_note: form.note || null, reviewed_by: Astro.locals.user.email, reviewed_at: new Date().toISOString() })
+      .eq('id', id).eq('status', 'pending');
+    return Astro.redirect('/admin/requests/?done=1', 303);
+  };
+  if (act === 'reject') return await finish('rejected');
+  if (act === 'approve') {
+    if (isEdit && !current) errors.push('The member this change is for no longer exists. Reject the request.');
+    if (!errors.length && f.get('mkfandoms') === 'on') {
+      const e = await ensureFandoms(form.fandoms.split(','));
+      if (e) errors.push(e);
+    }
+    if (!errors.length) {
+      const raw: Record<string, any> = {
+        ...(current ?? defaults('members')),
+        name: form.name, handle: form.handle, pronouns: form.pronouns, intro: form.intro, fandoms: form.fandoms,
+        sections: form.sections, joined: form.joined || current?.joined || today(),
+      };
+      if (current) raw.edited = today(); else raw.slug = form.slug;
+      const r = await saveRow('members', current ? req.member_id : null, raw, current?.slug);
+      if (r.errors.length) errors = r.errors; else return await finish('approved');
+    }
+  }
+}
+
+const rows = current ? ([
+  ['Name', current.name, req.name], ['Handle', current.handle, req.handle], ['Pronouns', current.pronouns, req.pronouns ?? ''],
+  ['Joined', current.joined, req.joined ?? ''], ['Intro', current.intro, req.intro],
+  ['Fandoms', current.fandoms, (req.fandoms ?? []).join(', ')], ['Sections', secText(current.sections), secText(req.sections)],
+] as string[][]).filter((r) => (r[1] || '') !== (r[2] || '')) : [];
+const secs: { heading: string; text: string }[] = form.sections;
+---
+<Base title="Admin: Request" description="HalilintarSMP admin.">
+  <Box title={isEdit ? 'Change request (member)' : 'New member request'}>
+    <AdminNav current="/admin/requests/" />
+    <p><a href="/admin/requests/">← Back to Requests</a></p>
+    <p>Sent {fmt(req.created_at)}.{req.reason && <> Note from the sender: <em>{req.reason}</em></>}</p>
+    {errors.length > 0 && (
+      <div class="adm-err" role="alert"><strong>Not approved:</strong><ul>{errors.map((e) => <li>{e}</li>)}</ul></div>
+    )}
+    {!pending && (
+      <p>This request was <strong>{req.status}</strong> by {req.reviewed_by} on {req.reviewed_at ? fmt(req.reviewed_at) : '?'}.{req.review_note && <> Note: {req.review_note}</>}</p>
+    )}
+    {isEdit && current && (
+      rows.length ? (
+        <table class="adm-stats">
+          <thead><tr><th>Field</th><th>Now</th><th>Proposed</th></tr></thead>
+          <tbody>{rows.map((r) => <tr><td>{r[0]}</td><td style="white-space:pre-wrap">{r[1]}</td><td style="white-space:pre-wrap">{r[2]}</td></tr>)}</tbody>
+        </table>
+      ) : <p>Nothing differs from the current page.</p>
+    )}
+    {pending && (
+      <form method="post" class="adm-form">
+        {!current && <label>Address piece (slug)<input type="text" name="slug" value={form.slug} /><small>Lowercase letters, numbers and dashes. Cannot change after saving.</small></label>}
+        <label>Name<input type="text" name="name" value={form.name} /></label>
+        <label>Handle<input type="text" name="handle" value={form.handle} /></label>
+        <label>Pronouns<input type="text" name="pronouns" value={form.pronouns} /></label>
+        <label>Joined<input type="date" name="joined" value={form.joined} /></label>
+        <label>Intro<textarea name="intro" rows="3">{form.intro}</textarea></label>
+        <label>Fandoms (commas)<input type="text" name="fandoms" value={form.fandoms} /></label>
+        <label class="adm-check"><input type="checkbox" name="mkfandoms" /><span>Create fandoms that do not exist yet (name only)</span></label>
+        <fieldset>
+          <legend>Sections</legend>
+          <div id="secs">
+            {secs.map((x) => (
+              <div class="adm-sec">
+                <input type="text" name="section_heading" placeholder="Heading" value={x.heading} />
+                <textarea name="section_text" rows="4" placeholder="Text">{x.text}</textarea>
+                <button type="button" class="rm-sec">Remove</button>
+              </div>
+            ))}
+          </div>
+          <template id="sec-tpl">
+            <div class="adm-sec">
+              <input type="text" name="section_heading" placeholder="Heading" />
+              <textarea name="section_text" rows="4" placeholder="Text"></textarea>
+              <button type="button" class="rm-sec">Remove</button>
+            </div>
+          </template>
+          <button type="button" id="add-sec">+ Add section</button>
+        </fieldset>
+        <label>Note for the record (optional)<input type="text" name="note" value={form.note} /></label>
+        <button type="submit" name="act" value="approve" class="adm-btn">Approve</button>
+        <button type="submit" name="act" value="reject" class="adm-btn">Reject</button>
+      </form>
+    )}
+    <script is:inline>
+      (function () {
+        var box = document.getElementById('secs'), tpl = document.getElementById('sec-tpl'), add = document.getElementById('add-sec');
+        if (!box || !tpl || !add) return;
+        add.addEventListener('click', function () { box.appendChild(tpl.content.cloneNode(true)); });
+        box.addEventListener('click', function (e) { var b = e.target.closest('.rm-sec'); if (b) b.closest('.adm-sec').remove(); });
+      })();
+    </script>
+  </Box>
+</Base>

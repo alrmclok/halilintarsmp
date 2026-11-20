@@ -1,0 +1,64 @@
+---
+// Part Q: review one fandom description change. Only the description can change.
+import Base from '../../../../layouts/Base.astro';
+import Box from '../../../../components/Box.astro';
+import AdminNav from '../../../../components/AdminNav.astro';
+import { adminDb } from '../../../../lib/auth';
+import { fmt, loadRaw, saveRow } from '../../../../lib/admin';
+
+export const prerender = false;
+
+const id = Astro.params.id as string;
+const db = adminDb();
+const { data: req } = await db.from('fandom_requests').select('*').eq('id', id).maybeSingle();
+if (!req) return new Response(null, { status: 404 });
+const current = req.fandom_id ? await loadRaw('fandoms', req.fandom_id) : null;
+const pending = req.status === 'pending';
+let errors: string[] = [];
+let description: string = req.description;
+let note: string = req.review_note ?? '';
+
+if (Astro.request.method === 'POST' && pending) {
+  const f = await Astro.request.formData();
+  description = String(f.get('description') ?? '').trim();
+  note = String(f.get('note') ?? '').trim();
+  const act = String(f.get('act'));
+  const finish = async (status: 'approved' | 'rejected') => {
+    await db.from('fandom_requests')
+      .update({ status, review_note: note || null, reviewed_by: Astro.locals.user.email, reviewed_at: new Date().toISOString() })
+      .eq('id', id).eq('status', 'pending');
+    return Astro.redirect('/admin/requests/?done=1', 303);
+  };
+  if (act === 'reject') return await finish('rejected');
+  if (act === 'approve') {
+    if (!current) errors.push('The fandom no longer exists. Reject the request.');
+    else {
+      const r = await saveRow('fandoms', req.fandom_id, { ...current, description });
+      if (r.errors.length) errors = r.errors; else return await finish('approved');
+    }
+  }
+}
+---
+<Base title="Admin: Request" description="HalilintarSMP admin.">
+  <Box title="Change request (fandom)">
+    <AdminNav current="/admin/requests/" />
+    <p><a href="/admin/requests/">← Back to Requests</a></p>
+    <p>Fandom: <strong>{current?.name ?? '(deleted)'}</strong>. Sent {fmt(req.created_at)}.{req.reason && <> Note from the sender: <em>{req.reason}</em></>}</p>
+    {errors.length > 0 && (
+      <div class="adm-err" role="alert"><strong>Not approved:</strong><ul>{errors.map((e) => <li>{e}</li>)}</ul></div>
+    )}
+    {!pending && (
+      <p>This request was <strong>{req.status}</strong> by {req.reviewed_by} on {req.reviewed_at ? fmt(req.reviewed_at) : '?'}.{req.review_note && <> Note: {req.review_note}</>}</p>
+    )}
+    <p><strong>Now:</strong></p>
+    <p style="white-space:pre-wrap">{current?.description || '(empty)'}</p>
+    {pending && (
+      <form method="post" class="adm-form">
+        <label>Proposed description (you can fix it)<textarea name="description" rows="6">{description}</textarea></label>
+        <label>Note for the record (optional)<input type="text" name="note" value={note} /></label>
+        <button type="submit" name="act" value="approve" class="adm-btn">Approve</button>
+        <button type="submit" name="act" value="reject" class="adm-btn">Reject</button>
+      </form>
+    )}
+  </Box>
+</Base>

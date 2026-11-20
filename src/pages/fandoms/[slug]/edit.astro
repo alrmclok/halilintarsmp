@@ -1,0 +1,24 @@
+---
+// Part Q: anyone can suggest a new description for a fandom. Only the description can be changed here.
+import Base from '../../../layouts/Base.astro';
+import Box from '../../../components/Box.astro';
+import RequestForm from '../../../components/RequestForm.astro';
+import { getFandomRows } from '../../../lib/db.js';
+
+export async function getStaticPaths() {
+  return [...(await getFandomRows())].map(([slug, f]) => ({ params: { slug }, props: { f } }));
+}
+const { slug } = Astro.params;
+const { f } = Astro.props;
+---
+<Base title={`Suggest a change: ${f.name}`} description="Suggest a change to this fandom page." noindex>
+  <div class="form-wrap">
+    <Box title={`Suggest a change: ${f.name}`}>
+      <p class="form-note">
+        Suggest a new description. An admin checks every change before it goes live.
+        <a href={`/fandoms/${slug}/`}>← Back to the page</a>
+      </p>
+      <RequestForm type="fandom-edit" slug={slug} initial={{ description: f.description }} />
+    </Box>
+  </div>
+</Base>

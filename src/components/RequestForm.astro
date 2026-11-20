@@ -1,0 +1,113 @@
+---
+// Part Q: one form for the three public requests: a new member, a change to a member page, a change to a fandom description.
+// It sends JSON to /api/request. Nothing becomes public until an admin approves it and Publish is pressed.
+const { type = 'member-new', slug = '', initial = {} } = Astro.props;
+const isMember = type !== 'fandom-edit';
+const isEdit = type !== 'member-new';
+const init = {
+  name: initial.name ?? '', handle: initial.handle ?? '', pronouns: initial.pronouns ?? '',
+  fandoms: (initial.fandoms ?? []).join(', '), joined: initial.joined ?? '', intro: initial.intro ?? '',
+  description: initial.description ?? '',
+  sections: initial.sections ?? (isEdit ? [] : [{ heading: 'About', text: '' }]),
+};
+const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
+---
+<div id="form-status" class="status-banner" hidden></div>
+<form id="req-form" class="smp-form" data-type={type} data-slug={slug}>
+  <div style="position:absolute;left:-9999px" aria-hidden="true"><input type="text" name="botcheck" tabindex="-1" autocomplete="off" /></div>
+
+  {isMember ? (
+    <>
+      <div class="field"><label for="f-name">Display Name <span class="req">*</span></label>
+        <input id="f-name" type="text" name="name" maxlength="80" value={init.name} required /></div>
+      <div class="field"><label for="f-handle">Handle / Username <span class="req">*</span></label>
+        <input id="f-handle" type="text" name="handle" maxlength="40" value={init.handle} required /></div>
+      <div class="field"><label for="f-pronouns">Pronouns</label>
+        <input id="f-pronouns" type="text" name="pronouns" maxlength="40" value={init.pronouns} placeholder="e.g. she/her, he/him, they/them" /></div>
+      <div class="field"><label for="f-fandoms">Fandoms</label>
+        <input id="f-fandoms" type="text" name="fandoms" value={init.fandoms} placeholder="Separate multiple fandoms with commas" /></div>
+      <div class="field"><label for="f-joined">When did you join HalilintarSMP?</label>
+        <input id="f-joined" type="date" name="joined" value={init.joined} /></div>
+      <div class="field"><label for="f-intro">Short Intro <span class="req">*</span></label>
+        <textarea id="f-intro" name="intro" rows="2" maxlength="300" required>{init.intro}</textarea></div>
+      <div id="sections-list"></div>
+      <div class="add-row"><button type="button" class="btn-add" id="add-section-btn">+ Add {isEdit ? 'a' : 'Another'} Section</button></div>
+    </>
+  ) : (
+    <div class="field"><label for="f-desc">Description</label>
+      <textarea id="f-desc" name="description" rows="6" maxlength="1000">{init.description}</textarea></div>
+  )}
+
+  {isEdit && (
+    <div class="field"><label for="f-reason">What did you change, and why? (optional)</label>
+      <input id="f-reason" type="text" name="reason" maxlength="300" /></div>
+  )}
+
+  {SITEKEY
+    ? <div class="cf-turnstile" data-sitekey={SITEKEY}></div>
+    : <p class="status-banner status-err">This form is not set up yet (the Turnstile key is missing).</p>}
+  <div class="form-actions"><button type="submit" class="btn-submit" id="submit-btn" disabled={!SITEKEY}>{isEdit ? 'Send Change' : 'Send Profile'}</button></div>
+</form>
+<script type="application/json" id="req-init" set:html={JSON.stringify(init).replace(/</g, '\\u003c')} />
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script is:inline>
+  (function () {
+    var form = document.getElementById('req-form'), status = document.getElementById('form-status');
+    var btn = document.getElementById('submit-btn'), list = document.getElementById('sections-list');
+    var init = JSON.parse(document.getElementById('req-init').textContent);
+    var type = form.dataset.type, edit = type !== 'member-new', label = btn.textContent;
+
+    function renumber() {
+      list.querySelectorAll('[data-section]').forEach(function (b, i) { b.querySelector('.section-num').textContent = 'Section ' + (i + 1); });
+    }
+    function add(h, t, removable) {
+      var b = document.createElement('div');
+      b.className = 'section-block'; b.setAttribute('data-section', '');
+      b.innerHTML = '<div class="section-bar"><span class="section-num"></span>' + (removable ? '<button type="button" class="btn-remove">Remove</button>' : '') +
+        '</div><div class="field-inner"><label>Heading <span class="req">*</span></label><input type="text" data-h maxlength="80" required /></div>' +
+        '<div class="field-inner"><label>Text <span class="req">*</span></label><textarea data-t rows="5" maxlength="4000" placeholder="Leave an empty line between paragraphs." required></textarea></div>';
+      b.querySelector('[data-h]').value = h; b.querySelector('[data-t]').value = t;
+      list.appendChild(b); renumber(); return b;
+    }
+    if (list) {
+      init.sections.forEach(function (s, i) { add(s.heading, s.text, edit || i > 0); });
+      document.getElementById('add-section-btn').addEventListener('click', function () { add('', '', true).querySelector('input').focus(); });
+      list.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-remove')) { e.target.closest('[data-section]').remove(); renumber(); }
+      });
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      btn.disabled = true; btn.textContent = 'Sending...'; status.hidden = true;
+      var v = function (n) { var el = form.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; };
+      var body = { type: type, slug: form.dataset.slug || undefined, reason: v('reason'), botcheck: v('botcheck'), token: v('cf-turnstile-response') };
+      if (type === 'fandom-edit') body.description = v('description');
+      else {
+        Object.assign(body, {
+          name: v('name'), handle: v('handle'), pronouns: v('pronouns'), joined: v('joined'), intro: v('intro'),
+          fandoms: v('fandoms').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+          sections: Array.prototype.map.call(list.querySelectorAll('[data-section]'), function (b) {
+            return { heading: b.querySelector('[data-h]').value.trim(), text: b.querySelector('[data-t]').value.trim() };
+          }),
+        });
+      }
+      var done = false;
+      try {
+        var res = await fetch('/api/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+        status.className = 'status-banner status-ok';
+        status.textContent = 'Sent! An admin will look at it. It shows on the site after it is approved and published.';
+        done = true;
+        if (!edit) { form.reset(); list.innerHTML = ''; init.sections.forEach(function (s, i) { add(s.heading, '', i > 0); }); }
+      } catch (err) {
+        status.className = 'status-banner status-err'; status.textContent = err.message;
+      }
+      status.hidden = false;
+      if (window.turnstile) window.turnstile.reset();
+      btn.disabled = edit && done; btn.textContent = edit && done ? 'Sent' : label;
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  })();
+</script>

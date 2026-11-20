@@ -8,7 +8,7 @@ It has three parts.
 
 - **Part 1** says what the site is and how it is built. It describes the real site.
 - **Part 2** says how the site looks (the style guide).
-- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M, N and O of it are built (the database, the public pages reading it, and the admin login). The dashboards and the rest are still planned.
+- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M to P of it are built (the database, the public pages reading it, the admin login and the content dashboards). Part Q (public requests and review) is written but not tested yet. The rest is still planned.
 
 ## How the two files are used
 
@@ -40,8 +40,9 @@ Pages:
 | About | Short info about the SMP |
 | Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
 | News, Join, Rules | Three pages, built in Part K. News (`/news/`) lists every news item, newest first. Join (`/join/`) holds how to join and, in its own box, the server address (`/join/#server-address`). Rules (`/rules/`) is its own page. No pop-ups. They have no tab: they are reached from the maroon bar, the hero and the News box. The words on them are placeholders until the admins send the real ones |
-| Member form | `/member-form/`, not in the tabs. A page where a member fills in their profile (name, handle, pronouns, fandoms, joined date, intro, sections). Today it sends the profile to the admins by email as a ready-to-paste member file (Web3Forms). Part 3 turns it into a request that waits for approval |
-| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (for now a plain page that shows who is signed in, with a Log out button). The dashboards come in Part P, see Part 3 |
+| Member form | `/member-form/`, not in the tabs. A public page where someone asks for a new member page (name, handle, pronouns, fandoms, joined date, intro, sections). It saves a pending request; nothing is public until an admin approves it and Publish is pressed (Part Q) |
+| Edit pages | `/members/<slug>/edit/` and `/fandoms/<slug>/edit/`, open to everyone, like a wiki. A member edit form is filled with the current page and a fandom edit form has only the description. Sending one saves a pending request. Members with a custom page have no edit page (Part Q). The links to these pages from the member and fandom pages are added in a later step |
+| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (counts, unpublished changes, last publish time and the Publish button), plus `/admin/<members|fandoms|gallery|news>/` lists and forms, and `/admin/requests/` (Part Q: the queue, `member/<id>` and `fandom/<id>` review screens). The dashboards (Part P) are written but not tested yet, see Part 3 |
 
 ## Who can change files
 
@@ -51,7 +52,7 @@ Three people have access to the GitHub project: Almira, Katz and Kate. Katz and 
 - Any of the three can put a custom page live. If none of them can, Almira does it.
 - Anyone who does not want to use GitHub can send the files to Almira, who adds them.
 
-Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. The login is built (Part O). The dashboards are planned, not built.
+Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. The login is built (Part O). The dashboards are written (Part P) but not tested yet.
 
 ## Tech stack (decided)
 
@@ -59,6 +60,14 @@ Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate 
 - **Custom member pages use plain HTML, CSS and JS.** Each one is its own folder. A member only needs to know those three things, and does not need to know Astro.
 - **Hosting is Vercel**, connected to the GitHub project.
 - **The content lives in a Supabase database** (members, fandoms, gallery and news, plus the admin tables). The public pages are still built ahead of time: only the build reads the database, with the public key, under read-only rules (Part N). The old data files in `src/content/` are kept until Part T and are now used only by the import script. Pictures still live in `public/` until Part R. See Part 3.
+
+### Deploying on Vercel (rules learned the hard way, 2026-11-20)
+
+- **Never commit `.vercel/` or `.env`.** A committed `.vercel/output` made Vercel log "Using prebuilt build artifacts" and skip the build, so the live site stayed an old snapshot (new pages gave a Vercel 404). Both folders belong in `.gitignore`. A secret that was committed once stays in git history: replace (rotate) that key.
+- **A real build log shows `npm install`, then `astro build`, then the adapter bundling a function.** If it only says "Deploying outputs...", something is wrong.
+- **Node is 22.x** (`engines.node` in `package.json`, and the Node.js Version setting in Vercel). Vercel refuses older runtimes. A local Node 24 only gives a harmless EBADENGINE warning.
+- **Adapter:** `@astrojs/vercel` 9.x goes with Astro 5. Version 8.0.0 did not know Node 22, 10.x needs Astro 6 and 11.x needs Astro 7. Do not use `--force` to install a newer one.
+- **Settings in Vercel (Production):** `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the build needs them), `SUPABASE_SECRET_KEY` and `SUPER_ADMIN_EMAIL` (the admin pages need them when they run), and later `VERCEL_DEPLOY_HOOK_URL` and `CRON_SECRET`.
 
 A change to the site's code is:
 
@@ -81,9 +90,11 @@ src/
   components/Row.astro      one row inside a box
   components/Parts.astro    shows text with member links inside it
   components/FeaturedMember.astro  the card in the home page "Featured member" box
+  components/AdminNav.astro the small menu at the top of the admin screens (Part P)
   lib/slug.js               turns a name into an address piece ("Fandom A" -> "fandom-a")
   lib/db.js                 the one place the site reads Supabase (Part N): members, fandoms, gallery and news, with the public key. Used only while the site builds
   lib/auth.ts               server only (Part O): the login client, the secret-key client, and getRole (super, admin or no access)
+  lib/admin.ts              server only (Part P): the field lists, the save rules and the database work behind the content dashboards
   lib/gallery.js            reads the gallery rows from the database, newest first (same day: the old file order), for the home page and Gallery pages. The address of each picture is stored in its row. Async: use `await`
   lib/mentions.js           turns member names in gallery text into links, only when a member is found
   lib/fandoms.js            builds the fandom list from the members (used by the home page and the fandom pages). Name, picture and description come from the `fandoms` table first; the folder public/fandoms/ is only a fallback until Part R. Async: use `await`
@@ -93,7 +104,11 @@ src/
   pages/news.astro          the News page: every news item from the database, newest first
   pages/join.astro          the Join page: how to join, and the server address (a line at the top of the file)
   pages/rules.astro         the Rules page
-  pages/member-form.astro   the member form (sends a profile to the admins, see Part 3)
+  pages/member-form.astro   the public form for a new member (Part Q: saves a pending request)
+  components/RequestForm.astro  the one form used by the member form and both edit pages: sends JSON to /api/request, Cloudflare Turnstile, hidden trap field
+  pages/members/[slug]/edit.astro, pages/fandoms/[slug]/edit.astro  the public edit forms (Part Q)
+  pages/api/request.ts      the one PUBLIC endpoint that writes: checks and saves a pending request (Part Q)
+  pages/admin/requests/     index.astro (the queue), member/[id].astro and fandom/[id].astro (review: fix, Approve, Reject) (Part Q)
   pages/search.json.js      makes /search.json when the site builds: the list the search box looks in (members, fandoms, news)
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
@@ -101,7 +116,8 @@ src/
   pages/fandoms/[slug].astro  one fandom page: its members
   pages/gallery/index.astro   the Gallery list (two columns)
   pages/gallery/[slug].astro  one picture's own page, with a lightbox
-  pages/admin/              the admin login (Part O): login.astro, callback.ts, logout.ts, not-allowed.astro, and index.astro (a plain page for now). Server-rendered (prerender = false)
+  pages/admin/              the admin pages. Part O: login.astro, callback.ts, logout.ts, not-allowed.astro. Part P: index.astro (home with counts and Publish), [kind]/index.astro (a list) and [kind]/[id].astro (the form; id `new` makes a row). Server-rendered (prerender = false)
+  pages/api/admin/publish.ts  the Publish button's endpoint: calls the Vercel deploy hook (Part P)
   middleware.ts             guards /admin/* and /api/admin/* (Part O). Public pages are untouched
   env.d.ts                  tells the editor that Astro.locals.user exists (set by the middleware)
   content.config.ts         what a member data file must contain (only checks the old files; removed in Part T)
@@ -118,9 +134,12 @@ templates/custom-member/    a starter folder to copy for a custom page
 templates/README.md         the steps and rules for custom pages, written for members (outside public/, so it is not shown)
 supabase/schema.sql         the database tables and their access rules, as they should be now (Part M). A record; it does not have to be run again
 supabase/migrations.sql     changes to run once in the Supabase SQL Editor (migration 1 removes the unused site_text table)
+supabase/migration-2.sql    run once in the SQL Editor (Part Q): request columns on member_requests and the fandom_requests table
 scripts/import-json.mjs     copies the content files into Supabase (Part M). Safe to run again
 scripts/check-access.mjs    checks that the public key reads only visible rows and cannot write (Part M)
 .env.example                the names of the settings, without values. The real `.env` is never committed
+package.json                scripts, packages and `engines.node` (22.x, needed by Vercel)
+.gitignore                  must list `.env`, `.vercel/`, `dist/` and `.astro/`
 astro.config.mjs            Astro settings: the `@astrojs/vercel` adapter (pages are still built ahead of time; only the admin pages run on the server)
 ```
 
@@ -432,9 +451,9 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 
 ---
 
-# Part 3: Supabase and the dashboards (Parts M, N, O and P built)
+# Part 3: Supabase and the dashboards (Parts M to P built; Part Q written, not tested)
 
-Status: Parts M, N, O and P are built: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), and the content dashboards with the Publish button (section 3.5; Part P, code written, not yet tested by Almira). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+Status: Parts M to P are built and tested, and Part Q (public requests and the review screens) is written but not tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
 
 ## 3.1 Why
 
@@ -444,13 +463,13 @@ The content moves from files in the project to a Supabase database. So people wh
 
 - **Hybrid.** The public pages (Home, Members, Fandoms, Gallery, News, Credits, About, Join, Rules and the search list) stay built pages, like now. When the site builds, they read Supabase instead of the JSON files (done in Part N, through `src/lib/db.js`). They are not made again for each visitor. About, Join and Rules keep their words in the page code.
 - **Server-rendered** (`export const prerender = false`, with the `@astrojs/vercel` adapter): only the dashboards, the login and its callback, and the endpoint that receives the member form.
-- **Publish button.** Saving in a dashboard writes to the database at once, but the public site does not change. An admin or the super-admin presses Publish, which calls a Vercel deploy hook, and the site rebuilds in about a minute. The dashboard shows how many changes are not published yet.
+- **Publish button.** Saving in a dashboard writes to the database at once, but the public site does not change. Someone presses Publish (who may is still an open decision, see the roadmap), which calls a Vercel deploy hook, and the site rebuilds in about a minute. The dashboard shows how many changes are not published yet.
 - If Supabase is paused or down, the public site keeps working. A build would fail, and Vercel keeps showing the last working version.
 - The build reads with the public key, under read-only rules. Hidden rows are not returned.
 
 ## 3.3 Tables (made in Part M; the real file is `supabase/schema.sql`)
 
-Nine tables. Access rules are switched on for every one of them. Each public table has a `hidden` column: a hidden row is not returned to the public key.
+Ten tables. Access rules are switched on for every one of them. Each public table has a `hidden` column: a hidden row is not returned to the public key.
 
 | Table | Holds |
 |---|---|
@@ -460,14 +479,15 @@ Nine tables. Access rules are switched on for every one of them. Each public tab
 | `gallery` | `slug`, `title`, `description`, `credit`, `file`, `alt`, `added` (a date), `position` (the order in the old file; it breaks ties between pictures added on the same day), `hidden` |
 | `news` | `title` (optional), `pic` (optional), `author` (called `by` in the old file), `date`, `summary`, `position` (the order in the old file: the home box shows the first three), `import_key` (used only by the import script), `hidden` |
 | `admins` | `email` (lowercase), `added_by`, `added_at` |
-| `member_requests` | `status` (`pending`, `approved` or `rejected`), what the form sends (`name`, `handle`, `pronouns`, `fandoms` as typed, `joined`, `intro`, `sections`), `review_note`, `reviewed_by`, `reviewed_at`, `created_at` |
+| `member_requests` | `kind` (`new` or `edit`), `member_id` (for an edit), `status` (`pending`, `approved` or `rejected`), what the form sends (`name`, `handle`, `pronouns`, `fandoms` as typed, `joined`, `intro`, `sections`), `reason` (the sender's note), `ip_hash` (salted hash for the rate limit), `review_note`, `reviewed_by`, `reviewed_at`, `created_at` |
+| `fandom_requests` | `fandom_id`, `status`, `description` (the proposed text), `reason`, `ip_hash`, and the same review columns |
 | `heartbeat` | Dummy rows for the keep-alive (see 3.8) |
 | `publish_state` | One row: `last_published_at` and `pending_changes` |
 
 Who can read what:
 
 - The public key reads `members`, `fandoms`, `member_fandoms`, `gallery` and `news`, and never a hidden row. A member-fandom link is readable only when both its member and its fandom are.
-- The public key cannot write anything. It cannot read `admins`, `member_requests`, `heartbeat` or `publish_state` either. Only the secret key (server only) can.
+- The public key cannot write anything. It cannot read `admins`, `member_requests`, `fandom_requests`, `heartbeat` or `publish_state` either. Only the secret key (server only) can.
 - `npm run db:check` tests all of this against the real project.
 
 Nothing is deleted by an admin. A row is hidden instead, and it can come back.
@@ -507,12 +527,12 @@ Built in Part O:
 | Create and edit members, fandoms, gallery, news | yes | yes |
 | Hide and unhide | yes | yes |
 | Review member requests (fix, approve, reject) | yes | yes |
-| Press Publish | yes (decided in Part P) | yes |
+| Press Publish | yes (decided 2026-11-20) | yes |
 | Delete for good | no | yes |
 | Add and remove admins | no | yes |
 | Keep-alive button | no | yes |
 
-How the content dashboards work (built in Part P):
+How the content dashboards work (written in Part P, not tested yet):
 
 - `/admin/` shows counts, unpublished changes, the last publish time and the Publish button (it calls `VERCEL_DEPLOY_HOOK_URL`, then resets the count).
 - `/admin/<members|fandoms|gallery|news>/` lists rows with Edit and Hide/Unhide. `/admin/<kind>/new/` and `/admin/<kind>/<id>/` are the forms. There is no delete in these screens.
@@ -522,19 +542,17 @@ How the content dashboards work (built in Part P):
 - New news items go first (the home box shows the lowest position first); new gallery items go last.
 - Code: `src/lib/admin.ts` (rules and database work), `src/components/AdminNav.astro`, `src/pages/admin/index.astro`, `src/pages/admin/[kind]/index.astro`, `src/pages/admin/[kind]/[id].astro`, `src/pages/api/admin/publish.ts`.
 
-## 3.6 The member form
+## 3.6 Requests from the public (Part Q, written, not tested)
 
-Today (Part LA): `src/pages/member-form.astro` is a page outside the tabs. Its fields are display name, handle, pronouns, fandoms (typed, split at commas), joined date, short intro, and any number of sections (heading and text). It sends a ready-to-paste member file to the admins by email with Web3Forms, and Almira adds it by hand.
+Anyone can send a request. A request is never public by itself. There is no member login, so a request cannot prove who sent it: the reviewer is the check. There is no separate editor role: admins review (Katz and Kate can be admins if they are asked).
 
-Planned (Part Q):
+- **Three kinds:** a new member (`/member-form/`), a change to a member page (`/members/<slug>/edit/`, filled with the current page), and a new description for a fandom (`/fandoms/<slug>/edit/`; only the description). Members with a custom page have no edit page. All three use `src/components/RequestForm.astro`. The edit pages are built with the site, so they show the content of the last Publish.
+- **Sending:** the form posts JSON to `src/pages/api/request.ts`, which saves a `pending` row in `member_requests` or `fandom_requests`. The Web3Forms email is gone (Almira's decision).
+- **Protection:** same-origin check; the hidden trap field `botcheck` (filled = a silent fake success); length limits (name 80, handle 40, pronouns 40, intro 300, 12 sections of up to 4000 characters, fandom description 1000, note 300); Cloudflare Turnstile checked on the server; a rate limit of 3 requests per hour and 8 per day for each visitor (a salted hash of the address, in `ip_hash`); and a stop at 200 waiting requests. Turnstile keys are in section 3.10. The endpoint fails closed: with no `TURNSTILE_SECRET_KEY` it refuses.
+- **Review:** `/admin/requests/` lists pending first. A member request opens a screen with every field editable, a Now / Proposed table for a change, and a checkbox "Create fandoms that do not exist yet (name only)". Approve runs the same rules as the member dashboard (`saveRow`): a new member gets a row (hidden = no), a change updates the member and sets "Last edited" to today. Reject saves the note. Either way the screen records who and when, and only a pending request can be handled. The site changes at the next Publish.
+- **Pictures:** members still send theirs to Almira. The reviewer uploads it when approving (Part R).
+- **Links and noindex:** the member page and the fandom page have an "Edit this page" link. `Base.astro` takes a `noindex` prop, used by the form and both edit pages. The fandom page now shows the fandom's `description` when it has one (if it does not show, `src/lib/fandoms.js` does not pass `description` on: send that file).
 
-- Same page, same fields, same look. It now sends to a server endpoint that saves a row in `member_requests` with the status `pending`. A pending request is not public.
-- A requests screen in the dashboard. An admin or the super-admin opens a request, can fix words, then approves (a member row is made, and it shows on the site at the next Publish) or rejects (with an optional note).
-- Fandom names typed in the form are matched to real fandoms by slug on the requests screen. A name with no match is shown to the reviewer, who can pick from the checkbox list or create it with the "Add fandoms" box (same as the member screen from Part P).
-- Fandom names in a request are matched to the existing fandoms with the same-address rule. A name that matches nothing is shown to the reviewer, who creates it or drops it.
-- Pictures: members still send theirs to Almira. The reviewer uploads it when approving (Part R).
-- A request is never applied by itself. There is no member login, so a request cannot prove who sent it. The reviewer is the check.
-- Protection: the hidden trap field `botcheck` stays, with a rate limit and length limits added (the numbers are set in Part Q). The page stays out of the tabs and gets `noindex`.
 
 ## 3.7 Pictures
 
@@ -561,7 +579,10 @@ Kept in `.env` (never committed) and in the Vercel settings. `.env.example` list
 | `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | The public key (starts with `sb_publishable_`), read-only under the rules |
 | `SUPABASE_SECRET_KEY` | The strong key (starts with `sb_secret_`). Server only. Also set in Vercel since Part O (the login reads the `admins` table with it). The build does not use it |
 | `SUPER_ADMIN_EMAIL` | Almira's Google email. Used by the login since Part O, set in `.env` and in Vercel |
-| `VERCEL_DEPLOY_HOOK_URL` | The address the Publish button calls (Part P). Set in `.env` and in Vercel. Treat it like a password |
+| `VERCEL_DEPLOY_HOOK_URL` | The address the Publish button calls (Part P). Made, and set in `.env` and in Vercel. Treat it like a password |
+| `PUBLIC_SITE_URL` | Optional. The live address, like `https://halilintarsmp.vercel.app` (no slash at the end). Used by `Base.astro` for the canonical link and link previews. Empty = `https://halilintarsmp.vercel.app`. The build needs it |
+| `PUBLIC_TURNSTILE_SITE_KEY` | The Cloudflare Turnstile site key (Part Q). Public, but the BUILD needs it: set it in `.env` and in Vercel. Cloudflare's test key `1x00000000000000000000AA` always passes (for localhost) |
+| `TURNSTILE_SECRET_KEY` | The Turnstile secret key. Server only, in `.env` and in Vercel. The test secret is `1x0000000000000000000000000000000AA` |
 | `CRON_SECRET` | Protects the weekly keep-alive call |
 
 The Google client id and secret are set in Supabase's Auth settings, not in the project.

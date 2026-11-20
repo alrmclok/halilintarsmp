@@ -136,10 +136,33 @@ create table if not exists public.member_requests (
   reviewed_by  text,
   reviewed_at  timestamptz,
   created_at   timestamptz not null default now(),
+  kind         text not null default 'new',   -- 'new' = a new member, 'edit' = a change to member_id's page (Part Q)
+  member_id    uuid references public.members (id) on delete set null,
+  reason       text,                           -- the sender's optional note
+  ip_hash      text,                           -- salted hash of the sender's address, used only for the rate limit
+  constraint member_requests_kind check (kind in ('new', 'edit')),
   constraint member_requests_status check (status in ('pending', 'approved', 'rejected')),
   constraint member_requests_sections_is_list check (jsonb_typeof(sections) = 'array')
 );
 create index if not exists member_requests_status_idx on public.member_requests (status, created_at);
+create index if not exists member_requests_ip_idx on public.member_requests (ip_hash, created_at);
+
+-- A suggested new description for a fandom (Part Q).
+create table if not exists public.fandom_requests (
+  id           uuid primary key default gen_random_uuid(),
+  status       text not null default 'pending',
+  fandom_id    uuid references public.fandoms (id) on delete cascade,
+  description  text not null default '',
+  reason       text,
+  ip_hash      text,
+  review_note  text,
+  reviewed_by  text,
+  reviewed_at  timestamptz,
+  created_at   timestamptz not null default now(),
+  constraint fandom_requests_status check (status in ('pending', 'approved', 'rejected'))
+);
+create index if not exists fandom_requests_status_idx on public.fandom_requests (status, created_at);
+create index if not exists fandom_requests_ip_idx on public.fandom_requests (ip_hash, created_at);
 
 create table if not exists public.heartbeat (
   id          uuid primary key default gen_random_uuid(),
@@ -186,20 +209,21 @@ alter table public.gallery         enable row level security;
 alter table public.news            enable row level security;
 alter table public.admins          enable row level security;
 alter table public.member_requests enable row level security;
+alter table public.fandom_requests enable row level security;
 alter table public.heartbeat       enable row level security;
 alter table public.publish_state   enable row level security;
 
 -- Start from nothing: take every right away from the public roles on every table.
 revoke all on table
   public.members, public.fandoms, public.member_fandoms, public.gallery, public.news,
-  public.admins, public.member_requests, public.heartbeat, public.publish_state
+  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state
 from anon, authenticated;
 
 -- The secret key (the service_role) bypasses the row rules but still needs the table rights, so say it out loud
 -- instead of relying on defaults that Supabase may change.
 grant all on table
   public.members, public.fandoms, public.member_fandoms, public.gallery, public.news,
-  public.admins, public.member_requests, public.heartbeat, public.publish_state
+  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state
 to service_role;
 
 -- ...then give back reading to the public roles, and only on the public tables.

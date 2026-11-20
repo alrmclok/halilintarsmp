@@ -78,16 +78,16 @@ const secs: { heading: string; text: string }[] = raw.sections ?? [];
       )}
       <button type="submit" class="adm-btn">Save</button>
     </form>
+    <script is:inline>
+      (function () {
+        var box = document.getElementById('secs'), tpl = document.getElementById('sec-tpl'), add = document.getElementById('add-sec');
+        if (!box || !tpl || !add) return;
+        add.addEventListener('click', function () { box.appendChild(tpl.content.cloneNode(true)); });
+        box.addEventListener('click', function (e) {
+          var b = e.target.closest('.rm-sec');
+          if (b) b.closest('.adm-sec').remove();
+        });
+      })();
+    </script>
   </Box>
 </Base>
-<script is:inline>
-  (function () {
-    var box = document.getElementById('secs'), tpl = document.getElementById('sec-tpl'), add = document.getElementById('add-sec');
-    if (!box || !tpl || !add) return;
-    add.addEventListener('click', function () { box.appendChild(tpl.content.cloneNode(true)); });
-    box.addEventListener('click', function (e) {
-      var b = e.target.closest('.rm-sec');
-      if (b) b.closest('.adm-sec').remove();
-    });
-  })();
-</script>

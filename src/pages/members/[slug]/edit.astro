@@ -1,0 +1,24 @@
+---
+// Part Q: anyone can suggest a change to a member page. It saves a pending request; an admin approves it.
+// Members with a custom page folder have no edit page.
+import Base from '../../../layouts/Base.astro';
+import Box from '../../../components/Box.astro';
+import RequestForm from '../../../components/RequestForm.astro';
+import { getMembers } from '../../../lib/db.js';
+
+export async function getStaticPaths() {
+  return (await getMembers()).filter((m) => !m.custom).map((m) => ({ params: { slug: m.slug }, props: { m } }));
+}
+const { m } = Astro.props;
+---
+<Base title={`Suggest a change: ${m.name}`} description="Suggest a change to this member page." noindex>
+  <div class="form-wrap">
+    <Box title={`Suggest a change: ${m.name}`}>
+      <p class="form-note">
+        Change what is wrong or out of date, then send it. An admin checks every change before it goes live.
+        <a href={`/members/${m.slug}/`}>← Back to the page</a>
+      </p>
+      <RequestForm type="member-edit" slug={m.slug} initial={m} />
+    </Box>
+  </div>
+</Base>

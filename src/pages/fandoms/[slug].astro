@@ -65,6 +65,8 @@ const alsoIn = (m) => {
         </p>
       </div>
     )}
+    {fandom.description && <p class="fandom-desc">{fandom.description}</p>}
+    <p class="edited"><a href={`/fandoms/${fandom.slug}/edit/`}>Edit this page</a></p>
     <div class="list-cols">
       {fandom.members.map((m) => (
         <Row

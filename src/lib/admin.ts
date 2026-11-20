@@ -52,7 +52,7 @@ export const KINDS: Record<Kind, {
     title: (r) => r.name,
     sub: (r) => `/${r.slug}/`,
     fields: [
-      { name: 'name', label: 'Name', type: 'text', help: 'The page address comes from the name ("Pokémon" becomes pokemon). Two names that make the same address cannot both exist.' },
+      { name: 'name', label: 'Name', type: 'text', help: 'The page address comes from the name ("Pokémon" becomes pokemon), so renaming a fandom changes its page address. Two names that make the same address cannot both exist.' },
       { name: 'picture', label: 'Picture (path or address, optional)', type: 'text', help: 'Empty = gray square.' },
       { name: 'description', label: 'Description (optional)', type: 'textarea' },
       hiddenField,
@@ -247,11 +247,17 @@ export async function saveRow(kind: Kind, id: string | null, raw: Record<string,
   }
 
   if (kind === 'members') {
+    // Keep the old links so a failed insert can put them back (no member is left without fandoms).
+    const old = await db.from('member_fandoms').select('member_id, fandom_id, position').eq('member_id', rowId);
+    if (old.error) return fail(old.error);
     const del = await db.from('member_fandoms').delete().eq('member_id', rowId);
     if (del.error) return fail(del.error);
     if (fandomIds.length) {
       const ins = await db.from('member_fandoms').insert(fandomIds.map((fid, i) => ({ member_id: rowId, fandom_id: fid, position: i })));
-      if (ins.error) return fail(ins.error);
+      if (ins.error) {
+        if (old.data?.length) await db.from('member_fandoms').insert(old.data);
+        return fail(ins.error);
+      }
     }
   }
 
@@ -286,4 +292,20 @@ export async function stats() {
   );
   const { data } = await db.from('publish_state').select('last_published_at, pending_changes').eq('id', 1).maybeSingle();
   return { counts, pending: data?.pending_changes ?? 0, last: (data?.last_published_at as string | null) ?? null };
+}
+
+// Part Q: makes the fandoms (name only) that do not exist yet, so a request that names a new fandom can be approved.
+export async function ensureFandoms(names: string[]): Promise<string | null> {
+  const db = adminDb();
+  const { data, error } = await db.from('fandoms').select('slug');
+  if (error) return error.message;
+  const have = new Set((data ?? []).map((f: any) => f.slug));
+  const add = new Map<string, string>();
+  for (const n of names.map((x) => x.trim()).filter(Boolean)) {
+    const k = toSlug(n);
+    if (k && !have.has(k) && !add.has(k)) add.set(k, n);
+  }
+  if (!add.size) return null;
+  const { error: e2 } = await db.from('fandoms').insert([...add].map(([slug, name]) => ({ slug, name })));
+  return e2?.message ?? null;
 }

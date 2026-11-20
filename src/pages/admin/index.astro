@@ -3,6 +3,7 @@
 import Base from '../../layouts/Base.astro';
 import Box from '../../components/Box.astro';
 import AdminNav from '../../components/AdminNav.astro';
+import { adminDb } from '../../lib/auth';
 import { KINDS, stats, fmt } from '../../lib/admin';
 
 export const prerender = false;
@@ -10,6 +11,8 @@ export const prerender = false;
 const { email, role } = Astro.locals.user;
 const s = await stats();
 const q = Astro.url.searchParams;
+const waiting = (await Promise.all(['member_requests', 'fandom_requests'].map((t) =>
+  adminDb().from(t).select('id', { count: 'exact', head: true }).eq('status', 'pending')))).reduce((n, r) => n + (r.count ?? 0), 0);
 ---
 <Base title="Admin" description="HalilintarSMP admin.">
   <Box title="Admin">
@@ -26,6 +29,7 @@ const q = Astro.url.searchParams;
       </tbody>
     </table>
     <p><strong>{s.pending}</strong> unpublished change{s.pending === 1 ? '' : 's'}. Last published: {s.last ? fmt(s.last) : 'never'}.</p>
+    <p><a href="/admin/requests/"><strong>{waiting}</strong> request{waiting === 1 ? '' : 's'} waiting for review</a>.</p>
     <form class="adm-pub" method="post" action="/api/admin/publish">
       <button type="submit">Publish now</button>
     </form>
