@@ -1,5 +1,5 @@
 ---
-// Part Q: the requests screen. Pending first, then the latest handled ones.
+// Part Q: the requests screen. Pending first, then the latest handled ones. Member, fandom and news requests.
 import Base from '../../../layouts/Base.astro';
 import Box from '../../../components/Box.astro';
 import AdminNav from '../../../components/AdminNav.astro';
@@ -10,11 +10,12 @@ export const prerender = false;
 
 const one = (x: any) => (Array.isArray(x) ? x[0] : x);
 const db = adminDb();
-const [m, f] = await Promise.all([
+const [m, f, n] = await Promise.all([
   db.from('member_requests').select('id, kind, name, handle, status, created_at, members(name)').order('created_at', { ascending: false }).limit(100),
   db.from('fandom_requests').select('id, status, created_at, fandoms(name)').order('created_at', { ascending: false }).limit(100),
+  db.from('news_requests').select('id, title, author, summary, status, created_at').order('created_at', { ascending: false }).limit(100),
 ]);
-const err = m.error?.message ?? f.error?.message ?? '';
+const err = m.error?.message ?? f.error?.message ?? n.error?.message ?? '';
 const rows = [
   ...(m.data ?? []).map((r: any) => ({
     href: `/admin/requests/member/${r.id}/`,
@@ -25,6 +26,11 @@ const rows = [
     href: `/admin/requests/fandom/${r.id}/`,
     title: `Fandom change: ${one(r.fandoms)?.name ?? '(deleted fandom)'}`,
     sub: 'description', status: r.status as string, at: r.created_at as string,
+  })),
+  ...(n.data ?? []).map((r: any) => ({
+    href: `/admin/requests/news/${r.id}/`,
+    title: `News: ${r.title || String(r.summary ?? '').slice(0, 50) || '(no text)'}`,
+    sub: `by ${r.author}`, status: r.status as string, at: r.created_at as string,
   })),
 ].sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1) || b.at.localeCompare(a.at));
 ---

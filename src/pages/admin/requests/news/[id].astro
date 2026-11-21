@@ -1,0 +1,70 @@
+---
+// Part BAHDNNYBGTSOOMFF: review one suggested news item. Every field can be fixed before approving.
+// Approve saves a `news` row through saveRow (so it is logged as a create and raises the unpublished count).
+import Base from '../../../../layouts/Base.astro';
+import Box from '../../../../components/Box.astro';
+import AdminNav from '../../../../components/AdminNav.astro';
+import { adminDb } from '../../../../lib/auth';
+import { fmt, logChange, saveRow } from '../../../../lib/admin';
+
+export const prerender = false;
+
+const id = Astro.params.id as string;
+const db = adminDb();
+const { data: req } = await db.from('news_requests').select('*').eq('id', id).maybeSingle();
+if (!req) return new Response(null, { status: 404 });
+const pending = req.status === 'pending';
+let errors: string[] = [];
+let v = { title: String(req.title ?? ''), author: String(req.author ?? ''), date: String(req.date ?? ''), pic: '', summary: String(req.summary ?? '') };
+let note: string = req.review_note ?? '';
+
+if (Astro.request.method === 'POST' && pending) {
+  const f = await Astro.request.formData();
+  const g = (k: string) => String(f.get(k) ?? '').trim();
+  v = { title: g('title'), author: g('author'), date: g('date'), pic: g('pic'), summary: g('summary') };
+  note = g('note');
+  const act = g('act');
+  const finish = async (status: 'approved' | 'rejected') => {
+    await db.from('news_requests')
+      .update({ status, review_note: note || null, reviewed_by: Astro.locals.user.email, reviewed_at: new Date().toISOString() })
+      .eq('id', id).eq('status', 'pending');
+    if (status === 'rejected') await logChange('reject', 'requests', v.title || v.summary.slice(0, 60) || 'a news item', 'news');
+    return Astro.redirect('/admin/requests/?done=1');
+  };
+  if (act === 'reject') return await finish('rejected');
+  if (act === 'approve') {
+    const r = await saveRow('news', null, { ...v, position: '', hidden: false });
+    if (r.errors.length) errors = r.errors; else return await finish('approved');
+  }
+}
+---
+<Base title="Admin: Request" description="HalilintarSMP admin.">
+  <Box title="News request">
+    <AdminNav current="/admin/requests/" />
+    <p><a href="/admin/requests/">← Back to Requests</a></p>
+    <p>A suggested news item. Sent {fmt(req.created_at)}.{req.reason && <> Note from the sender: <em>{req.reason}</em></>}</p>
+    {errors.length > 0 && (
+      <div class="adm-err" role="alert"><strong>Not approved:</strong><ul>{errors.map((e) => <li>{e}</li>)}</ul></div>
+    )}
+    {!pending && (
+      <p>This request was <strong>{req.status}</strong> by {req.reviewed_by} on {req.reviewed_at ? fmt(req.reviewed_at) : '?'}.{req.review_note && <> Note: {req.review_note}</>}</p>
+    )}
+    {pending ? (
+      <form method="post" class="adm-form">
+        <label>Title (optional)<input type="text" name="title" value={v.title} /></label>
+        <label>Author<input type="text" name="author" value={v.author} /></label>
+        <label>Date<input type="date" name="date" value={v.date} /></label>
+        <label>Picture (path or address, optional)<input type="text" name="pic" value={v.pic} /><small class="adm-help">Senders cannot attach one. If they sent a picture to Almira, put its address here.</small></label>
+        <label>Text<textarea name="summary" rows="6">{v.summary}</textarea></label>
+        <label>Note for the record (optional)<input type="text" name="note" value={note} /></label>
+        <button type="submit" name="act" value="approve" class="adm-btn">Approve</button>
+        <button type="submit" name="act" value="reject" class="adm-btn">Reject</button>
+      </form>
+    ) : (
+      <>
+        <p><strong>{v.title || '(no title)'}</strong> by {v.author}, {v.date}</p>
+        <p style="white-space:pre-wrap">{v.summary}</p>
+      </>
+    )}
+  </Box>
+</Base>

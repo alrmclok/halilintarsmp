@@ -1,0 +1,18 @@
+---
+// Part BAHDNNYBGTSOOMFF: the public form to suggest a NEW news item. It saves a pending request (see src/pages/api/request.ts).
+import Base from '../layouts/Base.astro';
+import Box from '../components/Box.astro';
+import RequestForm from '../components/RequestForm.astro';
+---
+<Base title="News Form" description="Suggest a news item for the HalilintarSMP." noindex>
+  <div class="form-wrap">
+    <Box title="Suggest a News Item">
+      <p class="form-note">
+        Write the news you would like to see on the <strong>News</strong> page. An admin reads every request before it goes live,
+        and may fix the wording. Fields marked with <span class="req">*</span> are required.
+        If you have a picture for it, send the picture directly to Almira.
+      </p>
+      <RequestForm type="news-new" />
+    </Box>
+  </div>
+</Base>

@@ -14,5 +14,6 @@ const items = [...news].sort((a, b) => b.date.localeCompare(a.date));
   <Box title="News">
     {items.length === 0 && <p>No news yet.</p>}
     {items.map((n) => <Row title={n.title} sub={`by ${n.by}, ${n.date}`} note={n.summary} pic={n.pic} />)}
+    <p><a href="/news-form/">Suggest a news item</a></p>
   </Box>
 </Base>

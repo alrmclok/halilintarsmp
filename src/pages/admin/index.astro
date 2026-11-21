@@ -11,7 +11,7 @@ export const prerender = false;
 const { email, role } = Astro.locals.user;
 const s = await stats();
 const q = Astro.url.searchParams;
-const waiting = (await Promise.all(['member_requests', 'fandom_requests'].map((t) =>
+const waiting = (await Promise.all(['member_requests', 'fandom_requests', 'news_requests'].map((t) =>
   adminDb().from(t).select('id', { count: 'exact', head: true }).eq('status', 'pending')))).reduce((n, r) => n + (r.count ?? 0), 0);
 ---
 <Base title="Admin" description="HalilintarSMP admin.">

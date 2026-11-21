@@ -1,4 +1,5 @@
 // Part Q: the one PUBLIC endpoint that writes. It saves a pending request and nothing else.
+// Four kinds: member-new, member-edit, fandom-edit, and news-new (a suggested news item).
 // Protection: same-origin check, hidden trap field, length limits, Cloudflare Turnstile, and a per-visitor rate limit
 // (the visitor is a salted hash of their address, never the address itself). src/middleware.ts leaves this path alone.
 import type { APIRoute } from 'astro';
@@ -10,6 +11,7 @@ export const prerender = false;
 const MAX_BODY = 60_000, PER_HOUR = 3, PER_DAY = 8, MAX_PENDING = 200;
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+const todayJakarta = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }); // yyyy-mm-dd
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const isDate = (x: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(x)) return false;
@@ -31,18 +33,25 @@ export const POST: APIRoute = async (ctx) => {
   if (str(b.botcheck)) return json({ ok: true }); // a bot filled the hidden field: pretend it worked
 
   const type = str(b.type);
-  if (!['member-new', 'member-edit', 'fandom-edit'].includes(type)) return json({ error: 'Bad request.' }, 400);
+  if (!['member-new', 'member-edit', 'fandom-edit', 'news-new'].includes(type)) return json({ error: 'Bad request.' }, 400);
 
   const errors: string[] = [];
   const reason = str(b.reason);
   if (reason.length > 300) errors.push('The note is too long (300 characters at most).');
   let record: Record<string, any> = {};
-  const table = type === 'fandom-edit' ? 'fandom_requests' : 'member_requests';
+  const table = type === 'fandom-edit' ? 'fandom_requests' : type === 'news-new' ? 'news_requests' : 'member_requests';
 
   if (type === 'fandom-edit') {
     const description = str(b.description);
     if (description.length > 1000) errors.push('The description is too long (1000 characters at most).');
     record = { description, reason: reason || null };
+  } else if (type === 'news-new') {
+    const title = str(b.title), author = str(b.author), summary = str(b.summary), date = str(b.date);
+    if (title.length > 100) errors.push('The title is too long (100 characters at most).');
+    if (!author || author.length > 80) errors.push('Your name is required (80 characters at most).');
+    if (!summary || summary.length > 1000) errors.push('The text is required (1000 characters at most).');
+    if (date && !isDate(date)) errors.push('The date is not a real date.');
+    record = { title: title || null, author, summary, date: date || todayJakarta(), reason: reason || null };
   } else {
     const name = str(b.name), handle = str(b.handle).replace(/^@+/, ''), pronouns = str(b.pronouns), intro = str(b.intro), joined = str(b.joined);
     if (!name || name.length > 80) errors.push('Name is required (80 characters at most).');
@@ -63,7 +72,7 @@ export const POST: APIRoute = async (ctx) => {
   if (errors.length) return json({ error: errors.join(' ') }, 400);
 
   const db = adminDb();
-  if (type !== 'member-new') {
+  if (type === 'member-edit' || type === 'fandom-edit') {
     const t = type === 'fandom-edit' ? 'fandoms' : 'members';
     const { data } = (await db.from(t).select(t === 'members' ? 'id, custom, hidden' : 'id, hidden').eq('slug', str(b.slug)).maybeSingle()) as { data: any };
     if (!data || data.hidden || data.custom) return json({ error: 'That page was not found.' }, 404);
@@ -75,7 +84,7 @@ export const POST: APIRoute = async (ctx) => {
   const ipHash = createHash('sha256').update(ip + ':' + (import.meta.env.SUPABASE_SECRET_KEY ?? '')).digest('hex').slice(0, 32);
   const count = async (q: (t: string) => any) => {
     let n = 0;
-    for (const t of ['member_requests', 'fandom_requests']) n += (await q(t)).count ?? 0;
+    for (const t of ['member_requests', 'fandom_requests', 'news_requests']) n += (await q(t)).count ?? 0;
     return n;
   };
   const since = (ms: number) => new Date(Date.now() - ms).toISOString();

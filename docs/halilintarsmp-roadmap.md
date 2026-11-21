@@ -1,6 +1,6 @@
 # HalilintarSMP: roadmap
 
-Last updated: 2026-11-20
+Last updated: 2026-11-21
 
 This file is written for the AI that helps Almira build the site. It lists the work in ordered parts (A, B, C and so on). Each part is small enough to finish in one chat, and the next part is started in another chat. The context for everything is in `halilintarsmp-main.md`. This file only tracks progress.
 
@@ -246,24 +246,59 @@ Notes:
 
 ## Part S: Super-admin dashboard
 
-Status: In progress
+Status: Done
 
 Goal: the things only Almira can do, plus a private change log.
 
-- [x] Code written (not tested): `/admin/super/` (admins, keep-alive), delete buttons in the lists, `/admin/log/`, `src/pages/api/keepalive.ts`, `vercel.json`, `supabase/migration-3.sql`.
-- [ ] Almira runs `supabase/migration-3.sql` once in the SQL Editor.
-- [ ] Set `CRON_SECRET` (a long random text) in Vercel and in `.env`, then push so the cron job is registered (Vercel, Settings, Cron Jobs).
-- [ ] Test: add and remove an admin (a removed admin loses access on the next click); an admin cannot open `/admin/super/`; hide then delete a row (members, fandoms, gallery, news); a fandom that members use is refused; the picture file leaves Storage; Ping now shows the time; the log shows each action.
-- [ ] Phone check.
+- [x] Code written: `/admin/super/` (admins, keep-alive), delete buttons in the lists, `/admin/log/`, `src/pages/api/keepalive.ts`, `vercel.json`, `supabase/migration-3.sql`.
+- [x] Almira runs `supabase/migration-3.sql` once in the SQL Editor.
+- [x] Set `CRON_SECRET` (a long random text) in Vercel and in `.env`, then push so the cron job is registered (Vercel, Settings, Cron Jobs).
+- [x] Test: add and remove an admin (a removed admin loses access on the next click); an admin cannot open `/admin/super/`; hide then delete a row (members, fandoms, gallery, news); a fandom that members use is refused; the picture file leaves Storage; Ping now shows the time; the log shows each action.
+- [x] Phone check.
 
 Notes:
 
+- Tested by Almira on 2026-11-21 and working.
 - Decided by Almira on 2026-11-20: delete for members, fandoms, gallery and news only (not requests); a row must be hidden first and DELETE typed; a fandom still used by members cannot be deleted (my choice, since "y" did not say block or unlink); deleting also removes the row's picture from Storage unless another row uses it; one super-admin page; keep-alive every 5 days (`0 3 */5 * *`: days 1, 6, 11, 16, 21, 26, 31, so never more than 5 days apart; Supabase free pauses after about 7); a change log, private to the dashboards (admins and the super-admin see it, the public never does).
 - Unhide already worked for both roles since Part P. Delete is super-admin only: checked in the page and again in `deleteRow` (it reads the role from `actorStore` in `lib/auth.ts`, set by the middleware, so no existing call had to change).
-- The change log (`change_log` table) is written by `logChange` in `lib/admin.ts`: create, edit (lists the changed fields), hide, unhide, delete, publish, admin added or removed. Approving a request is logged as a create or edit. Rejecting a request is not logged yet. Lines older than 180 days are removed by the keep-alive. Keep-alive pings are not logged.
+- The change log (`change_log` table) is written by `logChange` in `lib/admin.ts`: create, edit (lists the changed fields), hide, unhide, delete, publish, admin added or removed. Approving a request is logged as a create or edit. Rejecting a request is logged as `reject` (added on 2026-11-21, in both review pages). Lines older than 180 days are removed by the keep-alive. Keep-alive pings are not logged.
 - Deleting a member with a custom page leaves its folder in `public/members/` (GitHub); the log line says so.
 - The cron endpoint is `/api/keepalive` (outside `/api/admin`, since no one is logged in). It needs `Authorization: Bearer <CRON_SECRET>`, which Vercel sends by itself when `CRON_SECRET` is set, and refuses everything when it is not. Cron runs only on the Production deployment.
-- Checked by the AI: syntax only (no Astro run, no database).
+- Written by the AI first (syntax check only, no Astro run, no database).
+
+---
+
+## Part BAHDNNYBGTSOOMFF: News requests and templates README
+
+Status: In progress
+
+Goal: anyone can suggest a news item, and `templates/README.md` is correct again. (The name is intended. There is no Part SA. The order is S, BAHDNNYBGTSOOMFF, T.)
+
+- [x] Dropped by Almira on 2026-11-21: `/members.json` and any member data for custom pages. A custom page is detached from its member page instead (written in `templates/README.md` and the main document).
+
+### News request form
+
+- [x] `supabase/migration-4.sql` (also in `schema.sql`): the `news_requests` table, same access rules as the other request tables.
+- [x] `src/pages/news-form.astro` (new), with a "Suggest a news item" link at the bottom of `news.astro`.
+- [x] `RequestForm.astro` and `api/request.ts` take the new type `news-new` (same Turnstile check, trap field, rate limit and length limits).
+- [x] `admin/requests/index.astro` lists news requests, and `admin/index.astro` counts them as waiting.
+- [x] `admin/requests/news/[id].astro` (new): review, Approve (through `saveRow`), Reject (logged).
+- [ ] Almira runs `supabase/migration-4.sql` once in the SQL Editor, then `npm run db:check`.
+- [ ] Test: a form sent while not logged in; the 4th request in an hour is refused (all three request tables count together); approve shows on the site after Publish; reject does not; the phone layout.
+
+### templates/README.md
+
+- [x] Rewritten for members (what "custom" means, the steps, pictures, rules).
+- [ ] Check that every step works after `npm run build` then `npm run preview`.
+
+Notes:
+
+- Written by the AI first (no Astro run, no database). Based on `request.ts`, `RequestForm.astro`, `member-form.astro`, `admin.ts`, the requests queue, the fandom review page, the admin home, `news.astro`, `migration-2.sql`, `schema.sql`, `templates/README.md` and `templates/custom-member/index.html` (that file is unchanged).
+- Proposed and used (Almira did not answer, so she can change them): the sender types a name that becomes the author and the reviewer may change it; there is no picture on the form, and the reviewer pastes an address in the review screen (news has no upload button).
+- The form also asks for an optional date. If empty, the server uses today in Jakarta time.
+- `request.ts` now sends the member and fandom edit lookups only for `member-edit` and `fandom-edit` (it used to be "anything but member-new").
+- The fandom review page `fandom/[id].astro` sent to the AI has `finish()` without a redirect after it saves (the news page has `return Astro.redirect('/admin/requests/?done=1')` at the end of `finish`). If approving or rejecting a fandom request shows an odd page, check that file and the member review page. Not changed, because it was not asked for.
+- A custom page is detached from its member row: it does not read it, nothing syncs, there is no edit page, and the Members list, search, fandoms and the Featured member box still use the row.
 
 ---
 
@@ -279,6 +314,8 @@ Goal: the documents match the real site, and the old JSON files are gone.
 - [ ] Update `README.md` with the Supabase and `.env` steps.
 - [ ] Add `scripts/export-json.mjs`: writes the tables out as JSON, as a backup.
 - [ ] Delete `src/content/members/*.json`, `gallery.json`, `news.json` and the unused schema, once Almira has checked the live site.
+- [ ] `docs/guide-for-admins.md` also covers news requests and the private change log. `docs/guide-for-editors.md` explains that a custom page is detached from its member page and does not call Supabase.
+- [ ] `scripts/export-json.mjs` also exports `news_requests`, `admins` and `change_log`.
 - [ ] Final check of every page and every dashboard screen on a phone.
 
 ---
@@ -287,9 +324,9 @@ Goal: the documents match the real site, and the old JSON files are gone.
 
 Ask about these when the part that needs them starts. Do not decide them silently.
 
-- Real facts for the hero list. Placeholders for now. (Part C)
-- The orange line on the hero button ("Ask an admin" is a first try). (Part C)
-- May custom member pages break the Part 2 style rules, or must they follow them? (Part H)
+- Real facts for the hero list. Placeholders for now. Not confirmed yet; stays open and does not hold production. (Part C)
+- The orange line on the hero button, which is the bottom line of the big button ("Ask an admin" is a first try). Stays open and does not hold production. (Part C)
+- May custom member pages break the Part 2 style rules, or must they follow them? Not tested yet; stays open. (Part H)
 - The drawn logo, header figure and hero title picture. Placeholders until drawn.
 - The real text for About, and the real "made by" line for Credits. Placeholders for now. (Part G)
 - Tab icon and link preview stay putinxtrump.png, and the footer line stays futer, until Almira changes them. (The footer was set to "futer 2" as a deploy test on 2026-11-20: set it to the wanted text.)
@@ -300,6 +337,7 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - Google's login screen shows the Supabase address, not the site name. To show the site name: verify the branding in Google Cloud (needs a domain Almira owns, and can take days or weeks) or buy a Supabase custom domain. Left as it is for now, since only admins see it. (Part O)
 - Member pictures: members keep sending theirs to Almira, and the reviewer uploads it on approval. Almira can change this. (Part Q, Part R)
 - How often to export the tables to JSON as a backup. (Part T)
+- News request form (Part BAHDNNYBGTSOOMFF): built with the proposal (the sender types a name and the reviewer may change it; no picture on the form, the reviewer pastes an address). Almira can change this.
 
 ## Progress log
 
@@ -333,4 +371,6 @@ One line per finished part: date, part, what was done.
 - 2026-11-20, Part Q: public requests and review written (api/request.ts, RequestForm, edit pages, requests screens, migration-2.sql). Not tested.
 - 2026-11-20, docs: roadmap Parts A to LA condensed; main document updated for Part P, the deploy rules and the folder layout.
 - 2026-11-20, Part R: picture uploads tested by Almira and working. Part R done.
-- 2026-11-20, Part S: super-admin page, delete for good, change log and keep-alive written (api/keepalive.ts, vercel.json, migration-3.sql). Not tested.
+- 2026-11-20, Part S: super-admin page, delete for good, change log and keep-alive written (api/keepalive.ts, vercel.json, migration-3.sql).
+- 2026-11-21, Part S: tested by Almira and working; rejecting a request is now logged too. Part S done.
+- 2026-11-21, Part BAHDNNYBGTSOOMFF: news request form (`news-form.astro`, `news_requests`, `migration-4.sql`, review screen) and the new `templates/README.md` written. `/members.json` dropped. Not tested. Status In progress.

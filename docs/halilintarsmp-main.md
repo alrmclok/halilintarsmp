@@ -1,6 +1,6 @@
 # HalilintarSMP: main document
 
-Last updated: 2026-11-20
+Last updated: 2026-11-21
 
 This is the main document for the HalilintarSMP website. It says what the site is, how it is built and how it looks. It is the context file. What is done and what comes next is in `halilintarsmp-roadmap.md`.
 
@@ -8,7 +8,7 @@ It has three parts.
 
 - **Part 1** says what the site is and how it is built. It describes the real site.
 - **Part 2** says how the site looks (the style guide).
-- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M to R are built and tested (the database, the public pages reading it, the admin login, the content dashboards, public requests and picture uploads). Part S (super-admin page, delete, change log, keep-alive) is written but not tested yet. The rest is still planned.
+- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M to R are built and tested (the database, the public pages reading it, the admin login, the content dashboards, public requests and picture uploads). Part S (super-admin page, delete, change log, keep-alive) is built and tested too. The news request form and the custom-page README (Part BAHDNNYBGTSOOMFF) are written and not tested yet. The rest is still planned.
 
 ## How the two files are used
 
@@ -41,8 +41,9 @@ Pages:
 | Credits | Linked from the footer. A short note (not connected to Winamp, fonts) and a list of every member's name |
 | News, Join, Rules | Three pages, built in Part K. News (`/news/`) lists every news item, newest first. Join (`/join/`) holds how to join and, in its own box, the server address (`/join/#server-address`). Rules (`/rules/`) is its own page. No pop-ups. They have no tab: they are reached from the maroon bar, the hero and the News box. The words on them are placeholders until the admins send the real ones |
 | Member form | `/member-form/`, not in the tabs. A public page where someone asks for a new member page (name, handle, pronouns, fandoms, joined date, intro, sections). It saves a pending request; nothing is public until an admin approves it and Publish is pressed (Part Q) |
+| News form | `/news-form/`, not in the tabs, linked from the News page ("Suggest a news item"). A public page where someone suggests a new news item (title, name, date, text, note). It saves a pending request; nothing is public until an admin approves it and Publish is pressed (Part BAHDNNYBGTSOOMFF) |
 | Edit pages | `/members/<slug>/edit/` and `/fandoms/<slug>/edit/`, open to everyone, like a wiki. A member edit form is filled with the current page and a fandom edit form has only the description. Sending one saves a pending request. Members with a custom page have no edit page (Part Q). The links to these pages from the member and fandom pages are added in a later step |
-| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (counts, unpublished changes, last publish time and the Publish button), plus `/admin/<members|fandoms|gallery|news>/` lists and forms, and `/admin/requests/` (Part Q: the queue, `member/<id>` and `fandom/<id>` review screens), `/admin/log/` (Part S: the private change log) and `/admin/super/` (Part S: super-admin only, admins and keep-alive) |
+| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (counts, unpublished changes, last publish time and the Publish button), plus `/admin/<members|fandoms|gallery|news>/` lists and forms, and `/admin/requests/` (Part Q: the queue, `member/<id>` and `fandom/<id>` review screens; Part BAHDNNYBGTSOOMFF adds `news/<id>`), `/admin/log/` (Part S: the private change log) and `/admin/super/` (Part S: super-admin only, admins and keep-alive) |
 
 ## Who can change files
 
@@ -105,10 +106,11 @@ src/
   pages/join.astro          the Join page: how to join, and the server address (a line at the top of the file)
   pages/rules.astro         the Rules page
   pages/member-form.astro   the public form for a new member (Part Q: saves a pending request)
-  components/RequestForm.astro  the one form used by the member form and both edit pages: sends JSON to /api/request, Cloudflare Turnstile, hidden trap field
+  pages/news-form.astro     the public form to suggest a news item (Part BAHDNNYBGTSOOMFF: saves a pending request)
+  components/RequestForm.astro  the one form used by the member form, the news form and both edit pages: sends JSON to /api/request, Cloudflare Turnstile, hidden trap field
   pages/members/[slug]/edit.astro, pages/fandoms/[slug]/edit.astro  the public edit forms (Part Q)
   pages/api/request.ts      the one PUBLIC endpoint that writes: checks and saves a pending request (Part Q)
-  pages/admin/requests/     index.astro (the queue), member/[id].astro and fandom/[id].astro (review: fix, Approve, Reject) (Part Q)
+  pages/admin/requests/     index.astro (the queue), member/[id].astro, fandom/[id].astro and news/[id].astro (review: fix, Approve, Reject) (Part Q; news added in Part BAHDNNYBGTSOOMFF)
   pages/search.json.js      makes /search.json when the site builds: the list the search box looks in (members, fandoms, news)
   pages/members/index.astro   the Members list
   pages/members/[slug].astro  the default member page, made from data
@@ -139,6 +141,7 @@ supabase/schema.sql         the database tables and their access rules, as they 
 supabase/migrations.sql     changes to run once in the Supabase SQL Editor (migration 1 removes the unused site_text table)
 supabase/migration-2.sql    run once in the SQL Editor (Part Q): request columns on member_requests and the fandom_requests table
 supabase/migration-3.sql    run once in the SQL Editor (Part S): the change_log table and publish_state.last_ping_at
+supabase/migration-4.sql    run once in the SQL Editor (Part BAHDNNYBGTSOOMFF): the news_requests table
 vercel.json                 the weekly-ish cron job (every 5 days, calls /api/keepalive)
 scripts/import-json.mjs     copies the content files into Supabase (Part M). Safe to run again
 scripts/check-access.mjs    checks that the public key reads only visible rows and cannot write (Part M)
@@ -151,7 +154,8 @@ astro.config.mjs            Astro settings: the `@astrojs/vercel` adapter (pages
 ### How the custom pages work
 
 - Everything inside `public/` is served exactly as it is. Astro does not touch it. So `public/members/member-name/index.html` is shown at `/members/member-name/`.
-- A member with a custom page has a flag in their data file (for example `custom: true`). The default page maker skips them, so the two never clash. The Members list links to `/members/member-name/` in both cases, so the address looks the same.
+- A member with a custom page has the flag `custom` on their member row (the "Custom page" checkbox in the dashboard; in the old data files it was `custom: true`). The default page maker skips them, so the two never clash. The Members list links to `/members/member-name/` in both cases, so the address looks the same.
+- **A custom page is detached from its member row** (decided 2026-11-21). The page does not read the row, and custom pages do not call Supabase and have no `/members.json`. Changing the row does not change the page, and changing the page does not change the row. The row is still used by the Members list, the search, the fandom pages, the home "Featured member" box and Credits. A custom page has no edit page and no "Edit this page" link, and `/api/request` refuses edit requests for it. Turning `custom` off brings the default page back and leaves the folder unused. The folder's name is the member's `slug`.
 - The shared look lives in one file, `public/style.css`. The Astro layout uses it, and a custom page can link to it too if the member wants the box look. A member can also ignore it and write only their own `style.css`.
 - The starter folder in `templates/custom-member/` has a ready `index.html`, an empty `style.css`, an empty `script.js` and a link back to `/members/`. It sits outside `public/` so it is not shown on the site.
 
@@ -454,9 +458,9 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 
 ---
 
-# Part 3: Supabase and the dashboards (Parts M to R built and tested; Part S written, not tested)
+# Part 3: Supabase and the dashboards (Parts M to S built and tested)
 
-Status: Parts M to R are built and tested, and Part S (super-admin) is written but not tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+Status: Parts M to S are built and tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
 
 ## 3.1 Why
 
@@ -484,6 +488,7 @@ Eleven tables. Access rules are switched on for every one of them. Each public t
 | `admins` | `email` (lowercase), `added_by`, `added_at` |
 | `member_requests` | `kind` (`new` or `edit`), `member_id` (for an edit), `status` (`pending`, `approved` or `rejected`), what the form sends (`name`, `handle`, `pronouns`, `fandoms` as typed, `joined`, `intro`, `sections`), `reason` (the sender's note), `ip_hash` (salted hash for the rate limit), `review_note`, `reviewed_by`, `reviewed_at`, `created_at` |
 | `fandom_requests` | `fandom_id`, `status`, `description` (the proposed text), `reason`, `ip_hash`, and the same review columns |
+| `news_requests` | `status`, `title` (optional), `author`, `date` (the sender's date, or the day it was sent), `summary`, `reason`, `ip_hash`, and the same review columns. Added in Part BAHDNNYBGTSOOMFF (`migration-4.sql`) |
 | `heartbeat` | Dummy rows for the keep-alive (see 3.8) |
 | `publish_state` | One row: `last_published_at`, `pending_changes` and `last_ping_at` (the last keep-alive) |
 | `change_log` | One line per change in the dashboards (Part S): `created_at`, `actor` (email), `action`, `kind`, `label`, `detail`. Private. Lines older than 180 days are removed by the keep-alive |
@@ -491,7 +496,7 @@ Eleven tables. Access rules are switched on for every one of them. Each public t
 Who can read what:
 
 - The public key reads `members`, `fandoms`, `member_fandoms`, `gallery` and `news`, and never a hidden row. A member-fandom link is readable only when both its member and its fandom are.
-- The public key cannot write anything. It cannot read `admins`, `member_requests`, `fandom_requests`, `heartbeat`, `publish_state` or `change_log` either. Only the secret key (server only) can.
+- The public key cannot write anything. It cannot read `admins`, `member_requests`, `fandom_requests`, `news_requests`, `heartbeat`, `publish_state` or `change_log` either. Only the secret key (server only) can.
 - `npm run db:check` tests all of this against the real project.
 
 Admins never delete: they hide a row, and it can come back. Only the super-admin can delete a row for good, and only a hidden one (see 3.5).
@@ -531,7 +536,7 @@ Built in Part O:
 |---|---|---|
 | Create and edit members, fandoms, gallery, news | yes | yes |
 | Hide and unhide | yes | yes |
-| Review member requests (fix, approve, reject) | yes | yes |
+| Review requests: members, fandoms, news (fix, approve, reject) | yes | yes |
 | Press Publish | yes (decided 2026-11-20) | yes |
 | Delete for good | no | yes |
 | Add and remove admins | no | yes |
@@ -545,16 +550,16 @@ How the content dashboards work (Part P, tested):
 - Member and gallery slugs are locked after saving. A fandom's slug is always `toSlug(name)`, and a second fandom with the same slug is refused.
 - Member fandoms: a compact checkbox list of all fandoms plus an "Add fandoms not in the list" box. Typed names are created (name only) at save, or linked if the slug exists. The member's old order is kept, newly checked ones follow in list order, typed ones last. (A plain text box was tried first, but one unknown name refused the whole save, which was too hard on long lists.)
 - New news items go first (the home box shows the lowest position first); new gallery items go last.
-- Part S (written, not tested): `/admin/super/` (super-admin only: the middleware redirects anyone else, and every function checks the role again). It lists the admins with who added them and when, adds one by Google email (lowercased; refuses the super-admin email and doubles) and removes one (that person loses the login on their next click). It also has the keep-alive button (see 3.8).
+- Part S (tested): `/admin/super/` (super-admin only: the middleware redirects anyone else, and every function checks the role again). It lists the admins with who added them and when, adds one by Google email (lowercased; refuses the super-admin email and doubles) and removes one (that person loses the login on their next click). It also has the keep-alive button (see 3.8).
 - Delete for good (Part S): super-admin only, in the lists, on hidden rows only, after typing DELETE. A fandom that members still use is refused (remove it from the members first). Deleting a row also removes its picture from Storage unless another row uses it. A member with a custom page leaves its folder in `public/members/` (GitHub). Deleting does not raise the unpublished count (a hidden row is already left out when the site is built). Requests cannot be deleted.
-- Change log (Part S): `logChange` in `lib/admin.ts` writes one line to `change_log` for create, edit (with the changed fields), hide, unhide, delete, publish, admin added and removed. The role and email of the person come from `actorStore` (`lib/auth.ts`), which `middleware.ts` fills for every guarded request, so the callers do not pass them. It is best effort: a log failure never stops the save. Seen on `/admin/log/` by every admin and the super-admin, never public. Approving a request shows as a create or edit; rejecting is not logged.
+- Change log (Part S): `logChange` in `lib/admin.ts` writes one line to `change_log` for create, edit (with the changed fields), hide, unhide, delete, publish, admin added and removed. The role and email of the person come from `actorStore` (`lib/auth.ts`), which `middleware.ts` fills for every guarded request, so the callers do not pass them. It is best effort: a log failure never stops the save. Seen on `/admin/log/` by every admin and the super-admin, never public. Approving a request shows as a create or edit; rejecting shows as `reject` (kind `requests`).
 - Code: `src/lib/admin.ts` (rules and database work), `src/components/AdminNav.astro`, `src/pages/admin/index.astro`, `src/pages/admin/[kind]/index.astro`, `src/pages/admin/[kind]/[id].astro`, `src/pages/api/admin/publish.ts`.
 
 ## 3.6 Requests from the public (Part Q)
 
 Anyone can send a request. A request is never public by itself. There is no member login, so a request cannot prove who sent it: the reviewer is the check. There is no separate editor role: admins review (Katz and Kate can be admins if they are asked).
 
-- **Three kinds:** a new member (`/member-form/`), a change to a member page (`/members/<slug>/edit/`, filled with the current page), and a new description for a fandom (`/fandoms/<slug>/edit/`; only the description). Members with a custom page have no edit page. All three use `src/components/RequestForm.astro`. The edit pages are built with the site, so they show the content of the last Publish.
+- **Four kinds:** a new member (`/member-form/`), a change to a member page (`/members/<slug>/edit/`, filled with the current page), a new description for a fandom (`/fandoms/<slug>/edit/`; only the description), and a new news item (`/news-form/`, see 3.12). Members with a custom page have no edit page. All four use `src/components/RequestForm.astro`. The edit pages are built with the site, so they show the content of the last Publish.
 - **Sending:** the form posts JSON to `src/pages/api/request.ts`, which saves a `pending` row in `member_requests` or `fandom_requests`. The Web3Forms email is gone (Almira's decision).
 - **Protection:** same-origin check; the hidden trap field `botcheck` (filled = a silent fake success); length limits (name 80, handle 40, pronouns 40, intro 300, 12 sections of up to 4000 characters, fandom description 1000, note 300); Cloudflare Turnstile checked on the server; a rate limit of 3 requests per hour and 8 per day for each visitor (a salted hash of the address, in `ip_hash`); and a stop at 200 waiting requests. Turnstile keys are in section 3.10. The endpoint fails closed: with no `TURNSTILE_SECRET_KEY` it refuses.
 - **Review:** `/admin/requests/` lists pending first. A member request opens a screen with every field editable, a Now / Proposed table for a change, and a checkbox "Create fandoms that do not exist yet (name only)". Approve runs the same rules as the member dashboard (`saveRow`): a new member gets a row (hidden = no), a change updates the member and sets "Last edited" to today. Reject saves the note. Either way the screen records who and when, and only a pending request can be handled. The site changes at the next Publish.
@@ -599,3 +604,11 @@ The Google client id and secret are set in Supabase's Auth settings, not in the 
 ## 3.11 Backup
 
 Part T adds `scripts/export-json.mjs`, which writes the tables out as JSON, so the content is never only in Supabase.
+
+## 3.12 Part BAHDNNYBGTSOOMFF: news requests and the custom-page README (written, not tested yet)
+
+- **Dropped on 2026-11-21:** a `/members.json` file for custom pages. A custom page is detached from its member row instead (see "How the custom pages work" in Part 1).
+- **News request form:** `/news-form/`, linked from the News page. Public, no login, for a NEW news item only (changing an existing item is not part of it). The form asks for a title (optional), the sender's name (required, becomes the author), a date (optional, today in Jakarta time if empty), the text (required, 1000 characters at most) and a note for the reviewer (optional). It uses the same component, endpoint, Turnstile check, trap field and rate limit as the other forms; the rate limit and the 200-waiting cap count all three request tables together. It saves a `pending` row in `news_requests`. Limits: title 100, name 80, text 1000, note 300.
+- **Review:** `/admin/requests/` lists news requests with the others, and the waiting count on `/admin/` includes them. `/admin/requests/news/<id>/` shows every field editable (title, author, date, picture, text, note). Approve saves a `news` row through `saveRow` (so it goes first in the news order, raises the unpublished count and is logged as a create); Reject saves the note and is logged as `reject` (kind `requests`). Only a pending request can be handled. The site changes at the next Publish.
+- **Pictures:** the form has no picture field. The sender sends the picture to Almira, and the reviewer pastes its address in the review screen's picture box. News pictures have no upload button (they stay a text box, as in the News dashboard form).
+- **`templates/README.md`** is rewritten for members: what "custom" means (detached from the member row), the steps, where pictures go, and the rules.

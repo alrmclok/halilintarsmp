@@ -1,13 +1,16 @@
 ---
-// Part Q: one form for the three public requests: a new member, a change to a member page, a change to a fandom description.
+// Part Q: one form for the public requests: a new member, a change to a member page, a change to a fandom description,
+// and (Part BAHDNNYBGTSOOMFF) a suggested news item.
 // It sends JSON to /api/request. Nothing becomes public until an admin approves it and Publish is pressed.
 const { type = 'member-new', slug = '', initial = {} } = Astro.props;
-const isMember = type !== 'fandom-edit';
-const isEdit = type !== 'member-new';
+const isMember = type === 'member-new' || type === 'member-edit';
+const isNews = type === 'news-new';
+const isEdit = type === 'member-edit' || type === 'fandom-edit';
 const init = {
   name: initial.name ?? '', handle: initial.handle ?? '', pronouns: initial.pronouns ?? '',
   fandoms: (initial.fandoms ?? []).join(', '), joined: initial.joined ?? '', intro: initial.intro ?? '',
   description: initial.description ?? '',
+  title: initial.title ?? '', author: initial.author ?? '', summary: initial.summary ?? '', date: initial.date ?? '',
   sections: initial.sections ?? (isEdit ? [] : [{ heading: 'About', text: '' }]),
 };
 const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
@@ -33,20 +36,31 @@ const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
       <div id="sections-list"></div>
       <div class="add-row"><button type="button" class="btn-add" id="add-section-btn">+ Add {isEdit ? 'a' : 'Another'} Section</button></div>
     </>
+  ) : isNews ? (
+    <>
+      <div class="field"><label for="f-title">Title</label>
+        <input id="f-title" type="text" name="title" maxlength="100" value={init.title} /></div>
+      <div class="field"><label for="f-author">Your name (shown as the author) <span class="req">*</span></label>
+        <input id="f-author" type="text" name="author" maxlength="80" value={init.author} required /></div>
+      <div class="field"><label for="f-date">Date of the news (if empty, today)</label>
+        <input id="f-date" type="date" name="date" value={init.date} /></div>
+      <div class="field"><label for="f-summary">Text <span class="req">*</span></label>
+        <textarea id="f-summary" name="summary" rows="6" maxlength="1000" required>{init.summary}</textarea></div>
+    </>
   ) : (
     <div class="field"><label for="f-desc">Description</label>
       <textarea id="f-desc" name="description" rows="6" maxlength="1000">{init.description}</textarea></div>
   )}
 
-  {isEdit && (
-    <div class="field"><label for="f-reason">What did you change, and why? (optional)</label>
+  {(isEdit || isNews) && (
+    <div class="field"><label for="f-reason">{isNews ? 'Anything the reviewer should know? (optional)' : 'What did you change, and why? (optional)'}</label>
       <input id="f-reason" type="text" name="reason" maxlength="300" /></div>
   )}
 
   {SITEKEY
     ? <div class="cf-turnstile" data-sitekey={SITEKEY}></div>
     : <p class="status-banner status-err">This form is not set up yet (the Turnstile key is missing).</p>}
-  <div class="form-actions"><button type="submit" class="btn-submit" id="submit-btn" disabled={!SITEKEY}>{isEdit ? 'Send Change' : 'Send Profile'}</button></div>
+  <div class="form-actions"><button type="submit" class="btn-submit" id="submit-btn" disabled={!SITEKEY}>{isNews ? 'Send News' : isEdit ? 'Send Change' : 'Send Profile'}</button></div>
 </form>
 <script type="application/json" id="req-init" set:html={JSON.stringify(init).replace(/</g, '\\u003c')} />
 <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -55,7 +69,7 @@ const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
     var form = document.getElementById('req-form'), status = document.getElementById('form-status');
     var btn = document.getElementById('submit-btn'), list = document.getElementById('sections-list');
     var init = JSON.parse(document.getElementById('req-init').textContent);
-    var type = form.dataset.type, edit = type !== 'member-new', label = btn.textContent;
+    var type = form.dataset.type, edit = type === 'member-edit' || type === 'fandom-edit', label = btn.textContent;
 
     function renumber() {
       list.querySelectorAll('[data-section]').forEach(function (b, i) { b.querySelector('.section-num').textContent = 'Section ' + (i + 1); });
@@ -83,6 +97,7 @@ const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
       var v = function (n) { var el = form.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; };
       var body = { type: type, slug: form.dataset.slug || undefined, reason: v('reason'), botcheck: v('botcheck'), token: v('cf-turnstile-response') };
       if (type === 'fandom-edit') body.description = v('description');
+      else if (type === 'news-new') Object.assign(body, { title: v('title'), author: v('author'), date: v('date'), summary: v('summary') });
       else {
         Object.assign(body, {
           name: v('name'), handle: v('handle'), pronouns: v('pronouns'), joined: v('joined'), intro: v('intro'),
@@ -100,7 +115,10 @@ const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
         status.className = 'status-banner status-ok';
         status.textContent = 'Sent! An admin will look at it. It shows on the site after it is approved and published.';
         done = true;
-        if (!edit) { form.reset(); list.innerHTML = ''; init.sections.forEach(function (s, i) { add(s.heading, '', i > 0); }); }
+        if (!edit) {
+          form.reset();
+          if (list) { list.innerHTML = ''; init.sections.forEach(function (s, i) { add(s.heading, '', i > 0); }); }
+        }
       } catch (err) {
         status.className = 'status-banner status-err'; status.textContent = err.message;
       }

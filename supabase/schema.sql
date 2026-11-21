@@ -164,6 +164,25 @@ create table if not exists public.fandom_requests (
 create index if not exists fandom_requests_status_idx on public.fandom_requests (status, created_at);
 create index if not exists fandom_requests_ip_idx on public.fandom_requests (ip_hash, created_at);
 
+-- A suggested news item (Part BAHDNNYBGTSOOMFF). An approved one becomes a row in `news`.
+create table if not exists public.news_requests (
+  id           uuid primary key default gen_random_uuid(),
+  status       text not null default 'pending',
+  title        text,                           -- optional, like news.title
+  author       text not null,                  -- typed by the sender; the reviewer may change it
+  date         date not null default current_date,
+  summary      text not null default '',
+  reason       text,                           -- the sender's optional note for the reviewer
+  ip_hash      text,                           -- salted hash of the sender's address, used only for the rate limit
+  review_note  text,
+  reviewed_by  text,
+  reviewed_at  timestamptz,
+  created_at   timestamptz not null default now(),
+  constraint news_requests_status check (status in ('pending', 'approved', 'rejected'))
+);
+create index if not exists news_requests_status_idx on public.news_requests (status, created_at);
+create index if not exists news_requests_ip_idx on public.news_requests (ip_hash, created_at);
+
 create table if not exists public.heartbeat (
   id          uuid primary key default gen_random_uuid(),
   created_at  timestamptz not null default now()
@@ -223,6 +242,7 @@ alter table public.news            enable row level security;
 alter table public.admins          enable row level security;
 alter table public.member_requests enable row level security;
 alter table public.fandom_requests enable row level security;
+alter table public.news_requests   enable row level security;
 alter table public.heartbeat       enable row level security;
 alter table public.publish_state   enable row level security;
 alter table public.change_log      enable row level security;
@@ -230,14 +250,14 @@ alter table public.change_log      enable row level security;
 -- Start from nothing: take every right away from the public roles on every table.
 revoke all on table
   public.members, public.fandoms, public.member_fandoms, public.gallery, public.news,
-  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state, public.change_log
+  public.admins, public.member_requests, public.fandom_requests, public.news_requests, public.heartbeat, public.publish_state, public.change_log
 from anon, authenticated;
 
 -- The secret key (the service_role) bypasses the row rules but still needs the table rights, so say it out loud
 -- instead of relying on defaults that Supabase may change.
 grant all on table
   public.members, public.fandoms, public.member_fandoms, public.gallery, public.news,
-  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state, public.change_log
+  public.admins, public.member_requests, public.fandom_requests, public.news_requests, public.heartbeat, public.publish_state, public.change_log
 to service_role;
 
 -- ...then give back reading to the public roles, and only on the public tables.
@@ -271,7 +291,7 @@ drop policy if exists "public reads visible news" on public.news;
 create policy "public reads visible news" on public.news
   for select to anon, authenticated using (not hidden);
 
--- admins, member_requests, heartbeat and publish_state get no policy and no grant:
+-- admins, the request tables, heartbeat, publish_state and change_log get no policy and no grant:
 -- the public key cannot read or write them. Only the secret key can.
 -- No table has an insert, update or delete policy, so the public key can never write.
 
