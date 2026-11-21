@@ -4,7 +4,7 @@ import Base from '../../../../layouts/Base.astro';
 import Box from '../../../../components/Box.astro';
 import AdminNav from '../../../../components/AdminNav.astro';
 import { adminDb } from '../../../../lib/auth';
-import { fmt, loadRaw, saveRow } from '../../../../lib/admin';
+import { fmt, loadRaw, logChange, saveRow } from '../../../../lib/admin';
 
 export const prerender = false;
 
@@ -27,7 +27,7 @@ if (Astro.request.method === 'POST' && pending) {
     await db.from('fandom_requests')
       .update({ status, review_note: note || null, reviewed_by: Astro.locals.user.email, reviewed_at: new Date().toISOString() })
       .eq('id', id).eq('status', 'pending');
-    return Astro.redirect('/admin/requests/?done=1', 303);
+    if (status === 'rejected') await logChange('reject', 'requests', String(current?.name ?? 'a fandom'), 'fandom description');
   };
   if (act === 'reject') return await finish('rejected');
   if (act === 'approve') {

@@ -1,6 +1,6 @@
 // Part P: the rules and the database work behind the content dashboards. Server only.
 // The middleware already lets only the super-admin and listed admins reach /admin and /api/admin.
-import { adminDb } from './auth';
+import { adminDb, currentActor } from './auth';
 // @ts-ignore (plain JS file)
 import { toSlug } from './slug.js';
 
@@ -293,6 +293,10 @@ export async function saveRow(kind: Kind, id: string | null, raw: Record<string,
     errors: [e.code === '23505' ? 'That address piece is already used by another row.' : `Database error: ${e.message}`],
   });
 
+  let before: Record<string, any> | null = null;
+  if (id) before = (await db.from(kind).select('*').eq('id', id).maybeSingle()).data;
+  let fandomsChanged = false;
+
   let rowId = id;
   if (id) {
     const { error } = await db.from(kind).update(row).eq('id', id);
@@ -309,6 +313,7 @@ export async function saveRow(kind: Kind, id: string | null, raw: Record<string,
     if (old.error) return fail(old.error);
     const del = await db.from('member_fandoms').delete().eq('member_id', rowId);
     if (del.error) return fail(del.error);
+    fandomsChanged = JSON.stringify([...(old.data ?? [])].sort((a: any, b: any) => a.position - b.position).map((x: any) => x.fandom_id)) !== JSON.stringify(fandomIds);
     if (fandomIds.length) {
       const ins = await db.from('member_fandoms').insert(fandomIds.map((fid, i) => ({ member_id: rowId, fandom_id: fid, position: i })));
       if (ins.error) {
@@ -319,13 +324,23 @@ export async function saveRow(kind: Kind, id: string | null, raw: Record<string,
   }
 
   await bumpPending();
+  if (id) {
+    const changed = before ? Object.keys(row).filter((k) => JSON.stringify(before![k] ?? null) !== JSON.stringify(row[k] ?? null)) : [];
+    if (fandomsChanged) changed.push('fandoms');
+    await logChange('edit', kind, KINDS[kind].title(row), changed.length ? 'changed: ' + changed.join(', ') : 'saved');
+  } else {
+    await logChange('create', kind, KINDS[kind].title(row));
+  }
   return { errors: [] };
 }
 
 export async function setHidden(kind: Kind, id: string, hidden: boolean): Promise<string | null> {
-  const { error } = await adminDb().from(kind).update({ hidden }).eq('id', id);
+  const db = adminDb();
+  const { data: row } = await db.from(kind).select('*').eq('id', id).maybeSingle();
+  const { error } = await db.from(kind).update({ hidden }).eq('id', id);
   if (error) return error.message;
   await bumpPending();
+  await logChange(hidden ? 'hide' : 'unhide', kind, row ? KINDS[kind].title(row) : id);
   return null;
 }
 
@@ -365,4 +380,101 @@ export async function ensureFandoms(names: string[]): Promise<string | null> {
   if (!add.size) return null;
   const { error: e2 } = await db.from('fandoms').insert([...add].map(([slug, name]) => ({ slug, name })));
   return e2?.message ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Part S: change log, delete for good, admins, keep-alive. Server only.
+// ---------------------------------------------------------------------------
+
+// Writes one line in the private change log. Best effort: a failure never stops the real work.
+export async function logChange(action: string, kind: string, label: string, detail = '') {
+  try {
+    const { error } = await adminDb().from('change_log').insert({
+      actor: currentActor()?.email ?? 'unknown', action, kind,
+      label: label.slice(0, 200), detail: detail.slice(0, 500),
+    });
+    if (error) console.error('[log] could not write the change log:', error.message);
+  } catch (e) {
+    console.error('[log] could not write the change log:', e);
+  }
+}
+
+export async function recentLog(limit = 200) {
+  const { data, error } = await adminDb().from('change_log').select('*').order('created_at', { ascending: false }).limit(limit);
+  return { rows: (data ?? []) as any[], error: error?.message ?? '' };
+}
+
+async function removeUnusedPicture(kind: Kind, field: string, url: string, exceptId: string) {
+  const at = url.indexOf(PICTURE_PREFIX);
+  if (at < 0) return; // not one of ours (an outside address or an old /public path)
+  const key = decodeURIComponent(url.slice(at + PICTURE_PREFIX.length).split('?')[0]);
+  const db = adminDb();
+  const { data } = await db.from(kind).select('id').like(field, `%${key}%`).neq('id', exceptId).limit(1);
+  if (!data?.length) await db.storage.from(BUCKET).remove([key]); // best effort
+}
+
+// Super-admin only. The row must be hidden, and the person must type DELETE. A fandom that members still use is refused.
+export async function deleteRow(kind: Kind, id: string, confirm: string): Promise<string | null> {
+  if (currentActor()?.role !== 'super') return 'Only the super-admin can delete.';
+  if (confirm.trim() !== 'DELETE') return 'Type DELETE (capitals) to confirm.';
+  const db = adminDb();
+  const { data: row } = await db.from(kind).select('*').eq('id', id).maybeSingle();
+  if (!row) return 'That row no longer exists.';
+  if (!row.hidden) return 'Hide it first. Only hidden rows can be deleted.';
+  if (kind === 'fandoms') {
+    const { count, error } = await db.from('member_fandoms').select('member_id', { count: 'exact', head: true }).eq('fandom_id', id);
+    if (error) return error.message;
+    if (count) return `${count} member${count === 1 ? '' : 's'} still use this fandom. Remove it from them first.`;
+  }
+  const { error } = await db.from(kind).delete().eq('id', id);
+  if (error) return error.message;
+  const field = PICTURE_FIELD[kind];
+  if (field) await removeUnusedPicture(kind, field, String(row[field] ?? ''), id);
+  await logChange('delete', kind, KINDS[kind].title(row), [row.slug ? `slug: ${row.slug}` : '', row.custom ? 'its custom page folder stays in GitHub' : ''].filter(Boolean).join('; '));
+  return null;
+}
+
+export async function listAdmins() {
+  const { data } = await adminDb().from('admins').select('email, added_by, added_at').order('added_at', { ascending: true });
+  return (data ?? []) as { email: string; added_by: string | null; added_at: string }[];
+}
+
+export async function addAdmin(emailRaw: string): Promise<string | null> {
+  const me = currentActor();
+  if (me?.role !== 'super') return 'Only the super-admin can add admins.';
+  const email = emailRaw.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'That does not look like an email address.';
+  const superEmail = ((import.meta.env.SUPER_ADMIN_EMAIL as string | undefined) ?? '').trim().toLowerCase();
+  if (email === superEmail) return 'That is the super-admin email. It already has full access.';
+  const { error } = await adminDb().from('admins').insert({ email, added_by: me.email });
+  if (error) return error.code === '23505' ? 'That email is already an admin.' : error.message;
+  await logChange('admin_add', 'admins', email);
+  return null;
+}
+
+export async function removeAdmin(emailRaw: string): Promise<string | null> {
+  if (currentActor()?.role !== 'super') return 'Only the super-admin can remove admins.';
+  const email = emailRaw.trim().toLowerCase();
+  const { error } = await adminDb().from('admins').delete().eq('email', email);
+  if (error) return error.message;
+  await logChange('admin_remove', 'admins', email);
+  return null;
+}
+
+// Keep-alive: adds a dummy row to `heartbeat`, deletes it, notes the time. Also drops log lines older than 180 days.
+// It never touches the real tables. Called by the button on /admin/super/ and by the Vercel cron job.
+export async function keepAlive(): Promise<string | null> {
+  const db = adminDb();
+  const ins = await db.from('heartbeat').insert({}).select('id').single();
+  if (ins.error) return ins.error.message;
+  const del = await db.from('heartbeat').delete().eq('id', ins.data.id);
+  if (del.error) return del.error.message;
+  await db.from('publish_state').update({ last_ping_at: new Date().toISOString() }).eq('id', 1);
+  await db.from('change_log').delete().lt('created_at', new Date(Date.now() - 180 * 86400000).toISOString());
+  return null;
+}
+
+export async function lastPing(): Promise<string | null> {
+  const { data } = await adminDb().from('publish_state').select('last_ping_at').eq('id', 1).maybeSingle();
+  return (data?.last_ping_at as string | null) ?? null;
 }

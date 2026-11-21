@@ -4,7 +4,7 @@ import Base from '../../../../layouts/Base.astro';
 import Box from '../../../../components/Box.astro';
 import AdminNav from '../../../../components/AdminNav.astro';
 import { adminDb } from '../../../../lib/auth';
-import { defaults, ensureFandoms, fmt, loadRaw, saveRow, today } from '../../../../lib/admin';
+import { defaults, ensureFandoms, fmt, loadRaw, logChange, saveRow, today } from '../../../../lib/admin';
 // @ts-ignore (plain JS file)
 import { toSlug } from '../../../../lib/slug.js';
 
@@ -39,7 +39,7 @@ if (Astro.request.method === 'POST' && pending) {
     await db.from('member_requests')
       .update({ status, review_note: form.note || null, reviewed_by: Astro.locals.user.email, reviewed_at: new Date().toISOString() })
       .eq('id', id).eq('status', 'pending');
-    return Astro.redirect('/admin/requests/?done=1', 303);
+    if (status === 'rejected') await logChange('reject', 'requests', req.name, req.kind === 'edit' ? 'member page change' : 'new member');
   };
   if (act === 'reject') return await finish('rejected');
   if (act === 'approve') {

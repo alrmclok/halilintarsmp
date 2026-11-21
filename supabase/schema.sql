@@ -174,9 +174,22 @@ create table if not exists public.publish_state (
   id                 integer primary key default 1,
   last_published_at  timestamptz,
   pending_changes    integer not null default 0,
+  last_ping_at       timestamptz,                -- the last keep-alive ping (Part S)
   constraint publish_state_one_row check (id = 1)
 );
 insert into public.publish_state (id) values (1) on conflict (id) do nothing;
+
+-- The change log (Part S): who did what in the dashboards. Private, like the other admin tables.
+create table if not exists public.change_log (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  actor       text not null,
+  action      text not null,
+  kind        text not null,
+  label       text not null default '',
+  detail      text not null default ''
+);
+create index if not exists change_log_created_idx on public.change_log (created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- updated_at triggers
@@ -212,18 +225,19 @@ alter table public.member_requests enable row level security;
 alter table public.fandom_requests enable row level security;
 alter table public.heartbeat       enable row level security;
 alter table public.publish_state   enable row level security;
+alter table public.change_log      enable row level security;
 
 -- Start from nothing: take every right away from the public roles on every table.
 revoke all on table
   public.members, public.fandoms, public.member_fandoms, public.gallery, public.news,
-  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state
+  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state, public.change_log
 from anon, authenticated;
 
 -- The secret key (the service_role) bypasses the row rules but still needs the table rights, so say it out loud
 -- instead of relying on defaults that Supabase may change.
 grant all on table
   public.members, public.fandoms, public.member_fandoms, public.gallery, public.news,
-  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state
+  public.admins, public.member_requests, public.fandom_requests, public.heartbeat, public.publish_state, public.change_log
 to service_role;
 
 -- ...then give back reading to the public roles, and only on the public tables.

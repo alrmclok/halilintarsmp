@@ -4,7 +4,7 @@ import Base from "../../../layouts/Base.astro";
 import Box from "../../../components/Box.astro";
 import AdminNav from "../../../components/AdminNav.astro";
 import { adminDb } from "../../../lib/auth";
-import { KINDS, setHidden, type Kind } from "../../../lib/admin";
+import { KINDS, setHidden, deleteRow, type Kind } from "../../../lib/admin";
 
 export const prerender = false;
 
@@ -12,16 +12,19 @@ const kind = Astro.params.kind as Kind;
 if (!Object.hasOwn(KINDS, kind)) return new Response(null, { status: 404 });
 const cfg = KINDS[kind];
 
+const isSuper = Astro.locals.user.role === "super";
+
 let err = "";
 if (Astro.request.method === "POST") {
   const f = await Astro.request.formData();
-  err =
-    (await setHidden(
-      kind,
-      String(f.get("id") ?? ""),
-      f.get("hidden") === "1",
-    )) ?? "";
-  if (!err) return Astro.redirect(`/admin/${kind}/?saved=1`, 303);
+  const id = String(f.get("id") ?? "");
+  if (f.get("action") === "delete") {
+    err = (await deleteRow(kind, id, String(f.get("confirm") ?? ""))) ?? "";
+    if (!err) return Astro.redirect(`/admin/${kind}/?deleted=1`, 303);
+  } else {
+    err = (await setHidden(kind, id, f.get("hidden") === "1")) ?? "";
+    if (!err) return Astro.redirect(`/admin/${kind}/?saved=1`, 303);
+  }
 }
 
 const { data, error } = await adminDb()
@@ -38,6 +41,9 @@ if (error) err = error.message;
       <p class="adm-ok" role="status">
         Saved. Press Publish on the dashboard to show it on the site.
       </p>
+    )}
+    {Astro.url.searchParams.get("deleted") && (
+      <p class="adm-ok" role="status">Deleted for good.</p>
     )}
     {err && (
       <p class="adm-err" role="alert">
@@ -63,6 +69,17 @@ if (error) err = error.message;
             <input type="hidden" name="hidden" value={r.hidden ? "0" : "1"} />
             <button type="submit">{r.hidden ? "Unhide" : "Hide"}</button>
           </form>
+          {isSuper && r.hidden && (
+            <details class="del">
+              <summary>Delete…</summary>
+              <form method="post">
+                <input type="hidden" name="action" value="delete" />
+                <input type="hidden" name="id" value={r.id} />
+                <label>Type DELETE <input name="confirm" autocomplete="off" required /></label>
+                <button type="submit">Delete for good</button>
+              </form>
+            </details>
+          )}
         </li>
       ))}
     </ul>
@@ -73,3 +90,8 @@ if (error) err = error.message;
     )}
   </Box>
 </Base>
+
+<style>
+  .del summary { cursor: pointer; padding: 0.6em 0.4em; }
+  .del form { display: flex; flex-wrap: wrap; gap: 0.4em; align-items: center; }
+</style>

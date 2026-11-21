@@ -1,0 +1,42 @@
+---
+// The private change log: who did what in the dashboards. Only logged-in admins reach it (middleware). Kept 180 days.
+import Base from '../../../layouts/Base.astro';
+import Box from '../../../components/Box.astro';
+import AdminNav from '../../../components/AdminNav.astro';
+import { recentLog, KINDS, fmt } from '../../../lib/admin';
+
+export const prerender = false;
+
+const { rows, error } = await recentLog(200);
+const words: Record<string, string> = {
+  create: 'created', edit: 'edited', hide: 'hid', unhide: 'unhid', delete: 'deleted for good',
+  publish: 'pressed Publish', reject: 'rejected request', admin_add: 'added admin', admin_remove: 'removed admin',
+};
+const kindName = (k: string) => (Object.hasOwn(KINDS, k) ? (KINDS as any)[k].one : k);
+---
+<Base title="Admin: Log" description="HalilintarSMP admin.">
+  <Box title="Change log">
+    <AdminNav current="/admin/log/" />
+    <p class="adm-help">The last 200 changes, newest first. Private: only admins see this. Lines older than 180 days are removed.</p>
+    {error && <p class="adm-err" role="alert">{error}</p>}
+    <div class="wrap">
+      <table class="adm-stats">
+        <thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              <td>{fmt(r.created_at)}</td>
+              <td>{r.actor}</td>
+              <td>{words[r.action] ?? r.action}{r.kind !== 'site' && r.kind !== 'admins' && r.kind !== 'requests' ? ` ${kindName(r.kind)}` : ''}{r.label ? `: ${r.label}` : ''}{r.detail ? ` (${r.detail})` : ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {!error && rows.length === 0 && <p class="adm-help">Nothing logged yet.</p>}
+  </Box>
+</Base>
+
+<style>
+  .wrap { overflow-x: auto; }
+</style>

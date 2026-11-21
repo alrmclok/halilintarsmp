@@ -225,7 +225,7 @@ Notes:
 
 ## Part R: Picture uploads
 
-Status: In progress
+Status: Done
 
 Goal: pictures are uploaded in the dashboard and stored in Supabase Storage.
 
@@ -238,7 +238,7 @@ Goal: pictures are uploaded in the dashboard and stored in Supabase Storage.
 Notes:
 
 - Site art (logo, hero, splatters) stays in `public/`.
-- Written by the AI only (no Astro run, no database): nothing tested yet. To do: run `supabase/schema.sql`, add the two npm scripts, test an upload for each of members, fandoms and gallery, run the move script, Publish, check the site, then delete the old files in `public/`.
+- Written by the AI first (no Astro run, no database). Tested by Almira on 2026-11-20: works. Old files in `public/gallery/` and `public/fandoms/` can go once `npm run db:move-pictures` has been run and the site checked.
 - The browser sends the shrunk picture with the form; the server uploads it (`applyUploads` in `lib/admin.ts`). The address text box stays for pasting an address or emptying it. Names: members `<slug>-photo-profile`, fandoms `<fandom-slug>`, gallery `<title-slug>-<timestamp>` (the move script uses the same rule). The replaced file is removed after a successful save unless another row uses it. News pictures stay a text box.
 - The live address is `halilintarsmp-dev.vercel.app` first (the main domain stays hidden). Almira set the Supabase and Google URLs.
 
@@ -246,14 +246,24 @@ Notes:
 
 ## Part S: Super-admin dashboard
 
-Status: Not started
+Status: In progress
 
-Goal: the things only Almira can do.
+Goal: the things only Almira can do, plus a private change log.
 
-- [ ] Add and remove admins by Google email.
-- [ ] Delete rows for good, and unhide.
-- [ ] Keep-alive: the button, the endpoint, the weekly Vercel cron job, and the last ping time on the screen.
+- [x] Code written (not tested): `/admin/super/` (admins, keep-alive), delete buttons in the lists, `/admin/log/`, `src/pages/api/keepalive.ts`, `vercel.json`, `supabase/migration-3.sql`.
+- [ ] Almira runs `supabase/migration-3.sql` once in the SQL Editor.
+- [ ] Set `CRON_SECRET` (a long random text) in Vercel and in `.env`, then push so the cron job is registered (Vercel, Settings, Cron Jobs).
+- [ ] Test: add and remove an admin (a removed admin loses access on the next click); an admin cannot open `/admin/super/`; hide then delete a row (members, fandoms, gallery, news); a fandom that members use is refused; the picture file leaves Storage; Ping now shows the time; the log shows each action.
 - [ ] Phone check.
+
+Notes:
+
+- Decided by Almira on 2026-11-20: delete for members, fandoms, gallery and news only (not requests); a row must be hidden first and DELETE typed; a fandom still used by members cannot be deleted (my choice, since "y" did not say block or unlink); deleting also removes the row's picture from Storage unless another row uses it; one super-admin page; keep-alive every 5 days (`0 3 */5 * *`: days 1, 6, 11, 16, 21, 26, 31, so never more than 5 days apart; Supabase free pauses after about 7); a change log, private to the dashboards (admins and the super-admin see it, the public never does).
+- Unhide already worked for both roles since Part P. Delete is super-admin only: checked in the page and again in `deleteRow` (it reads the role from `actorStore` in `lib/auth.ts`, set by the middleware, so no existing call had to change).
+- The change log (`change_log` table) is written by `logChange` in `lib/admin.ts`: create, edit (lists the changed fields), hide, unhide, delete, publish, admin added or removed. Approving a request is logged as a create or edit. Rejecting a request is not logged yet. Lines older than 180 days are removed by the keep-alive. Keep-alive pings are not logged.
+- Deleting a member with a custom page leaves its folder in `public/members/` (GitHub); the log line says so.
+- The cron endpoint is `/api/keepalive` (outside `/api/admin`, since no one is logged in). It needs `Authorization: Bearer <CRON_SECRET>`, which Vercel sends by itself when `CRON_SECRET` is set, and refuses everything when it is not. Cron runs only on the Production deployment.
+- Checked by the AI: syntax only (no Astro run, no database).
 
 ---
 
@@ -289,7 +299,6 @@ Ask about these when the part that needs them starts. Do not decide them silentl
 - The look of the dashboards. Proposed: the same Box and colors as the site, plain forms. (Part P)
 - Google's login screen shows the Supabase address, not the site name. To show the site name: verify the branding in Google Cloud (needs a domain Almira owns, and can take days or weeks) or buy a Supabase custom domain. Left as it is for now, since only admins see it. (Part O)
 - Member pictures: members keep sending theirs to Almira, and the reviewer uploads it on approval. Almira can change this. (Part Q, Part R)
-- Show "last edited by" or keep a change log in the dashboard? (Part S)
 - How often to export the tables to JSON as a backup. (Part T)
 
 ## Progress log
@@ -323,3 +332,5 @@ One line per finished part: date, part, what was done.
 - 2026-11-20, Part P: tested by Almira (fandoms with no members and a stale dev server were the only issues). Part P done.
 - 2026-11-20, Part Q: public requests and review written (api/request.ts, RequestForm, edit pages, requests screens, migration-2.sql). Not tested.
 - 2026-11-20, docs: roadmap Parts A to LA condensed; main document updated for Part P, the deploy rules and the folder layout.
+- 2026-11-20, Part R: picture uploads tested by Almira and working. Part R done.
+- 2026-11-20, Part S: super-admin page, delete for good, change log and keep-alive written (api/keepalive.ts, vercel.json, migration-3.sql). Not tested.

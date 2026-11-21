@@ -1,6 +1,6 @@
 // Guards /admin/* and /api/admin/*. Every other page is untouched (they are built ahead of time and must not read cookies).
 import { defineMiddleware } from 'astro:middleware';
-import { createAuthClient, getRole } from './lib/auth';
+import { actorStore, createAuthClient, getRole } from './lib/auth';
 
 // The pages that must work without being logged in.
 const OPEN = new Set(['/admin/login', '/admin/callback', '/admin/logout', '/admin/not-allowed']);
@@ -37,6 +37,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return finish(context.redirect('/admin/not-allowed/'));
   }
 
-  context.locals.user = { email: user.email!.toLowerCase(), role };
-  return finish(await next());
+  const me = { email: user.email!.toLowerCase(), role };
+  context.locals.user = me;
+  // Part S: the super-admin screen is for the super-admin only.
+  if ((path === '/admin/super' || path.startsWith('/admin/super/')) && role !== 'super') return finish(context.redirect('/admin/'));
+  return actorStore.run(me, async () => finish(await next()));
 });

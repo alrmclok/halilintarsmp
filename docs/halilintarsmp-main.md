@@ -8,7 +8,7 @@ It has three parts.
 
 - **Part 1** says what the site is and how it is built. It describes the real site.
 - **Part 2** says how the site looks (the style guide).
-- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M to P of it are built (the database, the public pages reading it, the admin login and the content dashboards). Part Q (public requests and review) is written but not tested yet. The rest is still planned.
+- **Part 3** is the plan for moving the content to Supabase and adding the dashboards. Parts M to R are built and tested (the database, the public pages reading it, the admin login, the content dashboards, public requests and picture uploads). Part S (super-admin page, delete, change log, keep-alive) is written but not tested yet. The rest is still planned.
 
 ## How the two files are used
 
@@ -42,7 +42,7 @@ Pages:
 | News, Join, Rules | Three pages, built in Part K. News (`/news/`) lists every news item, newest first. Join (`/join/`) holds how to join and, in its own box, the server address (`/join/#server-address`). Rules (`/rules/`) is its own page. No pop-ups. They have no tab: they are reached from the maroon bar, the hero and the News box. The words on them are placeholders until the admins send the real ones |
 | Member form | `/member-form/`, not in the tabs. A public page where someone asks for a new member page (name, handle, pronouns, fandoms, joined date, intro, sections). It saves a pending request; nothing is public until an admin approves it and Publish is pressed (Part Q) |
 | Edit pages | `/members/<slug>/edit/` and `/fandoms/<slug>/edit/`, open to everyone, like a wiki. A member edit form is filled with the current page and a fandom edit form has only the description. Sending one saves a pending request. Members with a custom page have no edit page (Part Q). The links to these pages from the member and fandom pages are added in a later step |
-| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (counts, unpublished changes, last publish time and the Publish button), plus `/admin/<members|fandoms|gallery|news>/` lists and forms, and `/admin/requests/` (Part Q: the queue, `member/<id>` and `fandom/<id>` review screens). The dashboards (Part P) are written but not tested yet, see Part 3 |
+| Admin | `/admin/`, behind Google login (built in Part O). Pages: `/admin/login/`, `/admin/not-allowed/`, and `/admin/` (counts, unpublished changes, last publish time and the Publish button), plus `/admin/<members|fandoms|gallery|news>/` lists and forms, and `/admin/requests/` (Part Q: the queue, `member/<id>` and `fandom/<id>` review screens), `/admin/log/` (Part S: the private change log) and `/admin/super/` (Part S: super-admin only, admins and keep-alive) |
 
 ## Who can change files
 
@@ -52,7 +52,7 @@ Three people have access to the GitHub project: Almira, Katz and Kate. Katz and 
 - Any of the three can put a custom page live. If none of them can, Almira does it.
 - Anyone who does not want to use GitHub can send the files to Almira, who adds them.
 
-Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. The login is built (Part O). The dashboards are written (Part P) but not tested yet.
+Part 3 changes this: admins will edit content in a dashboard, and Katz and Kate will keep GitHub for code and custom pages. The login is built (Part O). The dashboards are built and tested (Parts P to R).
 
 ## Tech stack (decided)
 
@@ -117,7 +117,10 @@ src/
   pages/gallery/index.astro   the Gallery list (two columns)
   pages/gallery/[slug].astro  one picture's own page, with a lightbox
   pages/admin/              the admin pages. Part O: login.astro, callback.ts, logout.ts, not-allowed.astro. Part P: index.astro (home with counts and Publish), [kind]/index.astro (a list) and [kind]/[id].astro (the form; id `new` makes a row). Server-rendered (prerender = false)
+  pages/admin/super/index.astro  super-admin only (Part S): add and remove admins, keep-alive button and last ping time
+  pages/admin/log/index.astro    the private change log (Part S): the last 200 changes
   pages/api/admin/publish.ts  the Publish button's endpoint: calls the Vercel deploy hook (Part P)
+  pages/api/keepalive.ts    the keep-alive endpoint for the Vercel cron job (Part S). Needs `Authorization: Bearer <CRON_SECRET>`
   middleware.ts             guards /admin/* and /api/admin/* (Part O). Public pages are untouched
   env.d.ts                  tells the editor that Astro.locals.user exists (set by the middleware)
   content.config.ts         what a member data file must contain (only checks the old files; removed in Part T)
@@ -135,6 +138,8 @@ templates/README.md         the steps and rules for custom pages, written for me
 supabase/schema.sql         the database tables and their access rules, as they should be now (Part M). A record; it does not have to be run again
 supabase/migrations.sql     changes to run once in the Supabase SQL Editor (migration 1 removes the unused site_text table)
 supabase/migration-2.sql    run once in the SQL Editor (Part Q): request columns on member_requests and the fandom_requests table
+supabase/migration-3.sql    run once in the SQL Editor (Part S): the change_log table and publish_state.last_ping_at
+vercel.json                 the weekly-ish cron job (every 5 days, calls /api/keepalive)
 scripts/import-json.mjs     copies the content files into Supabase (Part M). Safe to run again
 scripts/check-access.mjs    checks that the public key reads only visible rows and cannot write (Part M)
 .env.example                the names of the settings, without values. The real `.env` is never committed
@@ -449,9 +454,9 @@ This is a personal site, not a wiki, but a few parts fit ours. These are ideas t
 
 ---
 
-# Part 3: Supabase and the dashboards (Parts M to Q built; Part R written, not tested)
+# Part 3: Supabase and the dashboards (Parts M to R built and tested; Part S written, not tested)
 
-Status: Parts M to Q are built and tested, and Part R (picture uploads) is written but not tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
+Status: Parts M to R are built and tested, and Part S (super-admin) is written but not tested: the tables, the access rules and the import (section 3.3), the public pages reading the database when the site builds (section 3.2), the Google login with roles (section 3.4), the content dashboards with the Publish button (section 3.5; Part P). The rest is planned. This is the plan for Parts M to T of the roadmap, decided by Almira on 2026-11-20. When a roadmap part is done, move what became real into Part 1 and fix this part so it still matches. Part T folds this whole part into Part 1.
 
 ## 3.1 Why
 
@@ -467,7 +472,7 @@ The content moves from files in the project to a Supabase database. So people wh
 
 ## 3.3 Tables (made in Part M; the real file is `supabase/schema.sql`)
 
-Ten tables. Access rules are switched on for every one of them. Each public table has a `hidden` column: a hidden row is not returned to the public key.
+Eleven tables. Access rules are switched on for every one of them. Each public table has a `hidden` column: a hidden row is not returned to the public key.
 
 | Table | Holds |
 |---|---|
@@ -480,15 +485,16 @@ Ten tables. Access rules are switched on for every one of them. Each public tabl
 | `member_requests` | `kind` (`new` or `edit`), `member_id` (for an edit), `status` (`pending`, `approved` or `rejected`), what the form sends (`name`, `handle`, `pronouns`, `fandoms` as typed, `joined`, `intro`, `sections`), `reason` (the sender's note), `ip_hash` (salted hash for the rate limit), `review_note`, `reviewed_by`, `reviewed_at`, `created_at` |
 | `fandom_requests` | `fandom_id`, `status`, `description` (the proposed text), `reason`, `ip_hash`, and the same review columns |
 | `heartbeat` | Dummy rows for the keep-alive (see 3.8) |
-| `publish_state` | One row: `last_published_at` and `pending_changes` |
+| `publish_state` | One row: `last_published_at`, `pending_changes` and `last_ping_at` (the last keep-alive) |
+| `change_log` | One line per change in the dashboards (Part S): `created_at`, `actor` (email), `action`, `kind`, `label`, `detail`. Private. Lines older than 180 days are removed by the keep-alive |
 
 Who can read what:
 
 - The public key reads `members`, `fandoms`, `member_fandoms`, `gallery` and `news`, and never a hidden row. A member-fandom link is readable only when both its member and its fandom are.
-- The public key cannot write anything. It cannot read `admins`, `member_requests`, `fandom_requests`, `heartbeat` or `publish_state` either. Only the secret key (server only) can.
+- The public key cannot write anything. It cannot read `admins`, `member_requests`, `fandom_requests`, `heartbeat`, `publish_state` or `change_log` either. Only the secret key (server only) can.
 - `npm run db:check` tests all of this against the real project.
 
-Nothing is deleted by an admin. A row is hidden instead, and it can come back.
+Admins never delete: they hide a row, and it can come back. Only the super-admin can delete a row for good, and only a hidden one (see 3.5).
 
 The database holds only members, fandoms, gallery and news (plus the admin tables). The words of the Join, Rules, About and Credits pages and the server address stay in the page code (Almira's decision).
 
@@ -516,7 +522,7 @@ Built in Part O:
 - **Role rules (`getRole`):** the email must come from a Google login and be confirmed. It is `super` when it equals `SUPER_ADMIN_EMAIL`, `admin` when it is in the `admins` table, and no access otherwise. Any doubt or database error means no access.
 - **The guard:** the middleware only acts on `/admin/*` and `/api/admin/*`, so the built public pages never read cookies. It asks Supabase who is logged in on every request (`getUser`, not the cookie alone), sends these pages with no-cache and noindex headers, and answers API calls with 401 (not logged in) or 403 (not allowed). A removed admin loses the login on the next request.
 - **Settings outside the code:** in Supabase, the Google provider is on with the Google client id and secret, the Email provider is off (so no one can make an account by email), and the Site URL and the Redirect URLs include `/admin/callback` for localhost:4321 and for the live site. In Google Cloud, the OAuth client is a Web application whose redirect address is the Supabase auth callback, and the app is published (not in test mode).
-- **First admins:** added by hand in the `admins` table, with the email in lowercase, until Part S makes the screen.
+- **Admins:** the first ones were added by hand in the `admins` table (lowercase email). Since Part S the super-admin adds and removes them on `/admin/super/`.
 - **Known and accepted:** Google's login screen shows the Supabase project address instead of the site name. It changes only after Google verifies the branding (needs a domain the project owner owns) or with a paid Supabase custom domain. Only admins see this screen.
 
 ## 3.5 Who can do what
@@ -531,7 +537,7 @@ Built in Part O:
 | Add and remove admins | no | yes |
 | Keep-alive button | no | yes |
 
-How the content dashboards work (written in Part P, not tested yet):
+How the content dashboards work (Part P, tested):
 
 - `/admin/` shows counts, unpublished changes, the last publish time and the Publish button (it calls `VERCEL_DEPLOY_HOOK_URL`, then resets the count).
 - `/admin/<members|fandoms|gallery|news>/` lists rows with Edit and Hide/Unhide. `/admin/<kind>/new/` and `/admin/<kind>/<id>/` are the forms. There is no delete in these screens.
@@ -539,6 +545,9 @@ How the content dashboards work (written in Part P, not tested yet):
 - Member and gallery slugs are locked after saving. A fandom's slug is always `toSlug(name)`, and a second fandom with the same slug is refused.
 - Member fandoms: a compact checkbox list of all fandoms plus an "Add fandoms not in the list" box. Typed names are created (name only) at save, or linked if the slug exists. The member's old order is kept, newly checked ones follow in list order, typed ones last. (A plain text box was tried first, but one unknown name refused the whole save, which was too hard on long lists.)
 - New news items go first (the home box shows the lowest position first); new gallery items go last.
+- Part S (written, not tested): `/admin/super/` (super-admin only: the middleware redirects anyone else, and every function checks the role again). It lists the admins with who added them and when, adds one by Google email (lowercased; refuses the super-admin email and doubles) and removes one (that person loses the login on their next click). It also has the keep-alive button (see 3.8).
+- Delete for good (Part S): super-admin only, in the lists, on hidden rows only, after typing DELETE. A fandom that members still use is refused (remove it from the members first). Deleting a row also removes its picture from Storage unless another row uses it. A member with a custom page leaves its folder in `public/members/` (GitHub). Deleting does not raise the unpublished count (a hidden row is already left out when the site is built). Requests cannot be deleted.
+- Change log (Part S): `logChange` in `lib/admin.ts` writes one line to `change_log` for create, edit (with the changed fields), hide, unhide, delete, publish, admin added and removed. The role and email of the person come from `actorStore` (`lib/auth.ts`), which `middleware.ts` fills for every guarded request, so the callers do not pass them. It is best effort: a log failure never stops the save. Seen on `/admin/log/` by every admin and the super-admin, never public. Approving a request shows as a create or edit; rejecting is not logged.
 - Code: `src/lib/admin.ts` (rules and database work), `src/components/AdminNav.astro`, `src/pages/admin/index.astro`, `src/pages/admin/[kind]/index.astro`, `src/pages/admin/[kind]/[id].astro`, `src/pages/api/admin/publish.ts`.
 
 ## 3.6 Requests from the public (Part Q)
@@ -553,9 +562,9 @@ Anyone can send a request. A request is never public by itself. There is no memb
 - **Links and noindex:** the member page and the fandom page have an "Edit this page" link. `Base.astro` takes a `noindex` prop, used by the form and both edit pages. The fandom page now shows the fandom's `description` when it has one (if it does not show, `src/lib/fandoms.js` does not pass `description` on: send that file).
 
 
-## 3.7 Pictures (Part R, written, not tested)
+## 3.7 Pictures (Part R)
 
-- Part R (written, not tested): pictures live in one public Supabase Storage bucket called `pictures`, with the folders `members/`, `fandoms/` and `gallery/`. `supabase/schema.sql` makes the bucket. Anyone can open a picture by its address; only the secret key can add files.
+- Part R (tested): pictures live in one public Supabase Storage bucket called `pictures`, with the folders `members/`, `fandoms/` and `gallery/`. `supabase/schema.sql` makes the bucket. Anyone can open a picture by its address; only the secret key can add files.
 - The dashboard form has a choose-a-picture box for members, fandoms and gallery. The browser shrinks the picture (about 1200 px wide, under 300 KB, as .webp) and sends it with the form. The server (`applyUploads` in `lib/admin.ts`) stores it under one naming rule (members `members/<slug>-photo-profile`, fandoms `fandoms/<fandom-slug>`, gallery `gallery/<title-slug>-<timestamp>`) and writes the address, with a `?v=` number so an old cached picture is not shown, in the row. The address text box stays: paste an address to use another picture, empty it to remove the picture. After a successful save the replaced picture file is removed from Storage, unless another row still uses it. News pictures stay a text box.
 - `npm run db:move-pictures` moves the old files from `public/gallery/`, `public/fandoms/` and any member picture path into Storage, and updates the rows. `:dry` only shows what it would do. It deletes nothing.
 - The scan of `public/fandoms/` is removed from `src/lib/fandoms.js`.
@@ -563,7 +572,7 @@ Anyone can send a request. A request is never public by itself. There is no memb
 
 ## 3.8 Keep-alive
 
-As far as is known, a free Supabase project can pause after a while without activity (check their current rules). The super-admin dashboard has a button that adds a dummy row to `heartbeat` and deletes it right away. A weekly Vercel cron job calls the same endpoint, so it does not depend on remembering. The dashboard shows the time of the last ping. It never touches the real tables.
+As far as is known, a free Supabase project can pause after about a week without activity (check their current rules). `keepAlive()` in `lib/admin.ts` adds a dummy row to `heartbeat`, deletes it right away, stores the time in `publish_state.last_ping_at` and drops change-log lines older than 180 days. It never touches the real tables. Two things call it: the "Ping now" button on `/admin/super/`, and a Vercel cron job (`vercel.json`, `0 3 */5 * *`, which runs on days 1, 6, 11, 16, 21, 26 and 31, so two runs are never more than 5 days apart) that calls `/api/keepalive`. That endpoint is outside `/api/admin` (no one is logged in) and accepts only `Authorization: Bearer <CRON_SECRET>`, which Vercel sends by itself when `CRON_SECRET` is set; with no `CRON_SECRET` it refuses everything. Vercel cron runs only on the Production deployment. The super-admin page shows the time of the last ping.
 
 ## 3.9 What stays in files
 
@@ -583,7 +592,7 @@ Kept in `.env` (never committed) and in the Vercel settings. `.env.example` list
 | `PUBLIC_SITE_URL` | Optional. The live address, like `https://halilintarsmp.vercel.app` (no slash at the end). Used by `Base.astro` for the canonical link and link previews. Empty = `https://halilintarsmp.vercel.app`. The build needs it |
 | `PUBLIC_TURNSTILE_SITE_KEY` | The Cloudflare Turnstile site key (Part Q). Public, but the BUILD needs it: set it in `.env` and in Vercel. Cloudflare's test key `1x00000000000000000000AA` always passes (for localhost) |
 | `TURNSTILE_SECRET_KEY` | The Turnstile secret key. Server only, in `.env` and in Vercel. The test secret is `1x0000000000000000000000000000000AA` |
-| `CRON_SECRET` | Protects the weekly keep-alive call |
+| `CRON_SECRET` | Protects the keep-alive call (Part S). A long random text. Set it in Vercel (Vercel then sends it to the cron job) and in `.env`. Treat it like a password |
 
 The Google client id and secret are set in Supabase's Auth settings, not in the project.
 

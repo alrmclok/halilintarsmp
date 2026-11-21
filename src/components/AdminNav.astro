@@ -8,7 +8,9 @@ const links = [
   ['/admin/gallery/', 'Gallery'],
   ['/admin/news/', 'News'],
   ['/admin/requests/', 'Requests'],
+  ['/admin/log/', 'Log'],
 ];
+if (Astro.locals.user?.role === 'super') links.push(['/admin/super/', 'Super-admin']);
 ---
 <nav class="adm-nav" aria-label="Admin">
   {links.map(([href, label]) => <a href={href} aria-current={href === current ? 'page' : undefined}>{label}</a>)}

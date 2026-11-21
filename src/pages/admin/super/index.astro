@@ -1,0 +1,71 @@
+---
+// Super-admin only (src/middleware.ts redirects everyone else): add and remove admins, and the keep-alive.
+import Base from '../../../layouts/Base.astro';
+import Box from '../../../components/Box.astro';
+import AdminNav from '../../../components/AdminNav.astro';
+import { listAdmins, addAdmin, removeAdmin, keepAlive, lastPing, fmt } from '../../../lib/admin';
+
+export const prerender = false;
+
+let err = '';
+if (Astro.request.method === 'POST') {
+  const f = await Astro.request.formData();
+  const action = String(f.get('action') ?? '');
+  const email = String(f.get('email') ?? '');
+  if (action === 'add') err = (await addAdmin(email)) ?? '';
+  else if (action === 'remove') err = (await removeAdmin(email)) ?? '';
+  else if (action === 'keepalive') err = (await keepAlive()) ?? '';
+  else err = 'Unknown action.';
+  if (!err) return Astro.redirect(`/admin/super/?ok=${action}`, 303);
+}
+
+const ok = Astro.url.searchParams.get('ok');
+const okText: Record<string, string> = { add: 'Admin added.', remove: 'Admin removed. They lose access on their next click.', keepalive: 'Keep-alive ping done.' };
+const admins = await listAdmins();
+const ping = await lastPing();
+---
+<Base title="Admin: Super-admin" description="HalilintarSMP admin.">
+  <Box title="Super-admin">
+    <AdminNav current="/admin/super/" />
+    {ok && okText[ok] && <p class="adm-ok" role="status">{okText[ok]}</p>}
+    {err && <p class="adm-err" role="alert">{err}</p>}
+
+    <h2>Admins</h2>
+    <p class="adm-help">Use the exact email of the person's Google account. They sign in at /admin/login/ with Google. Admins can edit, hide, review requests and Publish. They cannot delete, or change this list.</p>
+    <ul class="adm-list">
+      {admins.map((a) => (
+        <li>
+          <div class="grow">
+            <strong>{a.email}</strong>
+            <small class="adm-help">added by {a.added_by ?? 'unknown'} · {fmt(a.added_at)}</small>
+          </div>
+          <form method="post">
+            <input type="hidden" name="action" value="remove" />
+            <input type="hidden" name="email" value={a.email} />
+            <button type="submit">Remove</button>
+          </form>
+        </li>
+      ))}
+    </ul>
+    {admins.length === 0 && <p class="adm-help">No admins yet. Only you (the super-admin) can get in.</p>}
+    <form method="post" class="adm-pub addrow">
+      <input type="hidden" name="action" value="add" />
+      <label>New admin email <input type="email" name="email" required autocomplete="off" /></label>
+      <button type="submit">Add admin</button>
+    </form>
+
+    <h2>Keep-alive</h2>
+    <p>Last ping: {ping ? fmt(ping) : 'never'}.</p>
+    <p class="adm-help">A free Supabase project can pause when nothing touches it for a while. The ping adds a dummy row to a spare table and removes it again. Vercel does this by itself every 5 days; the button does it now.</p>
+    <form method="post" class="adm-pub">
+      <input type="hidden" name="action" value="keepalive" />
+      <button type="submit">Ping now</button>
+    </form>
+  </Box>
+</Base>
+
+<style>
+  h2 { margin: 1em 0 0.3em; }
+  .addrow { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center; margin-top: 0.8em; }
+  .addrow input[type="email"] { min-width: 14em; max-width: 100%; }
+</style>

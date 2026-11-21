@@ -2,6 +2,7 @@
 // Both the super-admin and listed admins may press it; src/middleware.ts has already checked the login.
 import type { APIRoute } from 'astro';
 import { adminDb } from '../../../lib/auth';
+import { logChange } from '../../../lib/admin';
 
 export const prerender = false;
 
@@ -19,5 +20,6 @@ export const POST: APIRoute = async ({ redirect }) => {
   if (!ok) return back('Vercel did not accept the deploy hook. Check the address and try again.');
 
   await adminDb().from('publish_state').update({ last_published_at: new Date().toISOString(), pending_changes: 0 }).eq('id', 1);
+  await logChange('publish', 'site', 'Publish pressed');
   return redirect('/admin/?published=1', 303);
 };

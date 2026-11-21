@@ -3,8 +3,14 @@
 import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { AstroCookies } from 'astro';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 export type Role = 'super' | 'admin';
+
+// Who is acting in the current request. The middleware sets it (Part S), so admin.ts can write the change log
+// and check the role without every caller passing the user along. Empty outside a guarded request.
+export const actorStore = new AsyncLocalStorage<{ email: string; role: Role }>();
+export const currentActor = () => actorStore.getStore() ?? null;
 
 const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
 const PUBLISHABLE_KEY = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY as string | undefined;
